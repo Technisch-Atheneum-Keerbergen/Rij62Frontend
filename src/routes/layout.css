@@ -1,1 +1,41 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@theme {
+  --color-brand-dark: #1a1b1e;
+  --color-brand-darker: #1e1e1e;
+  --color-brand-bg: #f9fafb;
+  --color-brand-primary: #2563eb;
+  --color-brand-secondary: #4b5563;
+  --color-brand-border: #e5e7eb;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-gray-900 font-sans;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-brand-primary text-white hover:bg-blue-700 shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-brand-border hover:bg-gray-50;
+  }
+
+  .btn-accent {
+    @apply bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-brand-border p-6;
+  }
+}
