@@ -37,3 +37,12 @@
     display: none;
   }
 }
+
+.page-bg {
+  background: linear-gradient(
+    to bottom right,
+    var(--color-primary-500),
+    var(--color-secondary-500)
+  );
+  min-height: 100vh; /* full viewport height */
+}
