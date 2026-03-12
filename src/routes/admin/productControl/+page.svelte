@@ -1,9 +1,19 @@
 <script>
-	import { Heading, Span } from 'flowbite-svelte';
-	import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Badge } from 'flowbite-svelte';
+	import { preloadData } from '$app/navigation';
+	import { Button, Heading, Span, ButtonGroup } from 'flowbite-svelte';
+	import {
+		Table,
+		TableBody,
+		TableBodyCell,
+		TableBodyRow,
+		TableHead,
+		TableHeadCell,
+		Badge,
+		Checkbox
+	} from 'flowbite-svelte';
+	import { DeleteRowOutline, RefreshOutline } from 'flowbite-svelte-icons';
 
-	const currentLanguage = 'EN';
-
+	// Fetching data
 	function fetchProducts() {
 		// Just a placeholder, replace with actual API call
 		return [
@@ -42,63 +52,10 @@
 				IsAvailable: true,
 				ImgURL: 'https://rij62.be/assets/products/cookie.png',
 				CategoryId: 1
-			},
-			{
-				Id: 4,
-				Title: { EN: 'Blueberry Muffin', NL: 'Blauwe Bes Muffin' },
-				Price: 3,
-				Stock: 25,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/muffin.png',
-				CategoryId: 1
-			},
-			{
-				Id: 5,
-				Title: { EN: 'Croissant', NL: 'Croissant' },
-				Price: 2.5,
-				Stock: 35,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/croissant.png',
-				CategoryId: 1
-			},
-			{
-				Id: 6,
-				Title: { EN: 'Mocha', NL: 'Mocha' },
-				Price: 5,
-				Stock: 40,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/mocha.png',
-				CategoryId: 0
-			},
-			{
-				Id: 7,
-				Title: { EN: 'Caramel Latte', NL: 'Caramel Latte' },
-				Price: 5,
-				Stock: 35,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/caramel-latte.png',
-				CategoryId: 0
-			},
-			{
-				Id: 8,
-				Title: { EN: 'Chocolate Cake Slice', NL: 'Chocolade Cake' },
-				Price: 4,
-				Stock: 20,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/chocolate-cake.png',
-				CategoryId: 1
-			},
-			{
-				Id: 9,
-				Title: { EN: 'Iced Coffee', NL: 'Iced Coffee' },
-				Price: 4,
-				Stock: 30,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/iced-coffee.png',
-				CategoryId: 0
 			}
 		];
 	}
+
 	function fetchCategories() {
 		return [
 			{ Id: 0, Name: { EN: 'Beverages', NL: 'Dranken' }, Color: 'blue' },
@@ -106,8 +63,58 @@
 		];
 	}
 
+	// Checkbox Logic
+	let selectedIds = $state(new Set());
+	let lastClickedId = $state(null);
+
+	function toggle(id) {
+		const newSet = new Set(selectedIds);
+
+		if (newSet.has(id)) {
+			newSet.delete(id);
+		} else {
+			newSet.add(id);
+		}
+
+		selectedIds = newSet;
+	}
+
+	function handleCheckboxClick(e, productId) {
+		e.stopPropagation();
+
+		let newSet = new Set(selectedIds);
+
+		if (e.shiftKey && lastClickedId !== null) {
+			const start = products.findIndex((p) => p.Id === lastClickedId);
+			const end = products.findIndex((p) => p.Id === productId);
+			const [from, to] = [Math.min(start, end), Math.max(start, end)];
+
+			for (let i = from; i <= to; i++) {
+				newSet.add(products[i].Id);
+			}
+		} else {
+			if (newSet.has(productId)) {
+				newSet.delete(productId);
+			} else {
+				newSet.add(productId);
+			}
+		}
+
+		selectedIds = newSet;
+		lastClickedId = productId;
+
+		console.log('End of handleCheckboxClick():');
+		console.log('selectedIds: ', selectedIds);
+		console.log('lastClickedId: ', lastClickedId);
+	}
+
+	// API logic
+
+	//Setting constants
 	const products = fetchProducts();
 	const categories = fetchCategories();
+
+	const currentLanguage = 'EN';
 </script>
 
 <div class="mx-auto max-w-7xl p-8">
@@ -120,10 +127,19 @@
 		</Heading>
 	</div>
 
+	<!-- Product Edit Menu -->
+	<div class="flex justify-center p-3">
+		<ButtonGroup>
+			<Button color="rose"><RefreshOutline class="me-2 h-4 w-4" />Settings</Button>
+			<Button color="rose"><DeleteRowOutline class="me-2 h-4 w-4" />Delete</Button>
+		</ButtonGroup>
+	</div>
+
 	<!-- Table Card -->
 	<div class="overflow-hidden rounded-xl border bg-white shadow-lg">
 		<Table hoverable striped class="w-full">
 			<TableHead>
+				<TableHeadCell class="text-left">Checkbox</TableHeadCell>
 				<TableHeadCell class="text-left">Product</TableHeadCell>
 				<TableHeadCell>Category</TableHeadCell>
 				<TableHeadCell>Status</TableHeadCell>
@@ -136,6 +152,13 @@
 						class="cursor-pointer transition hover:bg-gray-100"
 						onclick={() => (window.location.href = `/admin/productControl/${product.Id}`)}
 					>
+						<!-- Checkbox -->
+						<TableBodyCell class="p-4!">
+							<Checkbox
+								checked={selectedIds.has(product.Id)}
+								onclick={(e) => handleCheckboxClick(e, product.Id)}
+							/>
+						</TableBodyCell>
 						<!-- Name -->
 						<TableBodyCell class="font-semibold">
 							{#if currentLanguage === 'EN'}

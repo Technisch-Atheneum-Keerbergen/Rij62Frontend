@@ -39,7 +39,7 @@
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold md:text-5xl lg:text-6xl">
 			Take
-		<Span gradient="tealToLime">Control</Span>
+			<Span gradient="tealToLime">Control</Span>
 			of Your Products
 		</Heading>
 	</div>
@@ -49,7 +49,7 @@
 		<!-- Product Form -->
 		<form class="space-y-6 rounded-xl border bg-white p-8 shadow-2xl">
 			<Tabs>
-				<Button onclick={() => (window.location.href = "/admin/productControl")} class="p-2">
+				<Button onclick={() => (window.location.href = '/admin/productControl')} class="p-2">
 					<ArrowLeftOutline class="h-6 w-6" />
 				</Button>
 				<TabItem open title="Product Profile">
