@@ -1,41 +1,39 @@
 <script lang="ts">
-  import './layout.css';
-  import 'flowbite/dist/flowbite.css';
-  import favicon from '$lib/assets/favicon.svg';
-  import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from "flowbite-svelte";
+	import './layout.css';
+	import 'flowbite/dist/flowbite.css';
+	import favicon from '$lib/assets/favicon.svg';
+	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
 </script>
 
 <svelte:head>
-  <link rel="icon" href={favicon} />
-  <title>Rij 62</title>
+	<link rel="icon" href={favicon} />
+	<title>Rij 62</title>
 </svelte:head>
 
 <header>
-  <div class="px-4 mt-4">
-    <Navbar class="bg-blue-500 text-white rounded-lg overflow-hidden">
-      <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center py-2.5">
-        <NavBrand href="/" class="flex items-center">
-          <img src={favicon} class="mr-3 h-6 sm:h-9" alt="Rij 62 Logo" />
-          <span class="self-center text-xl font-semibold whitespace-nowrap">Rij 62</span>
-        </NavBrand>
-        <NavHamburger />
-        <NavUl class="hidden md:flex space-x-4">
-          <NavLi>
-            <a href="/" class="text-white hover:text-gray-200">Home</a>
-          </NavLi>
-          <NavLi>
-            <a href="/admin/overview" class="text-white hover:text-gray-200">Admin Overview</a>
-          </NavLi>
-        </NavUl>
-      </div>
-    </Navbar>
-  </div>
+	<div class="mt-4 px-4">
+		<Navbar class="overflow-hidden rounded-lg bg-primary-700 text-white">
+			<div class="mx-auto flex flex-wrap items-center justify-between py-1">
+				<NavBrand href="/" class="flex items-center">
+					<img src={favicon} class="mr-3 h-6 sm:h-9" alt="Rij 62 Logo" />
+					<span class="self-center text-xl font-semibold whitespace-nowrap">Rij 62</span>
+				</NavBrand>
+				<NavHamburger />
+				<NavUl class="hidden space-x-4 py-0 md:flex">
+					<NavLi class="py-0">
+						<a href="/" class="text-white hover:text-gray-200">Home</a>
+					</NavLi>
+					<NavLi class="py-0">
+						<a href="/admin/overview" class="text-white hover:text-gray-200">Admin Overview</a>
+					</NavLi>
+				</NavUl>
+			</div>
+		</Navbar>
+	</div>
 </header>
 
 <main class="p-3">
-  <slot />
+	<slot />
 </main>
 
-<footer class="mx-1 text-center">
-  © 2026
-</footer>
+<footer class="mx-1 text-center dark:text-white">© 2026</footer>
