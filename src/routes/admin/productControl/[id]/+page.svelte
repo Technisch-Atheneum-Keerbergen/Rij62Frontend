@@ -1,37 +1,28 @@
-<script>
+<script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { Tabs, TabItem, Label, Button, Input, Toggle, Heading, Span, Img } from 'flowbite-svelte';
 	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
-	const currentLanguage = 'EN'; // Temporary
-
-	// Load Product
-	function loadProduct() {
-		return {
-			Id: 0,
-			Title: { EN: 'Cappuccino', NL: 'Cappuccino' },
-			Price: 4,
-			Stock: 50,
-			IsAvailable: true,
-			ImgURL: '/images/blueberries.jpg',
-			CategoryId: 0
-		};
-	}
+	import { Language } from '$lib/api/types/multilangstring';
+	import type { Product } from '$lib/api/types/product';
+	import { onMount } from 'svelte';
+	import { apiFetch } from '$lib/api/client';
 
 	const ApplyChanges = () => {
 		alert('clicked');
 	};
-	const product = loadProduct();
 
-	// Asssigning all data
-	let Name = product.Title.NL;
-	let Price = product.Price;
-	let Stock = product.Stock;
-	let IsAvailable = product.IsAvailable;
-	let ImgURL = product.ImgURL;
-	let CategoryId = product.CategoryId;
+	let product : Product;
+	onMount(async () => {
+		var products = await apiFetch("/product") as Product[];
+		for (const p of products) {
+			if (p.id.toString() == $page.params.id) {
+				product = p;
+				break;
+			}
+		}
+	});
 
-	$: id = $page.params.id;
 </script>
 
 <div class="mx-auto max-w-7xl space-y-8 p-8">
@@ -52,21 +43,24 @@
 				<Button onclick={() => (window.location.href = "/admin/productControl")} class="p-2">
 					<ArrowLeftOutline class="h-6 w-6" />
 				</Button>
+				{#if product}
 				<TabItem open title="Product Profile">
 					<div class="space-y-5">
+						{#each Object.entries(product.title) as [lang, name]}
 						<div>
-							<Label for="Name">Name</Label>
-							<Input id="Name" bind:value={Name} type="text" />
+							<Label for="Title_{lang}">Title {lang}</Label>
+							<Input id="Title_{lang}" bind:value={name} type="text" />
 						</div>
+						{/each}
 
 						<div>
 							<Label for="Price">Price (€)</Label>
-							<Input id="Price" bind:value={Price} type="number" />
+							<Input id="Price" bind:value={product.price} type="number" />
 						</div>
 
 						<div>
 							<Label for="Stock">Stock</Label>
-							<Input id="Stock" bind:value={Stock} type="number" />
+							<Input id="Stock" bind:value={product.stock} type="number" />
 						</div>
 
 						<div class="flex items-center justify-between rounded-lg border p-4">
@@ -75,7 +69,7 @@
 								<p class="text-sm text-gray-500">Toggle product visibility</p>
 							</div>
 
-							<Toggle id="IsAvailable" bind:checked={IsAvailable} />
+							<Toggle id="IsAvailable" bind:checked={product.isAvailible} />
 						</div>
 					</div>
 
@@ -83,18 +77,21 @@
 						<Button type="submit" onclick={ApplyChanges}>Apply Changes</Button>
 					</div>
 				</TabItem>
+				{/if}
 
 				<TabItem title="History">
 					<div class="p-4 text-gray-500">No history APIs available yet. Will be added later.</div>
 				</TabItem>
 			</Tabs>
+			
 		</form>
 
 		<!-- Product Image -->
 		<div class="rounded-xl border bg-white p-6 shadow-2xl">
 			<h2 class="mb-4 text-lg font-semibold">Product Preview</h2>
-
-			<Img src={ImgURL} class="w-full rounded-lg object-cover" />
+			{#if product}
+			<Img src={product.imgURL} class="w-full rounded-lg object-cover" />
+			{/if}
 		</div>
 	</div>
 </div>
