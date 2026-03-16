@@ -28,7 +28,7 @@ Must use [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.p
 ### Recommended VS code extensions:
 
 - [Svelte for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode)
-- [Tailwind for VS code](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
+- [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 - [Tailwind Fold](https://marketplace.visualstudio.com/items?itemName=stivo.tailwind-fold)
 
 ## Building
