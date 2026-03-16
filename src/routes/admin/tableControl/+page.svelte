@@ -164,17 +164,17 @@
 </div>
 <div class="overflow-hidden rounded-xl">
 	<Table class="w-full">
-		<TableHead>
-			<TableHeadCell>Tablenumber</TableHeadCell>
-			<TableHeadCell>QR code</TableHeadCell>
-			<TableHeadCell>Remove</TableHeadCell>
+		<TableHead class="bg-200">
+			<TableHeadCell class="text-main bg-300">Tablenumber</TableHeadCell>
+			<TableHeadCell class="text-main bg-300">QR code</TableHeadCell>
+			<TableHeadCell class="text-main bg-300">Remove</TableHeadCell>
 		</TableHead>
 
 		<TableBody>
 			{#each tablers as tabler (tabler)}
-				<TableBodyRow>
-					<TableBodyCell class="font-semibold">{tabler.number}</TableBodyCell>
-					<TableBodyCell>
+				<TableBodyRow class="bg-200">
+					<TableBodyCell class="text-muted bg-200 font-semibold">{tabler.number}</TableBodyCell>
+					<TableBodyCell class="bg-200">
 						<Button
 							class="cursor-pointer"
 							onclick={() => {
@@ -194,7 +194,7 @@
 							</Modal>
 						</Button>
 					</TableBodyCell>
-					<TableBodyCell>
+					<TableBodyCell class="bg-200">
 						<Button
 							class="cursor-pointer"
 							onclick={() => {
