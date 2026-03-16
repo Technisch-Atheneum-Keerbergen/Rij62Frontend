@@ -5,7 +5,9 @@ export interface Product {
 	title: MultiLangString;
 	price: number;
 	stock: number;
-	isAvailible: boolean;
+	isAvailable: boolean;
+	description: MultiLangString;
+	btw: number;
 	imgURL: string;
 	categoryId: number;
 }

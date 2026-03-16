@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api/client';
+	import { apiDelete, apiFetch } from '$lib/api/client';
 	import { Language } from '$lib/api/types/multilangstring';
 	import type { Category } from '$lib/api/types/category';
 	import type { Product } from '$lib/api/types/product';
 
 	import { onMount } from 'svelte';
-	import { DeleteRowOutline, RefreshOutline } from 'flowbite-svelte-icons';
+	import { DeleteRowOutline, RefreshOutline, PlusOutline } from 'flowbite-svelte-icons';
 	import {
 		Table,
 		TableBody,
@@ -30,11 +30,30 @@
 			{ id: 1, screenId: 0, name: { English: 'Pastries', Dutch: 'Gebak' } }
 		];
 	}
-	// Checkbox Logic
-	let selectedIds = $state(new Set());
-	let lastClickedId = $state(null);
 
-	function toggle(id) {
+	const deleteSelected = async () => {
+		if (!selectedIds) return;
+
+		try {
+			for (const id of selectedIds) {
+				await apiDelete(`/product/${id}`);
+			}
+			// remove deleted products from UI
+			products = products.filter((p) => !selectedIds.has(p.id));
+
+			// clear selection
+			selectedIds = new Set();
+			console.log('[Rij62] Products removed successfully!');
+		} catch (err: any) {
+			console.log(`[Rij62] Failed to delete product: ${err.message}`);
+		}
+	};
+
+	//Checkbox Logic
+	let selectedIds = $state(new Set());
+	let lastClickedId: number | null = $state(null);
+
+	function toggle(id: number) {
 		const newSet = new Set(selectedIds);
 
 		if (newSet.has(id)) {
@@ -46,7 +65,7 @@
 		selectedIds = newSet;
 	}
 
-	function handleCheckboxClick(e, productId) {
+	function handleCheckboxClick(e: MouseEvent, productId: number) {
 		e.stopPropagation();
 
 		let newSet = new Set(selectedIds);
@@ -70,13 +89,14 @@
 		selectedIds = newSet;
 		lastClickedId = productId;
 
-		console.log('End of handleCheckboxClick():');
-		console.log('selectedIds: ', selectedIds);
-		console.log('lastClickedId: ', lastClickedId);
+		console.log('[Rij62] End of handleCheckboxClick():');
+		console.log('[Rij62] selectedIds: ', selectedIds);
+		console.log('[Rij62] lastClickedId: ', lastClickedId);
 	}
 
-	let products: Product[];
-	let categories: Category[];
+	let products: Product[] = $state([]);
+	let categories: Category[] = $state([]);
+
 	onMount(async () => {
 		products = (await apiFetch('/product')) as Product[];
 		categories = fetchCategories() as Category[];
@@ -97,7 +117,12 @@
 	<div class="flex justify-center p-3">
 		<ButtonGroup>
 			<Button color="rose"><RefreshOutline class="me-2 h-4 w-4" />Toggle Activation</Button>
-			<Button color="rose"><DeleteRowOutline class="me-2 h-4 w-4" />Delete</Button>
+			<Button color="rose" onclick={() => deleteSelected()}>
+				<DeleteRowOutline class="me-2 h-4 w-4" />Delete
+			</Button>
+			<Button color="rose" href="/admin/productControl/new">
+				<PlusOutline class="h-6 w-6 shrink-0" />Add Product
+			</Button>
 		</ButtonGroup>
 	</div>
 
@@ -141,7 +166,7 @@
 
 						<!-- Availability -->
 						<TableBodyCell>
-							{#if product.isAvailible}
+							{#if product.isAvailable}
 								<Badge color="green">Available</Badge>
 							{:else}
 								<Badge color="red">Unavailable</Badge>
