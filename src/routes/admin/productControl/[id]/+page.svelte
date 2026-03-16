@@ -9,7 +9,7 @@
 	function loadProduct() {
 		return {
 			Id: 0,
-			Title: { EN: 'Cappuccino', NL: 'Cappuccino' },
+			Title: { EN: 'Cappuccino (Test is always the same)', NL: 'Cappuccino' },
 			Price: 4,
 			Stock: 50,
 			IsAvailable: true,

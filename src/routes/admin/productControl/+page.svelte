@@ -1,5 +1,6 @@
 <script>
 	import { preloadData } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { Button, Heading, Span, ButtonGroup } from 'flowbite-svelte';
 	import {
 		Table,
@@ -14,46 +15,37 @@
 	import { DeleteRowOutline, RefreshOutline } from 'flowbite-svelte-icons';
 
 	// Fetching data
-	function fetchProducts() {
-		// Just a placeholder, replace with actual API call
-		return [
-			{
-				Id: 0,
-				Title: { EN: 'Cappuccino', NL: 'Cappuccino' },
-				Price: 4,
-				Stock: 50,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/cappuccino.png',
-				CategoryId: 0
-			},
-			{
-				Id: 1,
-				Title: { EN: 'Latte Macchiato', NL: 'Latte Macchiato' },
-				Price: 4.5,
-				Stock: 40,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/latte.png',
-				CategoryId: 0
-			},
-			{
-				Id: 2,
-				Title: { EN: 'Espresso', NL: 'Espresso' },
-				Price: 3,
-				Stock: 60,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/espresso.png',
-				CategoryId: 0
-			},
-			{
-				Id: 3,
-				Title: { EN: 'Chocolate Chip Cookie', NL: 'Chocolate Chip Koekje' },
-				Price: 2.5,
-				Stock: 30,
-				IsAvailable: true,
-				ImgURL: 'https://rij62.be/assets/products/cookie.png',
-				CategoryId: 1
-			}
-		];
+	async function fetchProducts() {
+		try {
+			const response = await fetch('http://localhost:8080/api/orders/GetOrders');
+
+			if (!response.ok) throw new Error('API error');
+
+			return await response.json();
+		} catch (err) {
+			console.warn('Backend not running, using mock data');
+
+			return [
+				{
+					Id: 1,
+					Title: { EN: 'Blueberries', NL: 'Bosbessen' },
+					Price: 4.5,
+					Stock: 20,
+					IsAvailable: true,
+					ImgURL: '/images/blueberries.jpg',
+					CategoryId: 0
+				},
+				{
+					Id: 2,
+					Title: { EN: 'Croissant', NL: 'Croissant' },
+					Price: 2.2,
+					Stock: 15,
+					IsAvailable: true,
+					ImgURL: '/images/croissant.jpg',
+					CategoryId: 1
+				}
+			];
+		}
 	}
 
 	function fetchCategories() {
@@ -108,12 +100,13 @@
 		console.log('lastClickedId: ', lastClickedId);
 	}
 
-	// API logic
+	let products = $state([]);
+	let categories = $state([]);
 
-	//Setting constants
-	const products = fetchProducts();
-	const categories = fetchCategories();
-
+	onMount(async () => {
+		products = await fetchProducts();
+		categories = fetchCategories();
+	});
 	const currentLanguage = 'EN';
 </script>
 
