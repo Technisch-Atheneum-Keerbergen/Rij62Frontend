@@ -1,7 +1,9 @@
-<script>
-	import { preloadData } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { Button, Heading, Span, ButtonGroup } from 'flowbite-svelte';
+<script lang="ts">
+	import { apiFetch } from '$lib/api/client';
+	import { Language } from '$lib/api/types/multilangstring';
+	import type { Category } from '$lib/api/types/category';
+	import type { Product } from '$lib/api/types/product';
+	import { Heading, Span } from 'flowbite-svelte';
 	import {
 		Table,
 		TableBody,
@@ -9,105 +11,26 @@
 		TableBodyRow,
 		TableHead,
 		TableHeadCell,
-		Badge,
-		Checkbox
+		Badge
 	} from 'flowbite-svelte';
-	import { DeleteRowOutline, RefreshOutline } from 'flowbite-svelte-icons';
+	import { onMount } from 'svelte';
 
-	// Fetching data
-	async function fetchProducts() {
-		try {
-			const response = await fetch('http://localhost:8080/api/orders/GetOrders');
+	const currentLanguage = Language.English;
 
-			if (!response.ok) throw new Error('API error');
-
-			return await response.json();
-		} catch (err) {
-			console.warn('Backend not running, using mock data');
-
-			return [
-				{
-					Id: 1,
-					Title: { EN: 'Blueberries', NL: 'Bosbessen' },
-					Price: 4.5,
-					Stock: 20,
-					IsAvailable: true,
-					ImgURL: '/images/blueberries.jpg',
-					CategoryId: 0
-				},
-				{
-					Id: 2,
-					Title: { EN: 'Croissant', NL: 'Croissant' },
-					Price: 2.2,
-					Stock: 15,
-					IsAvailable: true,
-					ImgURL: '/images/croissant.jpg',
-					CategoryId: 1
-				}
-			];
-		}
-	}
-
-	function fetchCategories() {
+	//TODO: fetch real api once done
+	function fetchCategories(): any {
 		return [
-			{ Id: 0, Name: { EN: 'Beverages', NL: 'Dranken' }, Color: 'blue' },
-			{ Id: 1, Name: { EN: 'Pastries', NL: 'Gebak' }, Color: 'pink' }
+			{ id: 0, screenId: 0, name: { English: 'Beverages', Dutch: 'Dranken' } },
+			{ id: 1, screenId: 0, name: { English: 'Pastries', Dutch: 'Gebak' } }
 		];
 	}
 
-	// Checkbox Logic
-	let selectedIds = $state(new Set());
-	let lastClickedId = $state(null);
-
-	function toggle(id) {
-		const newSet = new Set(selectedIds);
-
-		if (newSet.has(id)) {
-			newSet.delete(id);
-		} else {
-			newSet.add(id);
-		}
-
-		selectedIds = newSet;
-	}
-
-	function handleCheckboxClick(e, productId) {
-		e.stopPropagation();
-
-		let newSet = new Set(selectedIds);
-
-		if (e.shiftKey && lastClickedId !== null) {
-			const start = products.findIndex((p) => p.Id === lastClickedId);
-			const end = products.findIndex((p) => p.Id === productId);
-			const [from, to] = [Math.min(start, end), Math.max(start, end)];
-
-			for (let i = from; i <= to; i++) {
-				newSet.add(products[i].Id);
-			}
-		} else {
-			if (newSet.has(productId)) {
-				newSet.delete(productId);
-			} else {
-				newSet.add(productId);
-			}
-		}
-
-		selectedIds = newSet;
-		lastClickedId = productId;
-
-		console.log('End of handleCheckboxClick():');
-		console.log('selectedIds: ', selectedIds);
-		console.log('lastClickedId: ', lastClickedId);
-	}
-
-	let products = $state([]);
-	let categories = $state([]);
-
+	let products: Product[];
+	let categories: Category[];
 	onMount(async () => {
-		products = await fetchProducts();
-		categories = fetchCategories();
+		products = (await apiFetch('/product')) as Product[];
+		categories = fetchCategories() as Category[];
 	});
-	const currentLanguage = 'EN';
 </script>
 
 <div class="mx-auto max-w-7xl p-8">
@@ -143,7 +66,7 @@
 				{#each products as product}
 					<TableBodyRow
 						class="cursor-pointer transition hover:bg-gray-100"
-						onclick={() => (window.location.href = `/admin/productControl/${product.Id}`)}
+						onclick={() => (window.location.href = `/admin/productControl/${product.id}`)}
 					>
 						<!-- Checkbox -->
 						<TableBodyCell class="p-4!">
@@ -154,29 +77,21 @@
 						</TableBodyCell>
 						<!-- Name -->
 						<TableBodyCell class="font-semibold">
-							{#if currentLanguage === 'EN'}
-								{product.Title.EN}
-							{:else}
-								{product.Title.NL}
-							{/if}
+							{product.title[currentLanguage]}
 						</TableBodyCell>
 
 						<!-- Category -->
 						<TableBodyCell>
-							{#if categories[product.CategoryId]}
-								<Badge color={categories[product.CategoryId].Color}>
-									{#if currentLanguage === 'EN'}
-										{categories[product.CategoryId].Name.EN}
-									{:else}
-										{categories[product.CategoryId].Name.NL}
-									{/if}
+							{#if categories[product.categoryId]}
+								<Badge color="blue">
+									{categories[product.categoryId].name[currentLanguage]}
 								</Badge>
 							{/if}
 						</TableBodyCell>
 
 						<!-- Availability -->
 						<TableBodyCell>
-							{#if product.IsAvailable}
+							{#if product.isAvailible}
 								<Badge color="green">Available</Badge>
 							{:else}
 								<Badge color="red">Unavailable</Badge>
@@ -185,7 +100,7 @@
 
 						<!-- Price -->
 						<TableBodyCell class="text-right font-medium">
-							€{product.Price.toFixed(2)}
+							€{product.price.toFixed(2)}
 						</TableBodyCell>
 					</TableBodyRow>
 				{/each}
