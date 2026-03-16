@@ -26,38 +26,143 @@
 	--color-secondary-700: #a68411;
 	--color-secondary-800: #8a6e0e;
 	--color-secondary-900: #6e580b;
+
+	/*
+	These exist only so Tailwind / editor IntelliSense can autocomplete
+	utilities like `bg-50`, `bg-100`, `text-200`, etc.
+	*/
+
+	--color-50: var(--surface-50);
+	--color-100: var(--surface-100);
+	--color-200: var(--surface-200);
+	--color-300: var(--surface-300);
+	--color-400: var(--surface-400);
+	--color-500: var(--surface-500);
+	--color-600: var(--surface-600);
+	--color-700: var(--surface-700);
+	--color-800: var(--surface-800);
+	--color-900: var(--surface-900);
 }
 
 :root {
-	--color-white: #f6f2e3;
+	--base-dark: #070607;
+	--base-light: #f3f1eb;
 
-	--color-gray-50: #f1ecda;
-	--color-gray-100: #e4dfcf;
-	--color-gray-200: #cfcbbd;
-	--color-gray-300: #b6b2a6;
-	--color-gray-400: #9b988e;
-	--color-gray-500: #807d74;
-	--color-gray-600: #65635d;
-	--color-gray-700: #4d4b46;
-	--color-gray-800: #363536;
-	--color-gray-900: #201f20;
+	--color-accent: var(--color-primary-500);
+	--color-secondary: var(--color-secondary-500);
+}
+
+:root {
+	--color-bg: var(--base-light);
+	--color-text: var(--base-dark);
+	--color-muted: var(--color-gray-400);
+	--color-border: var(--color-gray-700);
+
+	--surface-50: #f3f1eb;
+	--surface-100: #f0eee8;
+	--surface-200: #e9e7e1;
+	--surface-300: #e3e1db;
+	--surface-400: #dcdad4;
+	--surface-500: #d2d1ca;
+	--surface-600: #cccbc4;
+	--surface-700: #c2c1ba;
+	--surface-800: #b8b7b1;
+	--surface-900: #afaea7;
+}
+
+.dark {
+	--color-bg: var(--base-dark);
+	--color-text: var(--base-light);
+	--color-muted: var(--color-gray-400);
+	--color-border: var(--color-gray-700);
+
+	--surface-50: #070607;
+	--surface-100: #141314;
+	--surface-200: #212021;
+	--surface-300: #302f30;
+	--surface-400: #3f3e3f;
+	--surface-500: #504e50;
+	--surface-600: #605f60;
+	--surface-700: #717071;
+	--surface-800: #838283;
+	--surface-900: #959495;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-bg: var(--base-dark);
+		--color-text: var(--base-light);
+		--color-muted: var(--color-gray-400);
+		--color-border: var(--color-gray-700);
+
+		--surface-50: #181718;
+		--surface-100: #201f20;
+		--surface-200: #2a292a;
+		--surface-300: #363536;
+		--surface-400: #4d4b46;
+		--surface-500: #65635d;
+		--surface-600: #807d74;
+		--surface-700: #9b988e;
+		--surface-800: #b6b2a6;
+		--surface-900: #d8d3c1;
+	}
 }
 
 @source '../../node_modules/flowbite-svelte/dist';
 @source '../../node_modules/flowbite-svelte-icons/dist';
 
 @layer base {
-	/* disable chrome cancel button */
 	input[type='search']::-webkit-search-cancel-button {
 		display: none;
 	}
+
+	body {
+		background: var(--color-bg);
+		color: var(--color-text);
+	}
 }
 
-.page-bg {
-	background: linear-gradient(
-		to bottom right,
-		var(--color-primary-500),
-		var(--color-secondary-500)
-	);
-	min-height: 100vh; /* full viewport height */
+@layer utilities {
+	.text-main {
+		color: var(--color-text);
+	}
+
+	.text-muted {
+		color: var(--color-muted);
+	}
+
+	.border-main {
+		border-color: var(--color-border);
+	}
+
+	.bg-50 {
+		background: var(--surface-50);
+	}
+	.bg-100 {
+		background: var(--surface-100);
+	}
+	.bg-200 {
+		background: var(--surface-200);
+	}
+	.bg-300 {
+		background: var(--surface-300);
+	}
+	.bg-400 {
+		background: var(--surface-400);
+	}
+	.bg-500 {
+		background: var(--surface-500);
+	}
+	.bg-600 {
+		background: var(--surface-600);
+	}
+	.bg-700 {
+		background: var(--surface-700);
+	}
+	.bg-800 {
+		background: var(--surface-800);
+	}
+	.bg-900 {
+		background: var(--surface-900);
+	}
 }
