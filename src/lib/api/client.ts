@@ -59,3 +59,26 @@ export async function apiDelete(
 
   return parseJSONSafe(res);
 }
+
+export async function apiToggle(productId: number) {
+  const product = await apiFetch(`/product/${productId}`);
+  if (!product) return null; // safely return null if product not found
+
+  const updatedProduct = {
+    ...product,
+    isAvailable: !product.isAvailable
+  };
+
+  const res = await fetch(`${API_BASE_URL}/product/${productId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedProduct)
+  });
+
+  if (!res.ok) {
+    const error = await parseJSONSafe(res);
+    throw new Error(error?.title || res.statusText);
+  }
+
+  return parseJSONSafe(res) || updatedProduct;
+}

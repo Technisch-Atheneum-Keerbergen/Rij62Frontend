@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiDelete, apiFetch } from '$lib/api/client';
+	import { apiDelete, apiFetch, apiToggle } from '$lib/api/client';
 	import { Language } from '$lib/api/types/multilangstring';
 	import type { Category } from '$lib/api/types/category';
 	import type { Product } from '$lib/api/types/product';
@@ -49,8 +49,29 @@
 		}
 	};
 
+	async function toggleSelected() {
+		if (!selectedIds || selectedIds.size === 0) return;
+
+		try {
+			for (const id of selectedIds) {
+				const updated = await apiToggle(id);
+				if (!updated) continue; // skip null updates
+
+				products = products.map((p) => (p.id === id ? updated : p)).filter(Boolean); // removes nulls if any
+			}
+			try {
+				products = (await apiFetch('/product')) as Product[];
+				console.log('[Rij62] Products refreshed');
+			} catch (err: any) {
+				console.error('[Rij62] Failed to refresh products:', err.message);
+			}
+		} catch (err: any) {
+			console.log(`[Rij62] Failed to toggle availability: ${err.message}`);
+		}
+	}
+
 	//Checkbox Logic
-	let selectedIds = $state(new Set());
+	let selectedIds = $state(new Set<number>());
 	let lastClickedId: number | null = $state(null);
 
 	function toggle(id: number) {
@@ -116,7 +137,9 @@
 	<!-- Product Edit Menu -->
 	<div class="flex justify-center p-3">
 		<ButtonGroup>
-			<Button color="rose"><RefreshOutline class="me-2 h-4 w-4" />Toggle Activation</Button>
+			<Button color="rose" onclick={() => toggleSelected()}
+				><RefreshOutline class="me-2 h-4 w-4" />Toggle Activation</Button
+			>
 			<Button color="rose" onclick={() => deleteSelected()}>
 				<DeleteRowOutline class="me-2 h-4 w-4" />Delete
 			</Button>
