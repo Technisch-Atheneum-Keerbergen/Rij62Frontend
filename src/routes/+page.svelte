@@ -1,21 +1,64 @@
 <script lang="ts">
-	import { Heading, P, Button, Span } from 'flowbite-svelte';
-	import { ArrowRightOutline } from 'flowbite-svelte-icons';
+	import Button from '$lib/components/Button.svelte';
+	import Card from '$lib/components/Cards/Card.svelte';
+	import CheckCard from '$lib/components/Cards/CheckCard.svelte';
+
+	type Product = {
+		id: number;
+		title: { English: string; Dutch: string };
+		price: number;
+		btw?: number;
+		stock: number;
+		isAvailible: boolean;
+		imgURL: string;
+		categoryId: number;
+	};
+
+	async function fetchProducts(): Promise<Product[]> {
+		// simulate network delay
+		await new Promise((r) => setTimeout(r, 500));
+
+		return [
+			{
+				id: 0,
+				title: { English: 'Thing', Dutch: 'Ding' },
+				price: 20,
+				btw: 5,
+				stock: 5,
+				isAvailible: true,
+				imgURL: '/images/coffee.jpg',
+				categoryId: 2
+			},
+			{
+				id: 2,
+				title: { English: 'Salmon toast', Dutch: 'Zalm toast' },
+				price: 1,
+				stock: 1,
+				isAvailible: true,
+				imgURL: '/images/zalmpje.jpg',
+				categoryId: 0
+			}
+		];
+	}
+
+	const productsPromise = fetchProducts();
 </script>
 
-<div class="text-center">
-	<Heading tag="h1" class="mb-4">
-		We invest in the best 
-    <Span underline class="decoration-blue-400 decoration-8 dark:decoration-blue-600">
-			Coffee Experience
-		</Span>
-	</Heading>
-	<P class="mb-6 text-lg sm:px-16 lg:text-xl xl:px-48 dark:text-gray-400">
-		Here at Rij 62, we are committed to offer the best possible coffee experience. We believe in the
-		power of love to transform the way we enjoy our daily cup of coffee.
-	</P>
-	<Button href="/">
-		Learn more
-		<ArrowRightOutline class="ms-2 h-6 w-6" />
-	</Button>
+<div class="text-main block text-center">
+	<Button type="button" size="md" variant="primary">Help first</Button>
+	<Button type="button" variant="secondary">Help Second</Button>
+	<Button type="button" variant="ghost">Weird button</Button>
+
+	<div class="mt-4 flex flex-wrap justify-center gap-2">
+		{#await productsPromise}
+			<p class="opacity-70">Loading products...</p>
+		{:then products}
+			{#each products as product (product.id)}
+				<Card title={product.title.English} imageSrc={product.imgURL} price={String(product.price)}
+				></Card>
+			{/each}
+		{:catch error}
+			<p class="text-red-500">Failed to load products: {error}</p>
+		{/await}
+	</div>
 </div>

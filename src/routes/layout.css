@@ -42,6 +42,9 @@
 	--color-700: var(--surface-700);
 	--color-800: var(--surface-800);
 	--color-900: var(--surface-900);
+
+	--color-dark: var(--base-dark);
+	--color-light: var(--base-light);
 }
 
 :root {
@@ -55,8 +58,7 @@
 :root {
 	--color-bg: var(--base-light);
 	--color-text: var(--base-dark);
-	--color-muted: var(--color-gray-400);
-	--color-border: var(--color-gray-700);
+	--color-muted: color-mix(in srgb, var(var(--base-dark)) 70%, transparent);
 
 	--surface-50: #f3f1eb;
 	--surface-100: #f0eee8;
@@ -73,8 +75,7 @@
 .dark {
 	--color-bg: var(--base-dark);
 	--color-text: var(--base-light);
-	--color-muted: var(--color-gray-400);
-	--color-border: var(--color-gray-700);
+	--color-muted: color-mix(in srgb, var(--base-light) 70%, transparent);
 
 	--surface-50: #070607;
 	--surface-100: #141314;
@@ -92,8 +93,7 @@
 	:root {
 		--color-bg: var(--base-dark);
 		--color-text: var(--base-light);
-		--color-muted: var(--color-gray-400);
-		--color-border: var(--color-gray-700);
+		--color-muted: color-mix(in srgb, var(--base-light) 70%, transparent);
 
 		--surface-50: #181718;
 		--surface-100: #201f20;
