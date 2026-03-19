@@ -8,7 +8,12 @@
 	export let disabled: boolean = false;
 	export let type: ButtonType = 'button';
 
-	const baseStyle = `border-2 mx-1.5 inline cursor-pointer px-2 py-0.5 transition-all active:scale-95 shadow-sm`;
+	let className: string = '';
+	export { className as class };
+
+	const baseStyle =
+		`border-2 mx-1.5 inline cursor-pointer px-2 py-0.5 transition-all active:scale-95 shadow-sm ` +
+		className;
 
 	const variantStyle: Record<Variant, string> = {
 		primary: 'border-primary-600 bg-primary-500 active:bg-primary-600 text-light',

@@ -5,27 +5,27 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-	--color-primary-50: #f2f6f9;
-	--color-primary-100: #e3edf3;
-	--color-primary-200: #c5d8e6;
-	--color-primary-300: #9fbdd2;
-	--color-primary-400: #6f98b6;
-	--color-primary-500: #42729a;
-	--color-primary-600: #3a6488;
-	--color-primary-700: #315373;
-	--color-primary-800: #294560;
-	--color-primary-900: #21364c;
+	--color-primary-50: oklch(0.99 0.01 245);
+	--color-primary-100: oklch(0.96 0.02 245);
+	--color-primary-200: oklch(0.92 0.05 245);
+	--color-primary-300: oklch(0.85 0.09 245);
+	--color-primary-400: oklch(0.78 0.13 245);
+	--color-primary-500: oklch(0.7 0.17 245);
+	--color-primary-600: oklch(0.61 0.14 245);
+	--color-primary-700: oklch(0.52 0.12 245);
+	--color-primary-800: oklch(0.41 0.1 245);
+	--color-primary-900: oklch(0.3 0.07 245);
 
-	--color-secondary-50: #fdf9e8;
-	--color-secondary-100: #faf2c9;
-	--color-secondary-200: #f5e596;
-	--color-secondary-300: #efd55f;
-	--color-secondary-400: #e6c63a;
-	--color-secondary-500: #dbb117;
-	--color-secondary-600: #c39d14;
-	--color-secondary-700: #a68411;
-	--color-secondary-800: #8a6e0e;
-	--color-secondary-900: #6e580b;
+	--color-secondary-50: oklch(0.99 0.01 91);
+	--color-secondary-100: oklch(0.96 0.02 91);
+	--color-secondary-200: oklch(0.92 0.05 91);
+	--color-secondary-300: oklch(0.85 0.09 91);
+	--color-secondary-400: oklch(0.79 0.13 91);
+	--color-secondary-500: oklch(0.71 0.17 91);
+	--color-secondary-600: oklch(0.61 0.14 91);
+	--color-secondary-700: oklch(0.52 0.12 91);
+	--color-secondary-800: oklch(0.41 0.1 91);
+	--color-secondary-900: oklch(0.3 0.07 91);
 
 	/*
 	These exist only so Tailwind / editor IntelliSense can autocomplete
@@ -45,8 +45,12 @@
 
 	--color-dark: var(--base-dark);
 	--color-light: var(--base-light);
-}
 
+	--color-darken: var(--darken);
+}
+html {
+	font-family: 'Noto Sans', sans-serif !important;
+}
 :root {
 	--base-dark: #070607;
 	--base-light: #f3f1eb;
@@ -59,7 +63,7 @@
 	--color-bg: var(--base-light);
 	--color-text: var(--base-dark);
 	--color-muted: color-mix(in srgb, var(var(--base-dark)) 70%, transparent);
-
+	--darken: rgba(1, 1, 1, 0.24);
 	--surface-50: #f3f1eb;
 	--surface-100: #f0eee8;
 	--surface-200: #e9e7e1;
@@ -76,6 +80,7 @@
 	--color-bg: var(--base-dark);
 	--color-text: var(--base-light);
 	--color-muted: color-mix(in srgb, var(--base-light) 70%, transparent);
+	--darken: rgba(2, 2, 2, 0.51);
 
 	--surface-50: #070607;
 	--surface-100: #141314;
@@ -94,6 +99,7 @@
 		--color-bg: var(--base-dark);
 		--color-text: var(--base-light);
 		--color-muted: color-mix(in srgb, var(--base-light) 70%, transparent);
+		--darken: rgba(2, 2, 2, 0.51);
 
 		--surface-50: #181718;
 		--surface-100: #201f20;
