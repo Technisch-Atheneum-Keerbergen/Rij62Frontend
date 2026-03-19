@@ -120,7 +120,8 @@
 
 	onMount(async () => {
 		products = (await apiFetch('/product')) as Product[];
-		categories = fetchCategories() as Category[];
+		categories = (await apiFetch('/category')) as Category[];
+		console.log(categories);
 	});
 </script>
 
