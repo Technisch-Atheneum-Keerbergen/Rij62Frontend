@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { apiFetch } from '$lib/api/client';
 	import {
 		Button,
 		Img,
@@ -17,11 +18,9 @@
 	import { QrCodeOutline, TrashBinSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
-	let currentLanguage: string = 'EN';
 	let serverDomain = 'http://localhost:5148';
 
-	const noServerAvailable = true;
-
+	const isServerRunning = import.meta.env.VITE_SERVER_RUNNING === 'true';
 	// Using Tabler (TableRij62) makes it different from just normal tables because this might get confusing otherwise
 
 	class Tabler {
@@ -41,7 +40,7 @@
 		}
 
 		async remove() {
-			if (noServerAvailable) {
+			if (!isServerRunning) {
 				console.log('a');
 				tablers = tablers.filter((tabler) => {
 					console.log('b');
@@ -77,15 +76,13 @@
 	});
 
 	async function getTablers(): Promise<Tabler[]> {
-		if (noServerAvailable) {
+		if (!isServerRunning) {
 			let tablers: Tabler[] = [new Tabler(1, 1), new Tabler(2, 2), new Tabler(4, 3)];
 			return tablers;
 		}
 
 		try {
-			const response = await fetch(serverDomain + '/api/tables', {
-				method: 'GET'
-			});
+			const response = await apiFetch('/api/tables');
 			if (!response.ok) return [];
 
 			interface TablerData {
@@ -105,7 +102,7 @@
 
 	let addTableModalIsOpen = $state(false);
 	async function addTable(tablenumber: number) {
-		if (noServerAvailable) {
+		if (!isServerRunning) {
 			tablers.push(new Tabler(4, tablenumber));
 			return true;
 		}

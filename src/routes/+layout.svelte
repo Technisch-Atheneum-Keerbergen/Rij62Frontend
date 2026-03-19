@@ -12,7 +12,7 @@
 
 <header>
 	<div class="mt-4 px-4">
-		<Navbar class="overflow-hidden rounded-lg bg-primary-700 text-white">
+		<Navbar class=" hidden overflow-hidden rounded-lg bg-primary-700 text-white md:block">
 			<div class="mx-auto flex flex-wrap items-center justify-between py-1">
 				<NavBrand href="/" class="flex items-center">
 					<img src={favicon} class="mr-3 h-6 sm:h-9" alt="Rij 62 Logo" />
