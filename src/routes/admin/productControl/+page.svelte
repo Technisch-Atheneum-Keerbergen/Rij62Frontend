@@ -169,14 +169,28 @@
 	<!-- Product Edit Menu -->
 	<div class="flex justify-center p-3">
 		<ButtonGroup>
-			<Button color="rose" onclick={() => toggleSelected()}
-				><RefreshOutline class="me-2 h-4 w-4" />Toggle Activation</Button
+			<Button
+				class="bg-primary-500 text-white hover:bg-primary-600"
+				onclick={() => toggleSelected()}
 			>
-			<Button color="rose" onclick={() => (popupModal = true)}>
-				<DeleteRowOutline class="me-2 h-4 w-4" />Delete
+				<RefreshOutline class="me-2 h-4 w-4" />
+				Toggle Activation
 			</Button>
-			<Button color="rose" href="/admin/productControl/new">
-				<PlusOutline class="h-6 w-6 shrink-0" />Add Product
+
+			<Button
+				class="bg-primary-500 text-white hover:bg-primary-600"
+				onclick={() => (popupModal = true)}
+			>
+				<DeleteRowOutline class="me-2 h-4 w-4" />
+				Delete
+			</Button>
+
+			<Button
+				class="bg-primary-500 text-white hover:bg-primary-600"
+				href="/admin/productControl/new"
+			>
+				<PlusOutline class="h-6 w-6 shrink-0" />
+				Add Product
 			</Button>
 		</ButtonGroup>
 	</div>
@@ -184,7 +198,7 @@
 	<!-- Table Card -->
 	<div class="overflow-hidden rounded-xl border bg-white shadow-lg">
 		<Table hoverable striped class="w-full">
-			<TableSearch placeholder="Search by maker name" hoverable bind:inputValue={searchTerm}>
+			<TableSearch placeholder="Search by title" hoverable bind:inputValue={searchTerm}>
 				<TableHead>
 					<TableHeadCell class="text-left">Checkbox</TableHeadCell>
 					<TableHeadCell class="text-left">Product</TableHeadCell>
@@ -192,6 +206,7 @@
 					<TableHeadCell>Status</TableHeadCell>
 					<TableHeadCell class="text-right">Price</TableHeadCell>
 				</TableHead>
+
 				<TableBody>
 					{#each filteredProducts as product}
 						<TableBodyRow
@@ -205,6 +220,7 @@
 									onclick={(e) => handleCheckboxClick(e, product.id)}
 								/>
 							</TableBodyCell>
+
 							<!-- Name -->
 							<TableBodyCell class="font-semibold">
 								{product.title[currentLanguage]}
@@ -222,7 +238,7 @@
 								{/if}
 							</TableBodyCell>
 
-							<!-- Availability -->
+							<!-- Availability (unchanged colors as requested) -->
 							<TableBodyCell>
 								{#if product.isAvailable}
 									<Badge color="green">Available</Badge>
@@ -241,16 +257,18 @@
 			</TableSearch>
 		</Table>
 	</div>
+
 	<Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
 		<div class="text-center">
 			<ExclamationCircleOutline class="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-200" />
 			<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
 				Are you sure you want to delete this product?
 			</h3>
+
 			<div class="space-x-2">
 				<Button
 					type="button"
-					color="red"
+					class="bg-red-500 text-white hover:bg-red-600"
 					onclick={() => {
 						deleteSelected();
 						popupModal = false;
@@ -259,7 +277,11 @@
 					Yes, I'm sure
 				</Button>
 
-				<Button type="button" color="alternative" onclick={() => (popupModal = false)}>
+				<Button
+					type="button"
+					class="bg-gray-200 text-gray-800 hover:bg-gray-300"
+					onclick={() => (popupModal = false)}
+				>
 					No, cancel
 				</Button>
 			</div>

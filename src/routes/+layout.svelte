@@ -16,8 +16,8 @@
 	$: activeUrl = $page.url.pathname;
 
 	const navItems = [
-		{ name: 'Home', href: '/' },
-		{ name: 'Admin Overview', href: '/admin/overview' }
+		{ name: 'Home', href: '/', reqAuth: false },
+		{ name: 'Admin Overview', href: '/admin/overview', reqAuth: true }
 	];
 </script>
 
@@ -26,39 +26,44 @@
 	<title>Rij 62</title>
 </svelte:head>
 
-<header class="sticky top-0 z-50 w-full px-4 pt-4 hidden md:block">
+<header class="sticky top-0 z-50 hidden w-full px-4 pt-4 md:block">
 	<Navbar
-		class="rounded-xl border border-white/10 bg-primary-700/90 px-4 py-2.5 backdrop-blur-md shadow-lg"
+		class="rounded-xl border border-white/10 bg-primary-700/90 px-4 py-2.5 shadow-lg backdrop-blur-md"
 		fluid={true}
 	>
 		<NavBrand href="/" class="flex items-center gap-3">
 			<img src={favicon} class="h-8 transition-transform hover:scale-110" alt="Rij 62 Logo" />
-			<span class="self-center text-xl font-bold tracking-tight text-white">
-				Rij 62
-			</span>
+			<span class="self-center text-xl font-bold tracking-tight text-white"> Rij 62 </span>
 		</NavBrand>
 
-		<div class="flex items-center md:order-2">			{#if $auth.user}
+		<div class="flex items-center md:order-2">
+			{#if $auth.user}
 				<div class="flex items-center gap-4">
 					<div class="hidden flex-col items-end sm:flex">
 						<span class="text-sm font-medium text-white">{$auth.user.displayName}</span>
-						<button 
-							on:click={() => { auth.logout(); goto('/login'); }}
+						<button
+							on:click={() => {
+								auth.logout();
+								goto('/login');
+							}}
 							class="text-xs text-primary-200 underline-offset-4 hover:underline"
 						>
 							Sign out
 						</button>
 					</div>
-					<div class="h-10 w-10 rounded-full bg-primary-600 border border-primary-500 flex items-center justify-center text-white font-bold">
+					<div
+						class="flex h-10 w-10 items-center justify-center rounded-full border border-primary-500 bg-primary-600 font-bold text-white"
+					>
 						{$auth.user.displayName?.charAt(0) || 'U'}
 					</div>
 				</div>
 			{:else}
-				<Button 
-					size="sm" 
-					color="light" 
-					href="/login" 
-					class="font-semibold shadow-sm transition-all hover:bg-white hover:text-primary-700"				>
+				<Button
+					size="sm"
+					color="light"
+					href="/login"
+					class="font-semibold shadow-sm transition-all hover:bg-white hover:text-primary-700"
+				>
 					Login
 				</Button>
 			{/if}
@@ -67,20 +72,22 @@
 
 		<NavUl class="md:bg-transparent">
 			{#each navItems as item}
-				<NavLi 
-					href={item.href} 
-					active={activeUrl === item.href}
-					activeClass="text-white md:text-white font-bold border-b-2 border-white md:border-b-2"
-					nonActiveClass="text-primary-100 hover:text-white transition-colors"
-				>
-					{item.name}
-				</NavLi>
+				{#if !item.reqAuth || $auth.user}
+					<NavLi
+						href={item.href}
+						active={activeUrl === item.href}
+						activeClass="text-white md:text-white font-bold border-b-2 border-white md:border-b-2"
+						nonActiveClass="text-primary-100 hover:text-white transition-colors"
+					>
+						{item.name}
+					</NavLi>
+				{/if}
 			{/each}
 		</NavUl>
 	</Navbar>
 </header>
 
-<main class="container mx-auto p-6 min-h-[80vh]">
+<main class="container mx-auto min-h-[80vh] p-6">
 	<slot />
 </main>
 

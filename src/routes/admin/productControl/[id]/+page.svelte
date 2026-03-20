@@ -21,8 +21,9 @@
 	let product: Product | null = null;
 	let isNew: boolean = false;
 	let imageError = false;
+
 	const ApplyChanges = async () => {
-		if (!product) return; // <- guard against null
+		if (!product) return;
 
 		try {
 			if (isNew) {
@@ -70,7 +71,12 @@
 	<div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
 		<form class="space-y-6 rounded-xl border bg-white p-8 shadow-2xl">
 			<Tabs tabStyle="pill">
-				<Button type="button" onclick={() => goto('/admin/productControl')} class="p-2">
+				<!-- Back button -->
+				<Button
+					type="button"
+					onclick={() => goto('/admin/productControl')}
+					class="bg-primary-500 p-2 text-white hover:bg-primary-600"
+				>
 					<ArrowLeftOutline class="h-6 w-6" />
 				</Button>
 
@@ -98,6 +104,7 @@
 									/>
 								</div>
 							{/each}
+
 							<div>
 								<Label for="Price">Price (€)</Label>
 								<Input id="Price" bind:value={product.price} type="number" />
@@ -124,7 +131,13 @@
 						</div>
 
 						<div class="mt-8 flex justify-end">
-							<Button type="button" onclick={ApplyChanges}>Apply Changes</Button>
+							<Button
+								type="button"
+								onclick={ApplyChanges}
+								class="bg-primary-500 text-white hover:bg-primary-600"
+							>
+								Apply Changes
+							</Button>
 						</div>
 					{/if}
 				</TabItem>
