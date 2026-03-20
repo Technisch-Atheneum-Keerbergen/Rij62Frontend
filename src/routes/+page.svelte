@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { Basket } from './../lib/basket/Basket.ts';
+	import type { Category } from './../lib/api/types/category.ts';
+	import type { Product } from './../lib/api/types/product.ts';
 	import { apiFetch } from '$lib/api/client';
 	import Button from '$lib/components/Button.svelte';
 	import Card from '$lib/components/Cards/Card.svelte';
@@ -6,31 +9,14 @@
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
+	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
+
+	let basket: Basket = new Basket();
 
 	/* ---------------- CONFIG ---------------- */
 
 	const isServerRunning = import.meta.env.VITE_SERVER_RUNNING === 'true';
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
-
-	/* ---------------- TYPES ---------------- */
-
-	type Product = {
-		id: number;
-		title: { English: string; Dutch: string };
-		description: { English: string; Dutch: string };
-		price: number;
-		btw?: number;
-		stock: number;
-		isAvailible: boolean;
-		imgURL: string;
-		categoryId: number;
-	};
-
-	type Category = {
-		id: number;
-		name: { English: string; Dutch: string };
-		screenId: number;
-	};
 
 	/* ---------------- MOCK DATA ---------------- */
 
@@ -51,7 +37,7 @@
 			price: 3.2,
 			btw: 6,
 			stock: 25,
-			isAvailible: true,
+			isAvailable: true,
 			imgURL: '/images/cappuccino.jpg',
 			categoryId: 2
 		},
@@ -65,7 +51,7 @@
 			price: 3.5,
 			btw: 6,
 			stock: 20,
-			isAvailible: true,
+			isAvailable: true,
 			imgURL: '/images/latte.jpg',
 			categoryId: 2
 		},
@@ -79,7 +65,7 @@
 			price: 4.5,
 			btw: 6,
 			stock: 12,
-			isAvailible: true,
+			isAvailable: true,
 			imgURL: '/images/sandwich.jpg',
 			categoryId: 0
 		},
@@ -93,7 +79,7 @@
 			price: 6.8,
 			btw: 6,
 			stock: 10,
-			isAvailible: true,
+			isAvailable: true,
 			imgURL: '/images/wrap.jpg',
 			categoryId: 0
 		},
@@ -107,7 +93,7 @@
 			price: 2.8,
 			btw: 6,
 			stock: 15,
-			isAvailible: true,
+			isAvailable: true,
 			imgURL: '/images/muffin.jpg',
 			categoryId: 1
 		}
@@ -134,6 +120,7 @@
 	let selectedProduct: Product | null = null;
 	let isSheetOpen = false;
 	let step = 0;
+	$: itemIsInBasket = false;
 
 	/* ---------------- DERIVED ---------------- */
 
@@ -154,6 +141,7 @@
 		const products = await productsPromise;
 		selectedProduct = products.find((p) => p.id === id) ?? null;
 		isSheetOpen = true;
+		itemIsInBasket = false;
 		step = 2;
 	}
 
@@ -165,7 +153,12 @@
 	}
 
 	function handleContinue() {
-		step++;
+		if (step === 2 && selectedProduct) {
+			basket.add(selectedProduct, 1);
+			itemIsInBasket = true;
+		} else {
+			step++;
+		}
 	}
 
 	/* ---------------- LIFECYCLE ---------------- */
@@ -263,10 +256,24 @@
 					{selectedProduct.description[currentLanguage]}
 				</p>
 			</div>
-
-			<Button class="w-full" size="lg" on:click={handleContinue}>
-				{getContinueText()}
-			</Button>
+			{#if !itemIsInBasket}
+				<Button class="w-full" size="lg" on:click={handleContinue}>
+					{getContinueText()}
+				</Button>
+			{:else}
+				<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
+			{/if}
 		</div>
 	</div>
 {/if}
+
+<!-- ---------------- BASKET ---------------- -->
+
+<a
+	href="/basket"
+	class="absolute right-6 bottom-6 flex aspect-square h-15 items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
+>
+	<span class="relative stroke-secondary-700 dark:stroke-secondary-900">
+		<SvgBasket />
+	</span>
+</a>
