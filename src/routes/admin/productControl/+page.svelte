@@ -4,8 +4,14 @@
 	import type { Category } from '$lib/api/types/category';
 	import type { Product } from '$lib/api/types/product';
 
+	import { slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import { DeleteRowOutline, RefreshOutline, PlusOutline } from 'flowbite-svelte-icons';
+	import {
+		DeleteRowOutline,
+		RefreshOutline,
+		PlusOutline,
+		ExclamationCircleOutline
+	} from 'flowbite-svelte-icons';
 	import {
 		Table,
 		TableBody,
@@ -18,17 +24,20 @@
 		ButtonGroup,
 		Button,
 		Heading,
-		Span
+		Span,
+		Modal,
+		TableSearch
 	} from 'flowbite-svelte';
 
 	const currentLanguage = Language.English;
 
-	//TODO: fetch real api once done
-	function fetchCategories(): any {
-		return [
-			{ id: 0, screenId: 0, name: { English: 'Beverages', Dutch: 'Dranken' } },
-			{ id: 1, screenId: 0, name: { English: 'Pastries', Dutch: 'Gebak' } }
-		];
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Delete' && selectedIds.size > 0) {
+			popupModal = true;
+		}
+		if (e.key === 'Escape') {
+			popupModal = false;
+		}
 	}
 
 	const deleteSelected = async () => {
@@ -69,6 +78,19 @@
 			console.log(`[Rij62] Failed to toggle availability: ${err.message}`);
 		}
 	}
+
+	//Search in Table
+	let searchTerm = $state('');
+	let filteredProducts = $derived.by(() =>
+		products.filter(
+			(product) =>
+				!searchTerm ||
+				product.title[currentLanguage].toLowerCase().includes(searchTerm.toLowerCase())
+		)
+	);
+
+	//for popup
+	let popupModal = $state(false);
 
 	//Checkbox Logic
 	let selectedIds = $state(new Set<number>());
@@ -118,10 +140,20 @@
 	let products: Product[] = $state([]);
 	let categories: Category[] = $state([]);
 
-	onMount(async () => {
+	onMount(() => {
+		window.addEventListener('keydown', handleKeydown);
+
+		loadData();
+
+		return () => {
+			window.removeEventListener('keydown', handleKeydown);
+		};
+	});
+
+	async function loadData() {
 		products = (await apiFetch('/product')) as Product[];
 		categories = (await apiFetch('/category')) as Category[];
-	});
+	}
 </script>
 
 <div class="mx-auto max-w-7xl p-8">
@@ -140,7 +172,7 @@
 			<Button color="rose" onclick={() => toggleSelected()}
 				><RefreshOutline class="me-2 h-4 w-4" />Toggle Activation</Button
 			>
-			<Button color="rose" onclick={() => deleteSelected()}>
+			<Button color="rose" onclick={() => (popupModal = true)}>
 				<DeleteRowOutline class="me-2 h-4 w-4" />Delete
 			</Button>
 			<Button color="rose" href="/admin/productControl/new">
@@ -152,60 +184,85 @@
 	<!-- Table Card -->
 	<div class="overflow-hidden rounded-xl border bg-white shadow-lg">
 		<Table hoverable striped class="w-full">
-			<TableHead>
-				<TableHeadCell class="text-left">Checkbox</TableHeadCell>
-				<TableHeadCell class="text-left">Product</TableHeadCell>
-				<TableHeadCell>Category</TableHeadCell>
-				<TableHeadCell>Status</TableHeadCell>
-				<TableHeadCell class="text-right">Price</TableHeadCell>
-			</TableHead>
+			<TableSearch placeholder="Search by maker name" hoverable bind:inputValue={searchTerm}>
+				<TableHead>
+					<TableHeadCell class="text-left">Checkbox</TableHeadCell>
+					<TableHeadCell class="text-left">Product</TableHeadCell>
+					<TableHeadCell>Category</TableHeadCell>
+					<TableHeadCell>Status</TableHeadCell>
+					<TableHeadCell class="text-right">Price</TableHeadCell>
+				</TableHead>
+				<TableBody>
+					{#each filteredProducts as product}
+						<TableBodyRow
+							class="cursor-pointer transition hover:bg-gray-100"
+							onclick={() => (window.location.href = `/admin/productControl/${product.id}`)}
+						>
+							<!-- Checkbox -->
+							<TableBodyCell class="p-4!">
+								<Checkbox
+									checked={selectedIds.has(product.id)}
+									onclick={(e) => handleCheckboxClick(e, product.id)}
+								/>
+							</TableBodyCell>
+							<!-- Name -->
+							<TableBodyCell class="font-semibold">
+								{product.title[currentLanguage]}
+							</TableBodyCell>
 
-			<TableBody>
-				{#each products as product}
-					<TableBodyRow
-						class="cursor-pointer transition hover:bg-gray-100"
-						onclick={() => (window.location.href = `/admin/productControl/${product.id}`)}
-					>
-						<!-- Checkbox -->
-						<TableBodyCell class="p-4!">
-							<Checkbox
-								checked={selectedIds.has(product.id)}
-								onclick={(e) => handleCheckboxClick(e, product.id)}
-							/>
-						</TableBodyCell>
-						<!-- Name -->
-						<TableBodyCell class="font-semibold">
-							{product.title[currentLanguage]}
-						</TableBodyCell>
-
-						<!-- Category -->
-						<TableBodyCell>
-							{#if categories.length}
-								{@const category = categories.find((c) => c.id === product.categoryId)}
-								{#if category}
-									<Badge color="blue">
-										{category.name[currentLanguage]}
-									</Badge>
+							<!-- Category -->
+							<TableBodyCell>
+								{#if categories.length}
+									{@const category = categories.find((c) => c.id === product.categoryId)}
+									{#if category}
+										<Badge color="blue">
+											{category.name[currentLanguage]}
+										</Badge>
+									{/if}
 								{/if}
-							{/if}
-						</TableBodyCell>
+							</TableBodyCell>
 
-						<!-- Availability -->
-						<TableBodyCell>
-							{#if product.isAvailable}
-								<Badge color="green">Available</Badge>
-							{:else}
-								<Badge color="red">Unavailable</Badge>
-							{/if}
-						</TableBodyCell>
+							<!-- Availability -->
+							<TableBodyCell>
+								{#if product.isAvailable}
+									<Badge color="green">Available</Badge>
+								{:else}
+									<Badge color="red">Unavailable</Badge>
+								{/if}
+							</TableBodyCell>
 
-						<!-- Price -->
-						<TableBodyCell class="text-right font-medium">
-							€{product.price.toFixed(2)}
-						</TableBodyCell>
-					</TableBodyRow>
-				{/each}
-			</TableBody>
+							<!-- Price -->
+							<TableBodyCell class="text-right font-medium">
+								€{product.price.toFixed(2)}
+							</TableBodyCell>
+						</TableBodyRow>
+					{/each}
+				</TableBody>
+			</TableSearch>
 		</Table>
 	</div>
+	<Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
+		<div class="text-center">
+			<ExclamationCircleOutline class="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-200" />
+			<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+				Are you sure you want to delete this product?
+			</h3>
+			<div class="space-x-2">
+				<Button
+					type="button"
+					color="red"
+					onclick={() => {
+						deleteSelected();
+						popupModal = false;
+					}}
+				>
+					Yes, I'm sure
+				</Button>
+
+				<Button type="button" color="alternative" onclick={() => (popupModal = false)}>
+					No, cancel
+				</Button>
+			</div>
+		</div>
+	</Modal>
 </div>

@@ -1,7 +1,18 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { Tabs, TabItem, Label, Button, Input, Toggle, Heading, Span, Img } from 'flowbite-svelte';
+	import {
+		Tabs,
+		TabItem,
+		Label,
+		Button,
+		Input,
+		Toggle,
+		Heading,
+		Span,
+		Img,
+		ImagePlaceholder
+	} from 'flowbite-svelte';
 	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
 	import type { Product } from '$lib/api/types/product';
 	import { onMount } from 'svelte';
@@ -9,6 +20,7 @@
 
 	let product: Product | null = null;
 	let isNew: boolean = false;
+	let imageError = false;
 	const ApplyChanges = async () => {
 		if (!product) return; // <- guard against null
 
@@ -57,13 +69,13 @@
 
 	<div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
 		<form class="space-y-6 rounded-xl border bg-white p-8 shadow-2xl">
-			<Tabs>
+			<Tabs tabStyle="pill">
 				<Button type="button" onclick={() => goto('/admin/productControl')} class="p-2">
 					<ArrowLeftOutline class="h-6 w-6" />
 				</Button>
 
-				{#if product}
-					<TabItem open title="Product Profile">
+				<TabItem open title="Product Profile">
+					{#if product}
 						<div class="space-y-5">
 							{#each Object.keys(product.title) as lang (lang)}
 								<div>
@@ -114,8 +126,8 @@
 						<div class="mt-8 flex justify-end">
 							<Button type="button" onclick={ApplyChanges}>Apply Changes</Button>
 						</div>
-					</TabItem>
-				{/if}
+					{/if}
+				</TabItem>
 
 				<TabItem title="History">
 					<div class="p-4 text-gray-500">No history APIs available yet. Will be added later.</div>
@@ -125,8 +137,15 @@
 
 		<div class="rounded-xl border bg-white p-6 shadow-2xl">
 			<h2 class="mb-4 text-lg font-semibold">Product Preview</h2>
-			{#if product}
-				<Img src={product.imgURL} class="w-full rounded-lg object-cover" />
+
+			{#if product?.imgURL && !imageError}
+				<img
+					src={product.imgURL}
+					class="w-full rounded-lg object-cover"
+					on:error={() => (imageError = true)}
+				/>
+			{:else}
+				<ImagePlaceholder />
 			{/if}
 		</div>
 	</div>
