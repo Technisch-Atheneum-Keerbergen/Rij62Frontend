@@ -4,6 +4,7 @@
 
 	let basket: Basket = new Basket();
 	let basketStore = basket.store;
+	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
 	const pending = new Set<number>();
 
@@ -44,11 +45,11 @@
 					<div class="flex items-center gap-3">
 						<img
 							src={item.product.imgURL}
-							alt={item.product.title.English}
+							alt={item.product.title[currentLanguage]}
 							class="h-12 w-12 rounded-lg object-cover"
 						/>
 						<div>
-							<p class="font-medium">{item.product.title.English}</p>
+							<p class="font-medium">{item.product.title[currentLanguage]}</p>
 							<p class="text-sm opacity-70">
 								€{(item.product.price * item.quantity).toFixed(2)}
 							</p>
