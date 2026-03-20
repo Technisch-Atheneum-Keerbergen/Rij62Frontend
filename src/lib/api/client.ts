@@ -1,3 +1,6 @@
+import { get } from 'svelte/store';
+import { auth } from '$lib/stores/auth';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 async function parseJSONSafe(res: Response) {
@@ -8,11 +11,30 @@ async function parseJSONSafe(res: Response) {
   }
 }
 
+function addAuth(options: RequestInit = {}): RequestInit {
+  const { token } = get(auth);
+
+  return {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: token ? `Bearer ${token}` : ''
+    }
+  };
+}
+
 export async function apiFetch(
   endpoint: string,
   options: RequestInit = {}
 ) {
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
+  const res = await fetch(
+    `${API_BASE_URL}${endpoint}`,
+    addAuth(options)
+  );
+
+  if (res.status === 401) {
+    auth.logout();
+  }
 
   if (!res.ok) {
     const error = await parseJSONSafe(res);
@@ -22,35 +44,46 @@ export async function apiFetch(
   return parseJSONSafe(res);
 }
 
-export async function apiAdd(
+export async function apiAdd<T = unknown>(
   endpoint: string,
-  data: any,
+  data: T,
   method: 'POST' | 'PUT' = 'POST'
 ) {
-  const options: RequestInit = {
+  const options: RequestInit = addAuth({
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
-  };
+  });
 
   const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+  if (res.status === 401) {
+    auth.logout();
+  }
 
   if (!res.ok) {
     const error = await parseJSONSafe(res);
     throw new Error(error?.title || res.statusText);
   }
 
-  return parseJSONSafe(res);
+  return parseJSONSafe(res) as Promise<T | null>;
 }
 
 export async function apiDelete(
   endpoint: string,
   options: RequestInit = {}
 ) {
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'DELETE',
-    ...options
-  });
+  const res = await fetch(
+    `${API_BASE_URL}${endpoint}`,
+    addAuth({
+      method: 'DELETE',
+      ...options
+    })
+  );
+
+  if (res.status === 401) {
+    auth.logout();
+  }
 
   if (!res.ok) {
     const error = await parseJSONSafe(res);
@@ -69,16 +102,23 @@ export async function apiToggle(productId: number) {
     isAvailable: !product.isAvailable
   };
 
-  const res = await fetch(`${API_BASE_URL}/product/${productId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updatedProduct)
-  });
+  const res = await fetch(
+    `${API_BASE_URL}/product/${productId}`,
+    addAuth({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedProduct)
+    })
+  );
+
+  if (res.status === 401) {
+    auth.logout();
+  }
 
   if (!res.ok) {
     const error = await parseJSONSafe(res);
     throw new Error(error?.title || res.statusText);
   }
 
-  return parseJSONSafe(res) || updatedProduct;
+  return (await parseJSONSafe(res)) || updatedProduct;
 }

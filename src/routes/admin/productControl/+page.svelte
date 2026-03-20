@@ -120,7 +120,7 @@
 
 	onMount(async () => {
 		products = (await apiFetch('/product')) as Product[];
-		categories = fetchCategories() as Category[];
+		categories = (await apiFetch('/category')) as Category[];
 	});
 </script>
 
@@ -180,10 +180,13 @@
 
 						<!-- Category -->
 						<TableBodyCell>
-							{#if categories[product.categoryId]}
-								<Badge color="blue">
-									{categories[product.categoryId].name[currentLanguage]}
-								</Badge>
+							{#if categories.length}
+								{@const category = categories.find((c) => c.id === product.categoryId)}
+								{#if category}
+									<Badge color="blue">
+										{category.name[currentLanguage]}
+									</Badge>
+								{/if}
 							{/if}
 						</TableBodyCell>
 
