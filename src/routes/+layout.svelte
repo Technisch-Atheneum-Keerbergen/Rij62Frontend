@@ -26,7 +26,7 @@
 	<title>Rij 62</title>
 </svelte:head>
 
-<header class="sticky top-0 z-50 w-full px-4 pt-4">
+<header class="sticky top-0 z-50 w-full px-4 pt-4 hidden md:block">
 	<Navbar
 		class="rounded-xl border border-white/10 bg-primary-700/90 px-4 py-2.5 backdrop-blur-md shadow-lg"
 		fluid={true}

@@ -25,7 +25,7 @@
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 		{#each controlTypes as item}
 			<Card
-				class="border-main bg-100 dark:bg-100 rounded-lg border transition-shadow duration-300 hover:shadow-xl"
+				class="rounded-lg border border-none bg-100 transition-shadow duration-300 hover:shadow-xl dark:bg-100"
 			>
 				<div class="flex h-full flex-col justify-between p-6">
 					<h2 class="mb-2 text-xl font-semibold capitalize">{item.type} Control</h2>
