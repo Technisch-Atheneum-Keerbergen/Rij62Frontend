@@ -3,8 +3,8 @@
 	import { auth } from '$lib/stores/auth';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Button } from 'flowbite-svelte';
-
+	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
+	import Button from '$lib/components/Button.svelte';
 	import './layout.css';
 	import 'flowbite/dist/flowbite.css';
 	import favicon from '$lib/assets/favicon.svg';
@@ -85,6 +85,38 @@
 			{/each}
 		</NavUl>
 	</Navbar>
+</header>
+
+<header>
+	{#if $auth.user}
+		<div class="flex items-center gap-4">
+			<div class="hidden flex-col items-end sm:flex">
+				<span class="text-sm font-medium text-white">{$auth.user.displayName}</span>
+				<button
+					on:click={() => {
+						auth.logout();
+						goto('/login');
+					}}
+				>
+					Sign out
+				</button>
+			</div>
+			<div
+				class="flex h-10 w-10 items-center justify-center rounded-full border border-primary-500 bg-primary-600 font-bold text-white"
+			>
+				{$auth.user.displayName?.charAt(0) || 'U'}
+			</div>
+		</div>
+	{:else}
+		<Button
+			size="sm"
+			on:click={() => {
+				goto('/login');
+			}}
+		>
+			Login
+		</Button>
+	{/if}
 </header>
 
 <main class="container mx-auto min-h-[80vh] p-6">
