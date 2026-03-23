@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { auth } from '$lib/stores/auth';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
 	import Button from '$lib/components/Button.svelte';
@@ -9,7 +8,7 @@
 	import 'flowbite/dist/flowbite.css';
 	import favicon from '$lib/assets/favicon.svg';
 
-	$: activeUrl = $page.url.pathname;
+	$: activeUrl = page.url.pathname;
 
 	const navItems = [
 		{ name: 'Home', href: '/', reqAuth: false },
@@ -22,7 +21,7 @@
 	<title>Rij 62</title>
 </svelte:head>
 
-<header class="sticky top-0 z-50 hidden w-full px-4 pt-4 md:block">
+<header class="sticky top-0 z-50 hidden w-full px-4 pt-4 md:hidden">
 	<Navbar
 		class="rounded-xl border border-white/10 bg-primary-700/90 px-4 py-2.5 shadow-lg backdrop-blur-md"
 		fluid={true}
@@ -83,12 +82,13 @@
 	</Navbar>
 </header>
 
-<header>
+<header class="fixed top-0 w-full">
 	{#if $auth.user}
-		<div class="flex items-center gap-4">
+		<div class="flex items-center gap-2">
 			<div class="hidden flex-col items-end sm:flex">
-				<span class="text-sm font-medium text-white">{$auth.user.displayName}</span>
+				<span class="text-sm font-bold">{$auth.user.displayName}</span>
 				<button
+					class="cursor-pointer text-sm font-light"
 					on:click={() => {
 						auth.logout();
 						goto('/login');
@@ -98,7 +98,7 @@
 				</button>
 			</div>
 			<div
-				class="flex h-10 w-10 items-center justify-center rounded-full border border-primary-500 bg-primary-600 font-bold text-white"
+				class="flex h-10 w-10 items-center justify-center rounded-full border border-primary-500 bg-primary-600 font-bold text-light"
 			>
 				{$auth.user.displayName?.charAt(0) || 'U'}
 			</div>
@@ -115,13 +115,13 @@
 	{/if}
 </header>
 
-<main class="container mx-auto min-h-[80vh] p-6">
+<main class="container mx-auto mt-8 min-h-[80vh] p-2">
 	<slot />
 </main>
 
-<footer class="mt-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+<footer class="text-muted mt-auto py-8 text-center text-sm">
 	<div class="mx-auto max-w-screen-xl px-4">
-		<hr class="mb-6 border-gray-200 dark:border-gray-700" />
-		<p>© 2026 Rij 62. All rights reserved.</p>
+		<hr class="mb-4 border-200" />
+		<p>© {new Date().getFullYear()} Rij 62. All rights reserved.</p>
 	</div>
 </footer>

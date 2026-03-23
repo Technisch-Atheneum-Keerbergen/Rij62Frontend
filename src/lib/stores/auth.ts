@@ -1,5 +1,7 @@
 import { writable } from 'svelte/store';
+
 import { decodeToken } from '$lib/utils/jwt';
+import { browser } from '$app/environment';
 
 type User = {
 	displayName: string;
@@ -13,7 +15,7 @@ type AuthState = {
 };
 
 function loadAuthState(): AuthState | null {
-	if (typeof localStorage === 'undefined') {
+	if (!browser) {
 		return null;
 	}
 	const token = localStorage.getItem('token');

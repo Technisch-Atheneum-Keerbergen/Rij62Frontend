@@ -271,7 +271,7 @@
 
 <a
 	href="/basket"
-	class="absolute right-6 bottom-6 flex aspect-square h-15 items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
+	class="fixed right-6 bottom-6 flex aspect-square h-15 items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
 >
 	<span class="relative stroke-secondary-700 dark:stroke-secondary-900">
 		<SvgBasket />

@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import type { Product } from '$lib/api/types/product';
 
 import { writable, type Writable } from 'svelte/store';
@@ -90,6 +91,9 @@ export class Basket {
 
 	private load() {
 		try {
+			if (!browser) {
+				return null;
+			}
 			const data = localStorage.getItem(Basket.STORAGE_KEY);
 			if (!data) return;
 			this.items = JSON.parse(data) as BasketItem[];
