@@ -42,7 +42,6 @@ function createAuth() {
 		},
 
 		logout() {
-			localStorage.removeItem('token');
 			set({ token: null, user: null });
 		},
 

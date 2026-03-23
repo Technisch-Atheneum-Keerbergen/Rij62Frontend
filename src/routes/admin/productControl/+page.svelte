@@ -70,6 +70,7 @@
 			}
 			try {
 				products = (await apiFetch('/product')) as Product[];
+				console.log('this fixes it');
 				console.log('[Rij62] Products refreshed');
 			} catch (err: any) {
 				console.error('[Rij62] Failed to refresh products:', err.message);

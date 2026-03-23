@@ -18,8 +18,6 @@
 	import { QrCodeOutline, TrashBinSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
-	let serverDomain = 'http://localhost:5148';
-
 	const isServerRunning = import.meta.env.VITE_SERVER_RUNNING === 'true';
 	// Using Tabler (TableRij62) makes it different from just normal tables because this might get confusing otherwise
 
@@ -41,9 +39,7 @@
 
 		async remove() {
 			if (!isServerRunning) {
-				console.log('a');
 				tablers = tablers.filter((tabler) => {
-					console.log('b');
 					return tabler.id != this.id;
 				});
 				console.log(tablers);
@@ -52,7 +48,7 @@
 
 			this.isRemoving = true;
 			try {
-				const response = await fetch(serverDomain + '/api/table/' + this.id, {
+				const response = await apiFetch('/tables/' + this.id, {
 					method: 'DELETE'
 				});
 				if (response.ok) {
@@ -71,9 +67,14 @@
 		}
 	}
 	let tablers: Tabler[] = $state([]);
-	onMount(async () => {
-		tablers = await getTablers();
+
+	onMount(() => {
+		loadData();
 	});
+
+	async function loadData() {
+		tablers = await getTablers();
+	}
 
 	async function getTablers(): Promise<Tabler[]> {
 		if (!isServerRunning) {
@@ -82,7 +83,7 @@
 		}
 
 		try {
-			const response = await apiFetch('/api/tables');
+			const response = await apiFetch('/tables');
 			if (!response.ok) return [];
 
 			interface TablerData {
@@ -101,22 +102,26 @@
 	}
 
 	let addTableModalIsOpen = $state(false);
-	async function addTable(tablenumber: number) {
+	async function addTable(tableNumber: number) {
 		if (!isServerRunning) {
-			tablers.push(new Tabler(4, tablenumber));
+			tablers.push(new Tabler(4, tableNumber));
 			return true;
 		}
 
 		try {
-			const response = await fetch(serverDomain + '/api/tables', {
-				method: 'POST'
+			const response = await apiFetch('/tables', {
+				method: 'POST',
+				body: JSON.stringify({
+					tableNumber: tableNumber
+				})
 			});
+
 			if (!response.ok) return false;
 
 			let json = await response.json();
 			if (!json.tableId) return false;
 
-			tablers.push(new Tabler(json.tableID, tablenumber));
+			tablers.push(new Tabler(json.tableID, tableNumber));
 		} catch (error) {
 			return false;
 		}
