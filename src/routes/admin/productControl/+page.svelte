@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiDelete, apiFetch, apiToggle } from '$lib/api/client';
+	import { apiDelete, apiFetch, apiToggle, apiUpload, getImageUrl } from '$lib/api/client';
 	import { Language } from '$lib/api/types/multilangstring';
 	import type { Category } from '$lib/api/types/category';
 	import type { Product } from '$lib/api/types/product';

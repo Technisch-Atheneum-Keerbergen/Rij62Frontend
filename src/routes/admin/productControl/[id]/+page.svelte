@@ -10,17 +10,44 @@
 		Toggle,
 		Heading,
 		Span,
-		Img,
 		ImagePlaceholder
 	} from 'flowbite-svelte';
 	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
 	import type { Product } from '$lib/api/types/product';
-	import { onMount } from 'svelte';
-	import { apiFetch, apiAdd } from '$lib/api/client';
+	import type { Category } from '$lib/api/types/category';
+	import { Language } from '$lib/api/types/multilangstring';
 
+	import { onMount } from 'svelte';
+	import { apiFetch, apiAdd, apiUpload, getImageUrl } from '$lib/api/client';
+
+	// --- State ---
 	let product: Product | null = null;
-	let isNew: boolean = false;
+	let isNew = false;
 	let imageError = false;
+
+	let categories: Category[] = [];
+
+	// --- Upload handler ---
+	async function handleUpload(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		const formData = new FormData();
+		formData.append('image', file);
+
+		try {
+			const imageId = await apiUpload('/image', formData);
+
+			if (product) {
+				product.imgURL = getImageUrl(imageId);
+			}
+			imageError = false;
+		} catch (err) {
+			console.error('[Upload] Failed:', err);
+			imageError = true;
+		}
+	}
 
 	const ApplyChanges = async () => {
 		if (!product) return;
@@ -31,6 +58,7 @@
 			} else {
 				await apiAdd(`/product/${product.id}`, product, 'PUT');
 			}
+
 			console.log('[Rij62] Product saved successfully!');
 			goto('/admin/productControl');
 		} catch (err: any) {
@@ -39,6 +67,10 @@
 	};
 
 	onMount(async () => {
+		// Load categories first
+		categories = (await apiFetch('/category')) as Category[];
+
+		// Check route
 		if ($page.params.id === 'new') {
 			product = {
 				id: 0,
@@ -119,7 +151,23 @@
 								<Label for="Btw">Btw</Label>
 								<Input id="Btw" bind:value={product.btw} type="number" />
 							</div>
+							<div>
+								<Label for="Category">Category</Label>
 
+								<select
+									id="Category"
+									bind:value={product.categoryId}
+									class="w-full rounded-lg border p-2"
+								>
+									<option value={0} disabled>Select a category</option>
+
+									{#each categories as category}
+										<option value={category.id}>
+											{category.name[Language.English]}
+										</option>
+									{/each}
+								</select>
+							</div>
 							<div class="flex items-center justify-between rounded-lg border p-4">
 								<div>
 									<Label for="IsAvailable">Product Available</Label>
@@ -152,6 +200,7 @@
 			<h2 class="mb-4 text-lg font-semibold">Product Preview</h2>
 
 			{#if product?.imgURL && !imageError}
+				<!-- svelte-ignore a11y_missing_attribute -->
 				<img
 					src={product.imgURL}
 					class="w-full rounded-lg object-cover"
@@ -160,6 +209,11 @@
 			{:else}
 				<ImagePlaceholder />
 			{/if}
+
+			<!-- Upload input -->
+			<div class="mt-4">
+				<input type="file" accept="image/*" on:change={handleUpload} class="block w-full text-sm" />
+			</div>
 		</div>
 	</div>
 </div>
