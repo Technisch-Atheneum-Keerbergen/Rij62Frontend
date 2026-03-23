@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
 	import { auth } from '$lib/stores/auth';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -7,13 +8,19 @@
 	import './layout.css';
 	import 'flowbite/dist/flowbite.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import type { Snippet } from 'svelte';
+	import UserMenu from '$lib/components/Misc/UserMenu.svelte';
+	import SvgMenu from '$lib/components/SVG/SvgMenu.svelte';
+	import { cubicInOut } from 'svelte/easing';
 
-	$: activeUrl = page.url.pathname;
+	let { children }: { children: Snippet } = $props();
 
 	const navItems = [
 		{ name: 'Home', href: '/', reqAuth: false },
 		{ name: 'Admin Overview', href: '/admin/overview', reqAuth: true }
 	];
+
+	let sideMenuIsOpen = $state(false);
 </script>
 
 <svelte:head>
@@ -37,7 +44,7 @@
 					<div class="hidden flex-col items-end sm:flex">
 						<span class="text-sm font-medium text-white">{$auth.user.displayName}</span>
 						<button
-							on:click={() => {
+							onclick={() => {
 								auth.logout();
 								goto('/login');
 							}}
@@ -70,9 +77,9 @@
 				{#if !item.reqAuth || $auth.user}
 					<NavLi
 						href={item.href}
-						active={activeUrl === item.href}
-						activeClass="text-white md:text-white font-bold border-b-2 border-white md:border-b-2"
-						nonActiveClass="text-primary-100 hover:text-white transition-colors"
+						class={page.url.pathname === item.href
+							? 'border-b-2 border-white font-bold text-white'
+							: 'text-primary-100 transition-colors hover:text-white'}
 					>
 						{item.name}
 					</NavLi>
@@ -82,45 +89,64 @@
 	</Navbar>
 </header>
 
-<header class="fixed top-0 w-full">
-	{#if $auth.user}
-		<div class="flex items-center gap-2">
-			<div class="hidden flex-col items-end sm:flex">
-				<span class="text-sm font-bold">{$auth.user.displayName}</span>
-				<button
-					class="cursor-pointer text-sm font-light"
-					on:click={() => {
-						auth.logout();
-						goto('/login');
-					}}
-				>
-					Sign out
-				</button>
-			</div>
-			<div
-				class="flex h-10 w-10 items-center justify-center rounded-full border border-primary-500 bg-primary-600 font-bold text-light"
-			>
-				{$auth.user.displayName?.charAt(0) || 'U'}
+<header class="fixed top-0 z-20 w-full px-4 pt-3">
+	<div class="flex items-center justify-between rounded-2xl px-4 py-2">
+		<div class="flex items-center">
+			<div class="hidden md:block">
+				<UserMenu />
 			</div>
 		</div>
-	{:else}
-		<Button
-			size="sm"
-			on:click={() => {
-				goto('/login');
-			}}
-		>
-			Login
-		</Button>
-	{/if}
+
+		<div class="relative h-8 w-8">
+			<button
+				class="stroke-main absolute flex h-10 w-10 items-center justify-center rounded-xl"
+				onclick={() => (sideMenuIsOpen = true)}
+			>
+				<SvgMenu />
+			</button>
+			{#if sideMenuIsOpen}
+				<!-- overlay -->
+				<div
+					class="fixed inset-0 z-10"
+					onclick={() => (sideMenuIsOpen = false)}
+					transition:fade={{ duration: 100 }}
+					onkeydown={(e) => e.key === 'Escape' && (sideMenuIsOpen = false)}
+					role="button"
+					tabindex="0"
+				></div>
+
+				<!-- drawer -->
+				<aside
+					class=" z-20 h-screen bg-100 p-6 shadow-xl"
+					transition:fly={{ x: 300, duration: 200 }}
+				>
+					<div class="mb-6">
+						<UserMenu />
+					</div>
+
+					<nav class="flex flex-col gap-3">
+						{#each navItems as item}
+							{#if !item.reqAuth || $auth.user}
+								<a
+									href={item.href}
+									class="rounded-lg px-3 py-2 text-sm font-medium hover:bg-200"
+									onclick={() => (sideMenuIsOpen = false)}
+								>
+									{item.name}
+								</a>
+							{/if}
+						{/each}
+					</nav>
+				</aside>
+			{/if}
+		</div>
+	</div>
 </header>
 
-<main class="container mx-auto mt-8 min-h-[80vh] p-2">
-	<slot />
-</main>
+<main class="container mx-auto mt-8 min-h-[80vh] p-2">{@render children()}</main>
 
 <footer class="text-muted mt-auto py-8 text-center text-sm">
-	<div class="mx-auto max-w-screen-xl px-4">
+	<div class="mx-auto max-w-7xl px-4">
 		<hr class="mb-4 border-200" />
 		<p>© {new Date().getFullYear()} Rij 62. All rights reserved.</p>
 	</div>

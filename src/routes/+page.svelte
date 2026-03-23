@@ -174,12 +174,12 @@
 <!-- ---------------- UI ---------------- -->
 
 <div class="text-main text-center">
-	<h1 class="text-2xl">
+	<h1 class="sticky top-4 text-2xl">
 		Welcome to <span class="font-bold text-primary-500 dark:text-primary-300">Rij62</span>
 	</h1>
 
 	<!-- Categories -->
-	<div class="mt-3 flex flex-wrap justify-center gap-1">
+	<div class="sticky top-14 mt-3 flex flex-wrap justify-center gap-1">
 		{#await categoriesPromise}
 			<span class="text-xs opacity-50">Loading categories...</span>
 		{:then categories}

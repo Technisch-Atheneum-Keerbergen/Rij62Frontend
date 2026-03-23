@@ -133,6 +133,10 @@ html {
 		color: var(--color-text);
 	}
 
+	.stroke-main {
+		stroke: var(--color-text);
+	}
+
 	.text-muted {
 		color: var(--color-muted);
 	}

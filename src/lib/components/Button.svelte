@@ -11,7 +11,7 @@
 	let className: string = '';
 	export { className as class };
 
-	const baseStyle = `border-2 mx-1.5 inline cursor-pointer px-2 py-0.5 transition-all active:scale-95 shadow-sm `;
+	const baseStyle = `border-2 inline cursor-pointer px-2 py-0.5 transition-all active:scale-95 shadow-sm `;
 
 	const variantStyle: Record<Variant, string> = {
 		primary: 'border-primary-600 bg-primary-500 active:bg-primary-600 text-light',

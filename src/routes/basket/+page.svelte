@@ -86,7 +86,7 @@
 	{/if}
 </div>
 
-<div class="mt-5 flex w-full items-stretch justify-stretch">
+<div class="mt-5 flex w-full items-stretch justify-stretch space-x-1.5">
 	<Button
 		class="flex-1"
 		variant="ghost"
