@@ -12,11 +12,36 @@ type AuthState = {
 	user: User | null;
 };
 
+function loadAuthState(): AuthState | null {
+	if (typeof localStorage === 'undefined') {
+		return null;
+	}
+	const token = localStorage.getItem('token');
+	if (!token) return null;
+
+	const parsed = decodeToken(token);
+	if (!parsed) return null;
+
+	return {
+		token,
+		user: {
+			displayName: parsed.DisplayName,
+			userId: parsed.UserId,
+			isAdmin: parsed.IsAdmin
+		}
+	};
+}
+
 function createAuth() {
 	const { subscribe, set } = writable<AuthState>({
 		token: null,
 		user: null
 	});
+
+	const authState = loadAuthState();
+	if (authState) {
+		set(authState);
+	}
 
 	return {
 		subscribe,
@@ -43,23 +68,6 @@ function createAuth() {
 
 		logout() {
 			set({ token: null, user: null });
-		},
-
-		init() {
-			const token = localStorage.getItem('token');
-			if (!token) return;
-
-			const parsed = decodeToken(token);
-			if (!parsed) return;
-
-			set({
-				token,
-				user: {
-					displayName: parsed.DisplayName,
-					userId: parsed.UserId,
-					isAdmin: parsed.IsAdmin
-				}
-			});
 		}
 	};
 }

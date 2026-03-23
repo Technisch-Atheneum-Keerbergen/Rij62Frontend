@@ -25,6 +25,7 @@ function addAuth(options: RequestInit = {}): RequestInit {
 }
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  console.log("api fetch "+endpoint)
 	const res = await fetch(`${API_BASE_URL}${endpoint}`, addAuth(options));
 	console.log(addAuth(options));
 	console.log(res);

@@ -9,10 +9,6 @@
 	import 'flowbite/dist/flowbite.css';
 	import favicon from '$lib/assets/favicon.svg';
 
-	onMount(() => {
-		auth.init();
-	});
-
 	$: activeUrl = $page.url.pathname;
 
 	const navItems = [
