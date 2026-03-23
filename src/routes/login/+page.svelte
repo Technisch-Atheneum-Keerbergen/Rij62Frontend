@@ -3,25 +3,45 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
 	import { Card, Spinner } from 'flowbite-svelte';
+	import { apiFetch } from '$lib/api/client';
+	import Button from '$lib/components/Button.svelte';
 
 	let loading = false;
 
 	async function handleCredentialResponse(response: any) {
 		loading = true;
 		try {
-			const res = await fetch('http://localhost:5148/api/auth/google', {
+			const res = await apiFetch('/auth/google', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ token: response.credential })
 			});
-			const data = await res.json();
-			auth.login(data.token);
+			auth.login(res.token);
 			goto('/admin/overview');
 		} catch (err) {
 			console.error('Login failed:', err);
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function handleDebugLoginResponse() {
+		var id = (document.getElementById("debugLoginId") as HTMLInputElement).value;
+		loading = true;
+		try{
+			const res = await apiFetch("/auth/debug", {
+			method: "POST",
+			headers: {"Content-Type": "application/json"},
+			body: JSON.stringify({id: id})
+		});
+			auth.login(res.token);
+			goto("/admin/overview");
+		} catch(err) {
+			alert("Failed to login in "+err);
+		}finally {
+			loading = false;
+		}
+
 	}
 
 	onMount(() => {
@@ -64,6 +84,11 @@
 			<!-- Action Area -->
 			<div class="mt-10 w-full">
 				<div id="googleButton" class="flex justify-center transition-transform hover:scale-[1.02]"></div>
+				
+				<div class="flex flex-row justify-center m-2">
+					<input class="bg-200 w-16 justify-center rounded-lg border-2 mx-1.5" type="number" value="1" id="debugLoginId">
+					<Button title="login met debug mode" on:click={handleDebugLoginResponse} id="debugButton" class="justify-center transition-transform">login met debug!</Button>
+				</div>
 			</div>
 
 			<!-- Footer Info -->
