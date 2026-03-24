@@ -1,9 +1,7 @@
 <script lang="ts">
 	import Button from '$lib/components/Button.svelte';
-	import { Basket } from './../../lib/basket/Basket.ts';
+	import { basket, basketTotal } from '$lib/stores/basket';
 
-	let basket: Basket = new Basket();
-	let basketStore = basket.store;
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
 	const pending = new Set<number>();
@@ -17,28 +15,26 @@
 
 	function increase(itemId: number) {
 		withGuard(itemId, () => {
-			const item = basket.getItems().find((i) => i.product.id === itemId);
+			const item = $basket.find((i) => i.product.id === itemId);
 			if (item) basket.add(item.product, 1);
 		});
 	}
 
 	function decrease(itemId: number) {
 		withGuard(itemId, () => {
-			const item = basket.getItems().find((i) => i.product.id === itemId);
-			if (item) basket.remove(item.product.id, 1);
+			basket.remove(itemId, 1);
 		});
 	}
-
-	$: total = $basketStore?.reduce((sum, item) => sum + item.product.price * item.quantity, 0) ?? 0;
 </script>
 
 <h2 class="mb-4 text-center text-xl font-semibold">Your Basket</h2>
+
 <div class="max-w-md rounded-2xl bg-100 p-2 shadow-md">
-	{#if $basketStore?.length === 0}
+	{#if $basket.length === 0}
 		<p class="py-5 text-center text-lg opacity-60">Your basket is empty.</p>
 	{:else}
 		<ul class="space-y-3">
-			{#each $basketStore as item (item.product.id)}
+			{#each $basket as item (item.product.id)}
 				<li
 					class="flex items-center justify-between rounded-2xl border-2 border-300 bg-200 p-2 shadow-sm"
 				>
@@ -59,19 +55,25 @@
 					<div class="flex items-center gap-2 text-lg">
 						<button
 							class="cursor-pointer rounded-md px-2 transition-all active:scale-95 active:bg-100"
-							on:click={(e) => {
+							onclick={(e) => {
 								e.stopPropagation();
 								decrease(item.product.id);
-							}}>-</button
+							}}
 						>
+							-
+						</button>
+
 						<span class="rounded-md bg-100 px-2">{item.quantity}</span>
+
 						<button
 							class="cursor-pointer rounded-md px-2 transition-all active:scale-95 active:bg-100"
-							on:click={(e) => {
+							onclick={(e) => {
 								e.stopPropagation();
 								increase(item.product.id);
-							}}>+</button
+							}}
 						>
+							+
+						</button>
 					</div>
 				</li>
 			{/each}
@@ -81,26 +83,22 @@
 
 		<div class="flex items-center justify-between p-2 font-semibold">
 			<span class="text-muted">Total:</span>
-			<span class="text-xl">€{total.toFixed(2)}</span>
+			<span class="text-xl">€{$basketTotal.toFixed(2)}</span>
 		</div>
 	{/if}
 </div>
 
 <div class="mt-5 flex w-full items-stretch justify-stretch space-x-1.5">
-	<Button
-		class="flex-1"
-		variant="ghost"
-		size="sm"
-		on:click={() => {
-			window.location.href = '/';
-		}}>Continue shopping</Button
-	>
+	<Button class="flex-1" variant="ghost" size="sm" onclick={() => (window.location.href = '/')}>
+		Continue shopping
+	</Button>
+
 	<Button
 		class="flex-1 py-1.5"
 		size="sm"
 		variant="primary"
-		on:click={() => {
-			window.location.href = '/checkout';
-		}}>Checkout</Button
+		onclick={() => (window.location.href = '/checkout')}
 	>
+		Checkout
+	</Button>
 </div>

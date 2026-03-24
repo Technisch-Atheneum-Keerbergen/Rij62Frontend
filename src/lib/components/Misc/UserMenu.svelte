@@ -1,4 +1,3 @@
-<!-- src/lib/components/UserMenu.svelte -->
 <script lang="ts">
 	import { auth } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -19,6 +18,7 @@
 				Sign out
 			</button>
 		</div>
+
 		<div
 			class="flex h-10 w-10 items-center justify-center rounded-full border border-primary-500 bg-primary-600 font-bold text-light"
 		>

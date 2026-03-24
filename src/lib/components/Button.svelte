@@ -1,17 +1,23 @@
 <script lang="ts">
+	import type { HTMLButtonAttributes } from 'svelte/elements';
+
 	type Variant = 'primary' | 'secondary' | 'ghost';
 	type Size = 'sm' | 'md' | 'lg';
-	type ButtonType = 'button' | 'submit' | 'reset';
 
-	export let variant: Variant = 'primary';
-	export let size: Size = 'sm';
-	export let disabled: boolean = false;
-	export let type: ButtonType = 'button';
+	let {
+		variant = 'primary',
+		size = 'sm',
+		disabled = false,
+		class: className = '',
+		children,
+		...restProps
+	}: HTMLButtonAttributes & {
+		variant?: Variant;
+		size?: Size;
+	} = $props();
 
-	let className: string = '';
-	export { className as class };
-
-	const baseStyle = `border-2 inline cursor-pointer px-2 py-0.5 transition-all active:scale-95 shadow-sm `;
+	const baseStyle =
+		'border-2 inline cursor-pointer px-2 py-0.5 transition-all active:scale-95 shadow-sm';
 
 	const variantStyle: Record<Variant, string> = {
 		primary: 'border-primary-600 bg-primary-500 active:bg-primary-600 text-light',
@@ -25,9 +31,13 @@
 		lg: 'text-xl rounded-2xl px-3 py-1'
 	};
 
-	$: styles = `${baseStyle} ${variantStyle[variant]} ${sizeStyle[size]} ${className} ${disabled ? 'text-muted pointer-events-none' : ''}`;
+	const styles = $derived(
+		`${baseStyle} ${variantStyle[variant]} ${sizeStyle[size]} ${className} ${
+			disabled ? 'text-muted pointer-events-none' : ''
+		}`
+	);
 </script>
 
-<button class={styles} {type} {disabled} on:click {...$$restProps}>
-	<slot />
+<button class={styles} {disabled} {...restProps}>
+	{@render children?.()}
 </button>

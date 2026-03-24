@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Button from '$lib/components/Button.svelte';
 	import Card from '$lib/components/Cards/Card.svelte';
 	import CheckCard from '$lib/components/Cards/CheckCard.svelte';

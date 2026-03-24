@@ -1,20 +1,25 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-
-	export let title: string = '';
-	export let price: string | null = null;
-	export let imageSrc: string = '';
-	export let alt: string = 'Card image';
-
-	const dispatch = createEventDispatcher();
-
-	let className: string = '';
-	export { className as class };
+	let {
+		title = '',
+		price = null,
+		imageSrc = '',
+		alt = 'Card image',
+		class: className = '',
+		onselect,
+		...restProps
+	}: {
+		title?: string;
+		price?: string | null;
+		imageSrc?: string;
+		alt?: string;
+		class?: string;
+		onselect?: () => void;
+	} = $props();
 </script>
 
 <div
-	{...$$restProps}
-	on:click={() => dispatch('select')}
+	{...restProps}
+	onclick={() => onselect?.()}
 	class="flex max-w-40 min-w-40 cursor-pointer flex-col overflow-hidden rounded-3xl border-2 border-300 bg-200 p-1 shadow-sm transition-all hover:shadow-md active:scale-95 {className}"
 >
 	{#if imageSrc}
@@ -22,9 +27,7 @@
 	{/if}
 
 	<div class="flex h-full flex-col justify-between p-1.5 text-left">
-		<div>
-			<h3 class="text-center text-xs font-semibold">{title}</h3>
-		</div>
+		<h3 class="text-center text-xs font-semibold">{title}</h3>
 
 		{#if price}
 			<p class="text-muted w-full text-center text-sm">€{price}</p>
