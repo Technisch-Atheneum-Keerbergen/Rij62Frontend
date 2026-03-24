@@ -300,7 +300,7 @@
 					Yes, delete
 				</Button>
 
-				<Button type="button" color="ghost" onclick={() => (popupModal = false)}>Cancel</Button>
+				<Button type="button" class="ghost" onclick={() => (popupModal = false)}>Cancel</Button>
 			</div>
 		</div>
 	</Modal>

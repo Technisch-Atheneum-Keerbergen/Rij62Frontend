@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { slide } from 'svelte/transition';
 	import {
 		Tabs,
 		TabItem,
@@ -10,9 +11,10 @@
 		Toggle,
 		Heading,
 		Span,
-		ImagePlaceholder
+		ImagePlaceholder,
+		Modal
 	} from 'flowbite-svelte';
-	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
+	import { ArrowLeftOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
 	import type { Product } from '$lib/api/types/product';
 	import type { Category } from '$lib/api/types/category';
 	import { Language } from '$lib/api/types/multilangstring';
@@ -21,13 +23,14 @@
 	import { apiFetch, apiAdd, apiUpload, getImageUrl } from '$lib/api/client';
 
 	// --- State ---
-	let product: Product | null = null;
-	let isNew = false;
-	let imageError = false;
+	let product = $state<Product | null>(null);
+	let isNew = $state(false);
+	let imageError = $state(false);
+	let categories = $state<Category[]>([]);
+	let SavedProduct = $state(false);
 
-	let categories: Category[] = [];
-
-	let formError: string | null = null;
+	let formError = $state<string | null>(null);
+	let popupOpen = $state(false);
 
 	// --- Upload handler ---
 	async function handleUpload(event: Event) {
@@ -63,6 +66,27 @@
 			};
 		}
 
+		if (product.stock < 0) {
+			return {
+				valid: false,
+				error: 'Stock cannot be negative'
+			};
+		}
+
+		if (product.btw < 0) {
+			return {
+				valid: false,
+				error: 'Btw cannot be negative'
+			};
+		}
+
+		if (product.btw > 100) {
+			return {
+				valid: false,
+				error: 'Btw cannot be more than 100'
+			};
+		}
+
 		return { valid: true };
 	}
 
@@ -72,10 +96,10 @@
 		const validation = ValidateProduct(product);
 
 		if (!validation.valid) {
-			formError = validation.error;
+			formError = validation.error ?? null;
+			popupOpen = true;
 			return;
 		}
-		formError = null;
 
 		try {
 			if (isNew) {
@@ -85,7 +109,7 @@
 			}
 
 			console.log('[Rij62] Product saved successfully!');
-			goto('/admin/productControl');
+			SavedProduct = true;
 		} catch (err: any) {
 			console.log(`[Rij62] Failed to save product: ${err.message}`);
 		}
@@ -120,7 +144,7 @@
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold md:text-5xl lg:text-6xl">
 			Take
-			<Span gradient="tealToLime">Control</Span>
+			<Span class="text-highlight">Control</Span>
 			of Your Products
 		</Heading>
 	</div>
@@ -174,7 +198,7 @@
 
 							<div>
 								<Label for="Btw">Btw</Label>
-								<Input id="Btw" bind:value={product.btw} type="number" min="0" />
+								<Input id="Btw" bind:value={product.btw} type="number" min="0" max="100" />
 							</div>
 							<div>
 								<Label for="Category">Category</Label>
@@ -231,7 +255,7 @@
 				<img
 					src={product.imgURL}
 					class="border-main w-full rounded-lg border object-cover"
-					on:error={() => (imageError = true)}
+					onerror={() => (imageError = true)}
 				/>
 			{:else}
 				<ImagePlaceholder />
@@ -239,11 +263,53 @@
 
 			<!-- Upload input -->
 			<div class="mt-4">
-				<input type="file" accept="image/*" on:change={handleUpload} class="block w-full text-sm" />
+				<input type="file" accept="image/*" onchange={handleUpload} class="block w-full text-sm" />
 			</div>
 		</div>
 	</div>
-	{#if formError}
-		<p class="text-red-500">{formError}</p>
+	{#if popupOpen}
+		<Modal bind:open={popupOpen} size="xs" transition={slide}>
+			<div class="text-center">
+				<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+
+				<h3 class="text-main mb-5 text-lg font-normal">
+					{formError}
+				</h3>
+
+				<div class="flex justify-center gap-3">
+					<Button
+						type="button"
+						color="primary"
+						onclick={() => {
+							popupOpen = false;
+							formError = null;
+						}}
+					>
+						Okay
+					</Button>
+				</div>
+			</div>
+		</Modal>
+	{/if}
+	{#if SavedProduct}
+		<Modal bind:open={SavedProduct} size="xs" transition={slide}>
+			<div class="text-center">
+				<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+
+				<h3 class="text-main mb-5 text-lg font-normal">Saved Product Successfully</h3>
+
+				<div class="flex justify-center gap-3">
+					<Button
+						type="button"
+						color="primary"
+						onclick={() => {
+							goto('/admin/productControl');
+						}}
+					>
+						Okay
+					</Button>
+				</div>
+			</div>
+		</Modal>
 	{/if}
 </div>
