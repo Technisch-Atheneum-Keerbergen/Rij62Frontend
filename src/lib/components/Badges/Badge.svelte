@@ -2,11 +2,18 @@
 	type Variant = 'primary' | 'secondary' | 'ghost';
 	type Size = 'sm' | 'md' | 'lg';
 
-	export let variant: Variant = 'ghost';
-	export let size: Size = 'sm';
-
-	let className: string = '';
-	export { className as class };
+	let {
+		variant = 'ghost',
+		size = 'sm',
+		class: className = '',
+		children,
+		...restProps
+	}: {
+		variant?: Variant;
+		size?: Size;
+		class?: string;
+		children?: () => any;
+	} = $props();
 
 	const baseStyle =
 		'border-2 mx-1 inline-flex items-center select-none px-2.5 py-0.5 transition-all shadow-sm';
@@ -23,9 +30,9 @@
 		lg: 'rounded-2xl px-3.5 py-1'
 	};
 
-	$: styles = `${baseStyle} ${variantStyle[variant]} ${sizeStyle[size]} ${className}`;
+	const styles = $derived(`${baseStyle} ${variantStyle[variant]} ${sizeStyle[size]} ${className}`);
 </script>
 
-<span class={styles} {...$$restProps}>
-	<slot />
+<span class={styles} {...restProps}>
+	{@render children?.()}
 </span>

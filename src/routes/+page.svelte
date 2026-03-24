@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { Basket } from './../lib/basket/Basket.ts';
-	import type { Category } from './../lib/api/types/category.ts';
-	import type { Product } from './../lib/api/types/product.ts';
+	import { basketCount } from './../lib/stores/basket.ts';
+	import { basket } from '$lib/stores/basket';
+	import type { Category } from '$lib/api/types/category';
+	import type { Product } from '$lib/api/types/product';
 	import { apiFetch } from '$lib/api/client';
 	import Button from '$lib/components/Button.svelte';
 	import Card from '$lib/components/Cards/Card.svelte';
@@ -10,8 +11,6 @@
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
-
-	let basket: Basket = new Basket();
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -111,23 +110,26 @@
 
 	/* ---------------- STATE ---------------- */
 
-	let productsPromise: Promise<Product[]>;
-	let categoriesPromise: Promise<Category[]>;
+	let productsPromise = $state<Promise<Product[]>>(new Promise(() => {}));
+	let categoriesPromise = $state<Promise<Category[]>>(new Promise(() => {}));
 
-	let allProducts: Product[] = [];
-	let selectedCategories: Set<number> = new Set();
+	let allProducts = $state<Product[]>([]);
+	let selectedCategories = $state(new Set<number>());
 
-	let selectedProduct: Product | null = null;
-	let isSheetOpen = false;
-	let step = 0;
-	$: itemIsInBasket = false;
+	let selectedProduct = $state<Product | null>(null);
+	let isSheetOpen = $state(false);
+	let step = $state(0);
+	let itemIsInBasket = $state(false);
 
 	/* ---------------- DERIVED ---------------- */
 
-	$: filteredProducts =
-		selectedCategories.size === 0
-			? allProducts
-			: allProducts.filter((p) => selectedCategories.has(p.categoryId));
+	const filteredProducts = $derived(
+		allProducts.filter((p) => {
+			if (!p.isAvailable) return false;
+			if (selectedCategories.size === 0) return true;
+			return selectedCategories.has(p.categoryId);
+		})
+	);
 
 	/* ---------------- METHODS ---------------- */
 
@@ -171,15 +173,9 @@
 	});
 </script>
 
-<!-- ---------------- UI ---------------- -->
-
 <div class="text-main text-center">
-	<h1 class="text-2xl">
-		Welcome to <span class="font-bold text-primary-500 dark:text-primary-300">Rij62</span>
-	</h1>
-
 	<!-- Categories -->
-	<div class="mt-3 flex flex-wrap justify-center gap-1">
+	<div class="sticky top-17 mt-3 flex flex-wrap justify-center gap-1">
 		{#await categoriesPromise}
 			<span class="text-xs opacity-50">Loading categories...</span>
 		{:then categories}
@@ -189,7 +185,7 @@
 					value={String(category.id)}
 					checked={selectedCategories.has(category.id)}
 					size="lg"
-					on:change={() => toggleCategory(category.id)}
+					onchange={() => toggleCategory(category.id)}
 				>
 					{category.name[currentLanguage]}
 				</FilterItem>
@@ -208,7 +204,7 @@
 						title={product.title[currentLanguage]}
 						imageSrc={product.imgURL}
 						price={`${product.price.toFixed(2)}`}
-						on:select={() => openProduct(product.id)}
+						onselect={() => openProduct(product.id)}
 					/>
 				{/each}
 			{:else}
@@ -230,8 +226,8 @@
 			tabindex="0"
 			class="absolute inset-0 bg-darken"
 			transition:fade={{ duration: 100 }}
-			on:click={() => (isSheetOpen = false)}
-			on:keydown={(e) => e.key === 'Escape' && (isSheetOpen = false)}
+			onclick={() => (isSheetOpen = false)}
+			onkeydown={(e) => e.key === 'Escape' && (isSheetOpen = false)}
 		></div>
 
 		<!-- sheet -->
@@ -256,8 +252,9 @@
 					{selectedProduct.description[currentLanguage]}
 				</p>
 			</div>
+
 			{#if !itemIsInBasket}
-				<Button class="w-full" size="lg" on:click={handleContinue}>
+				<Button class="w-full" size="lg" onclick={handleContinue}>
 					{getContinueText()}
 				</Button>
 			{:else}
@@ -267,13 +264,19 @@
 	</div>
 {/if}
 
-<!-- ---------------- BASKET ---------------- -->
+<!-- ---------------- BASKET ICON ---------------- -->
 
 <a
 	href="/basket"
-	class="absolute right-6 bottom-6 flex aspect-square h-15 items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
+	class="fixed right-6 bottom-6 flex aspect-square h-15 items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
 >
-	<span class="relative stroke-secondary-700 dark:stroke-secondary-900">
-		<SvgBasket />
+	<span
+		class="relative stroke-secondary-700 text-2xl font-extrabold text-secondary-700 dark:stroke-secondary-900 dark:text-secondary-900"
+	>
+		{#if $basketCount == 0}
+			<SvgBasket />
+		{:else}
+			<span> {$basketCount}</span>
+		{/if}
 	</span>
 </a>

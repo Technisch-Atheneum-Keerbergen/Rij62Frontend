@@ -1,19 +1,27 @@
 <script lang="ts">
 	import Card from './Card.svelte';
 
-	export let value: boolean = false;
-	export let group: string;
-
-	export let title: string = '';
-	export let description: string = '';
-	export let price: string | null = null;
-	export let imageSrc: string = '';
-	export let alt: string = 'Card image';
+	let {
+		value = false,
+		group,
+		title = '',
+		price = null,
+		imageSrc = '',
+		alt = 'Card image'
+	}: {
+		value?: boolean;
+		group: string;
+		title?: string;
+		description?: string;
+		price?: string | null;
+		imageSrc?: string;
+		alt?: string;
+	} = $props();
 </script>
 
 <label class="flex">
 	<input type="radio" name={group} {value} class="peer hidden" />
-	<Card {title} {description} {price} {imageSrc} {alt} />
+	<Card {title} {price} {imageSrc} {alt} />
 </label>
 
 <style>

@@ -5,8 +5,6 @@
 	import { get } from 'svelte/store';
 
 	onMount(() => {
-		auth.init();
-
 		const { token } = get(auth);
 
 		if (!token) {
@@ -16,3 +14,4 @@
 </script>
 
 <slot />
+

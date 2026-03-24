@@ -1,5 +1,7 @@
 import { writable } from 'svelte/store';
+
 import { decodeToken } from '$lib/utils/jwt';
+import { browser } from '$app/environment';
 
 type User = {
 	displayName: string;
@@ -12,24 +14,49 @@ type AuthState = {
 	user: User | null;
 };
 
+function loadAuthState(): AuthState | null {
+	if (!browser) {
+		return null;
+	}
+	const token = localStorage.getItem('token');
+	if (!token) return null;
+
+	const parsed = decodeToken(token);
+	if (!parsed) return null;
+
+	return {
+		token,
+		user: {
+			displayName: parsed.DisplayName,
+			userId: parsed.UserId,
+			isAdmin: parsed.IsAdmin
+		}
+	};
+}
+
 function createAuth() {
 	const { subscribe, set } = writable<AuthState>({
 		token: null,
 		user: null
 	});
 
+	if (browser) {
+		const authState = loadAuthState();
+		if (authState) {
+			set(authState);
+		}
+	}
+
 	return {
 		subscribe,
 
 		login(token: string) {
 			const parsed = decodeToken(token);
+			if (!parsed) return;
 
-			if (!parsed) {
-				console.error('Invalid token');
-				return;
+			if (browser) {
+				localStorage.setItem('token', token);
 			}
-
-			localStorage.setItem('token', token);
 
 			set({
 				token,
@@ -42,25 +69,11 @@ function createAuth() {
 		},
 
 		logout() {
-			localStorage.removeItem('token');
+			if (browser) {
+				localStorage.removeItem('token'); // ✅ critical
+			}
+
 			set({ token: null, user: null });
-		},
-
-		init() {
-			const token = localStorage.getItem('token');
-			if (!token) return;
-
-			const parsed = decodeToken(token);
-			if (!parsed) return;
-
-			set({
-				token,
-				user: {
-					displayName: parsed.DisplayName,
-					userId: parsed.UserId,
-					isAdmin: parsed.IsAdmin
-				}
-			});
 		}
 	};
 }

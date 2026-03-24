@@ -25,7 +25,6 @@ function addAuth(options: RequestInit = {}): RequestInit {
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 	const res = await fetch(`${API_BASE_URL}${endpoint}`, addAuth(options));
-
 	if (res.status === 401) {
 		auth.logout();
 	}
@@ -135,3 +134,4 @@ export async function apiUpload(endpoint: string, formData: FormData) {
 export function getImageUrl(id: string) {
 	return `${API_BASE_URL}/api/image/${id}`;
 }
+

@@ -1,24 +1,44 @@
 <script lang="ts">
+	import type { HTMLLabelAttributes } from 'svelte/elements';
+
 	type Size = 'sm' | 'md' | 'lg';
-	export let value: string = '';
-	export let group: string;
-	export let label: string = '';
-	export let size: Size = 'sm';
-	export let checked: boolean = false;
-	let className: string = '';
-	export { className as class };
+	let {
+		value = '',
+		group,
+		label = '',
+		size = 'sm',
+		checked = $bindable(false),
+		class: className = '',
+		children,
+		...restProps
+	}: HTMLLabelAttributes & {
+		value?: string;
+		group: string;
+		label?: string;
+		size?: Size;
+		checked?: boolean;
+	} = $props();
+
 	const sizeStyle: Record<Size, string> = {
 		sm: 'text-xs rounded-xl px-2.5 py-0.5',
 		md: 'text-sm rounded-xl px-3 py-0.5',
 		lg: 'text-base rounded-2xl px-3.5 py-1'
 	};
-	$: baseStyles = `border-2 mx-1 inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-sm border-300 bg-100 ${sizeStyle[size]} ${className}`;
+
+	const baseStyles = $derived(
+		`border-2 mx-1 inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-sm border-300 bg-100 ${sizeStyle[size]} ${className}`
+	);
 </script>
 
-<label class="inline-flex" on:change {...$$restProps}>
+<label class="inline-flex" {...restProps}>
 	<input type="checkbox" name={group} {value} bind:checked class="peer hidden" />
+
 	<span class={baseStyles}>
-		<slot>{label}</slot>
+		{#if children}
+			{@render children()}
+		{:else}
+			{label}
+		{/if}
 	</span>
 </label>
 
