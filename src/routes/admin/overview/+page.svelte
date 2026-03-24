@@ -13,7 +13,7 @@
 	<!-- Heading Section -->
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold  md:text-5xl lg:text-6xl">
-			<Span gradient="tealToLime">Rij 62</Span> Admin Overview
+			<Span class="text-highlight">Rij 62</Span> Admin Overview
 		</Heading>
 		<P>
 			Here at Rij 62, we are committed to offer the best possible coffee experience. Use the

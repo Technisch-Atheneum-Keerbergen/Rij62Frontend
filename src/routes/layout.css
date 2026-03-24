@@ -57,13 +57,19 @@ html {
 
 	--color-accent: var(--color-primary-500);
 	--color-secondary: var(--color-secondary-500);
+
+	/* Highlight gradient (light mode) */
+	--color-highlight-1: oklch(0.72 0.18 280); /* vibrant purple */
+	--color-highlight-2: oklch(0.75 0.2 340); /* vibrant pink */
 }
 
 :root {
 	--color-bg: var(--base-light);
 	--color-text: var(--base-dark);
-	--color-muted: color-mix(in srgb, var(var(--base-dark)) 70%, transparent);
+	--color-muted: color-mix(in srgb, var(--base-dark) 70%, transparent);
 	--darken: rgba(1, 1, 1, 0.24);
+	--color-border: var(--surface-300);
+
 	--surface-50: #f3f1eb;
 	--surface-100: #f0eee8;
 	--surface-200: #e9e7e1;
@@ -81,6 +87,11 @@ html {
 	--color-text: var(--base-light);
 	--color-muted: color-mix(in srgb, var(--base-light) 70%, transparent);
 	--darken: rgba(2, 2, 2, 0.51);
+	--color-border: var(--surface-600);
+
+	/* Brighter / more glowing in dark mode */
+	--color-highlight-1: oklch(0.8 0.22 280);
+	--color-highlight-2: oklch(0.82 0.24 340);
 
 	--surface-50: #070607;
 	--surface-100: #141314;
@@ -100,6 +111,9 @@ html {
 		--color-text: var(--base-light);
 		--color-muted: color-mix(in srgb, var(--base-light) 70%, transparent);
 		--darken: rgba(2, 2, 2, 0.51);
+
+		--color-highlight-1: oklch(0.8 0.22 280);
+		--color-highlight-2: oklch(0.82 0.24 340);
 
 		--surface-50: #181718;
 		--surface-100: #201f20;
@@ -174,5 +188,12 @@ html {
 	}
 	.bg-900 {
 		background: var(--surface-900);
+	}
+	.text-highlight {
+		background: linear-gradient(to right, var(--color-highlight-1), var(--color-highlight-2));
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-highlight-1) 30%, transparent));
 	}
 }

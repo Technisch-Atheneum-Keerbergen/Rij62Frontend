@@ -112,3 +112,26 @@ export async function apiToggle(productId: number) {
 
 	return (await parseJSONSafe(res)) || updatedProduct;
 }
+
+export async function apiUpload(endpoint: string, formData: FormData) {
+	const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+		method: 'POST',
+		...addAuth(),
+		body: formData
+	});
+
+	if (res.status === 401) {
+		auth.logout();
+	}
+
+	if (!res.ok) {
+		const error = await parseJSONSafe(res);
+		throw new Error(error?.title || res.statusText);
+	}
+
+	return parseJSONSafe(res) || (await res.text());
+}
+export function getImageUrl(id: string) {
+	return `${API_BASE_URL}/api/image/${id}`;
+}
+
