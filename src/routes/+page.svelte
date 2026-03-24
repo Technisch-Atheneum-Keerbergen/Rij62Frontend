@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { basketCount } from './../lib/stores/basket.ts';
 	import { basket } from '$lib/stores/basket';
 	import type { Category } from '$lib/api/types/category';
 	import type { Product } from '$lib/api/types/product';
@@ -123,9 +124,11 @@
 	/* ---------------- DERIVED ---------------- */
 
 	const filteredProducts = $derived(
-		selectedCategories.size === 0
-			? allProducts
-			: allProducts.filter((p) => selectedCategories.has(p.categoryId))
+		allProducts.filter((p) => {
+			if (!p.isAvailable) return false;
+			if (selectedCategories.size === 0) return true;
+			return selectedCategories.has(p.categoryId);
+		})
 	);
 
 	/* ---------------- METHODS ---------------- */
@@ -171,12 +174,8 @@
 </script>
 
 <div class="text-main text-center">
-	<h1 class="sticky top-4 text-2xl">
-		Welcome to <span class="font-bold text-primary-500 dark:text-primary-300">Rij62</span>
-	</h1>
-
 	<!-- Categories -->
-	<div class="sticky top-14 mt-3 flex flex-wrap justify-center gap-1">
+	<div class="sticky top-17 mt-3 flex flex-wrap justify-center gap-1">
 		{#await categoriesPromise}
 			<span class="text-xs opacity-50">Loading categories...</span>
 		{:then categories}
@@ -271,7 +270,13 @@
 	href="/basket"
 	class="fixed right-6 bottom-6 flex aspect-square h-15 items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
 >
-	<span class="relative stroke-secondary-700 dark:stroke-secondary-900">
-		<SvgBasket />
+	<span
+		class="relative stroke-secondary-700 text-2xl font-extrabold text-secondary-700 dark:stroke-secondary-900 dark:text-secondary-900"
+	>
+		{#if $basketCount == 0}
+			<SvgBasket />
+		{:else}
+			<span> {$basketCount}</span>
+		{/if}
 	</span>
 </a>

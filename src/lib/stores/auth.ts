@@ -40,9 +40,11 @@ function createAuth() {
 		user: null
 	});
 
-	const authState = loadAuthState();
-	if (authState) {
-		set(authState);
+	if (browser) {
+		const authState = loadAuthState();
+		if (authState) {
+			set(authState);
+		}
 	}
 
 	return {
@@ -50,13 +52,11 @@ function createAuth() {
 
 		login(token: string) {
 			const parsed = decodeToken(token);
+			if (!parsed) return;
 
-			if (!parsed) {
-				console.error('Invalid token');
-				return;
+			if (browser) {
+				localStorage.setItem('token', token);
 			}
-
-			localStorage.setItem('token', token);
 
 			set({
 				token,
@@ -69,6 +69,10 @@ function createAuth() {
 		},
 
 		logout() {
+			if (browser) {
+				localStorage.removeItem('token'); // ✅ critical
+			}
+
 			set({ token: null, user: null });
 		}
 	};

@@ -13,7 +13,6 @@ async function parseJSONSafe(res: Response) {
 
 function addAuth(options: RequestInit = {}): RequestInit {
 	const { token } = get(auth);
-	console.log(token);
 
 	return {
 		...options,
@@ -25,10 +24,7 @@ function addAuth(options: RequestInit = {}): RequestInit {
 }
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  console.log("api fetch "+endpoint)
 	const res = await fetch(`${API_BASE_URL}${endpoint}`, addAuth(options));
-	console.log(addAuth(options));
-	console.log(res);
 	if (res.status === 401) {
 		auth.logout();
 	}
@@ -106,7 +102,6 @@ export async function apiToggle(productId: number) {
 	);
 
 	if (res.status === 401) {
-		console.log('aaaaaaaaaa');
 		auth.logout();
 	}
 

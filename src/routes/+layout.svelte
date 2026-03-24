@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
+	import SvgXmark from './../lib/components/SVG/SvgXmark.svelte';
+	import { fade, fly, slide } from 'svelte/transition';
 	import { auth } from '$lib/stores/auth';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -16,7 +17,8 @@
 	let { children }: { children: Snippet } = $props();
 
 	const navItems = [
-		{ name: 'Home', href: '/', reqAuth: false },
+		{ name: 'Order', href: '/', reqAuth: false },
+		{ name: 'Basket', href: '/basket', reqAuth: false },
 		{ name: 'Admin Overview', href: '/admin/overview', reqAuth: true }
 	];
 
@@ -28,122 +30,79 @@
 	<title>Rij 62</title>
 </svelte:head>
 
-<header class="sticky top-0 z-50 hidden w-full px-4 pt-4 md:hidden">
-	<Navbar
-		class="rounded-xl border border-white/10 bg-primary-700/90 px-4 py-2.5 shadow-lg backdrop-blur-md"
-		fluid={true}
-	>
-		<NavBrand href="/" class="flex items-center gap-3">
-			<img src={favicon} class="h-8 transition-transform hover:scale-110" alt="Rij 62 Logo" />
-			<span class="self-center text-xl font-bold tracking-tight text-white"> Rij 62 </span>
-		</NavBrand>
+<header class="fixed top-0 z-20 flex w-full justify-center p-2">
+	<nav class="w-full max-w-xl rounded-3xl bg-100/80 px-4 py-2 shadow-lg backdrop-blur-md">
+		<div class="flex w-full items-center justify-between">
+			<a href="/" class="text-xl font-medium text-primary-500 dark:text-primary-300"
+				>Rij<span class="font-bold text-secondary-500 dark:text-secondary-300">62</span></a
+			>
 
-		<div class="flex items-center md:order-2">
-			{#if $auth.user}
-				<div class="flex items-center gap-4">
-					<div class="hidden flex-col items-end sm:flex">
-						<span class="text-sm font-medium text-white">{$auth.user.displayName}</span>
-						<button
-							onclick={() => {
-								auth.logout();
-								goto('/login');
-							}}
-							class="text-xs text-primary-200 underline-offset-4 hover:underline"
+			<div class="hidden flex-row gap-6 md:flex">
+				{#each navItems as item}
+					{#if !item.reqAuth || $auth.user}
+						<a
+							href={item.href}
+							class="rounded-lg transition-all hover:text-primary-900 dark:hover:text-primary-200"
+							onclick={() => (sideMenuIsOpen = false)}
 						>
-							Sign out
-						</button>
-					</div>
-					<div
-						class="flex h-10 w-10 items-center justify-center rounded-full border border-primary-500 bg-primary-600 font-bold text-white"
-					>
-						{$auth.user.displayName?.charAt(0) || 'U'}
-					</div>
-				</div>
-			{:else}
-				<Button
-					size="sm"
-					color="light"
-					href="/login"
-					class="font-semibold shadow-sm transition-all hover:bg-white hover:text-primary-700"
+							{item.name}
+						</a>
+					{/if}
+				{/each}
+			</div>
+			<div class="hidden flex-row md:flex"><UserMenu /></div>
+
+			<div class="relative block h-10 w-10 md:hidden">
+				<button
+					class="stroke-main absolute flex cursor-pointer items-center justify-center rounded-xl transition-all active:scale-95"
+					onclick={() => (sideMenuIsOpen = true)}
 				>
-					Login
-				</Button>
-			{/if}
-			<NavHamburger class="ml-2 text-white hover:bg-primary-600" />
-		</div>
-
-		<NavUl class="md:bg-transparent">
-			{#each navItems as item}
-				{#if !item.reqAuth || $auth.user}
-					<NavLi
-						href={item.href}
-						class={page.url.pathname === item.href
-							? 'border-b-2 border-white font-bold text-white'
-							: 'text-primary-100 transition-colors hover:text-white'}
-					>
-						{item.name}
-					</NavLi>
-				{/if}
-			{/each}
-		</NavUl>
-	</Navbar>
-</header>
-
-<header class="fixed top-0 z-20 w-full px-4 pt-3">
-	<div class="flex items-center justify-between rounded-2xl px-4 py-2">
-		<div class="flex items-center">
-			<div class="hidden md:block">
-				<UserMenu />
+					{#if sideMenuIsOpen}
+						<SvgXmark />
+					{:else}<SvgMenu />{/if}
+				</button>
 			</div>
 		</div>
+		{#if sideMenuIsOpen}
+			<!-- overlay -->
+			<div
+				class="fixed inset-0 z-30 h-screen"
+				onclick={() => (sideMenuIsOpen = false)}
+				onkeydown={(e) => e.key === 'Escape' && (sideMenuIsOpen = false)}
+				role="button"
+				tabindex="0"
+			></div>
 
-		<div class="relative h-8 w-8">
-			<button
-				class="stroke-main absolute flex h-10 w-10 items-center justify-center rounded-xl"
-				onclick={() => (sideMenuIsOpen = true)}
-			>
-				<SvgMenu />
-			</button>
-			{#if sideMenuIsOpen}
-				<!-- overlay -->
-				<div
-					class="fixed inset-0 z-10"
-					onclick={() => (sideMenuIsOpen = false)}
-					transition:fade={{ duration: 100 }}
-					onkeydown={(e) => e.key === 'Escape' && (sideMenuIsOpen = false)}
-					role="button"
-					tabindex="0"
-				></div>
-
-				<!-- drawer -->
-				<aside
-					class=" z-20 h-screen bg-100 p-6 shadow-xl"
-					transition:fly={{ x: 300, duration: 200 }}
-				>
-					<div class="mb-6">
+			<!-- drawer: relative, flows inside header, but visually above overlay via z -->
+			<aside class="relative z-40 p-1 text-right font-medium" transition:slide={{ duration: 200 }}>
+				<nav class="flex flex-col gap-1">
+					<div
+						class="rounded-lg px-4 py-3 transition-all hover:bg-300 active:scale-95 active:bg-300"
+						role="button"
+						tabindex="0"
+						onclick={() => (sideMenuIsOpen = false)}
+						onkeydown={(e) => e.key === 'Escape' && (sideMenuIsOpen = false)}
+					>
 						<UserMenu />
 					</div>
-
-					<nav class="flex flex-col gap-3">
-						{#each navItems as item}
-							{#if !item.reqAuth || $auth.user}
-								<a
-									href={item.href}
-									class="rounded-lg px-3 py-2 text-sm font-medium hover:bg-200"
-									onclick={() => (sideMenuIsOpen = false)}
-								>
-									{item.name}
-								</a>
-							{/if}
-						{/each}
-					</nav>
-				</aside>
-			{/if}
-		</div>
-	</div>
+					{#each navItems as item}
+						{#if !item.reqAuth || $auth.user}
+							<a
+								href={item.href}
+								class="rounded-lg px-4 py-3 transition-all hover:bg-300 active:scale-95 active:bg-300"
+								onclick={() => (sideMenuIsOpen = false)}
+							>
+								{item.name}
+							</a>
+						{/if}
+					{/each}
+				</nav>
+			</aside>
+		{/if}
+	</nav>
 </header>
 
-<main class="container mx-auto mt-8 min-h-[80vh] p-2">{@render children()}</main>
+<main class="container mx-auto mt-16 min-h-[80vh] p-2">{@render children()}</main>
 
 <footer class="text-muted mt-auto py-8 text-center text-sm">
 	<div class="mx-auto max-w-7xl px-4">

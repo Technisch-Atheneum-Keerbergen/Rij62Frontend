@@ -107,7 +107,7 @@
 					/>
 					<Button
 						title="login met debug mode"
-						on:click={handleDebugLoginResponse}
+						onclick={handleDebugLoginResponse}
 						id="debugButton"
 						class="justify-center transition-transform">login met debug!</Button
 					>

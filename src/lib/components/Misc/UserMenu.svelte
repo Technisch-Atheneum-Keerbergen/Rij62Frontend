@@ -6,10 +6,10 @@
 
 {#if $auth.user}
 	<div class="flex items-center justify-end gap-2">
-		<div class="flex flex-col items-end">
-			<span class="text-sm font-bold">{$auth.user.displayName}</span>
+		<div class="flex flex-col items-end py-0.5">
+			<span class="text-sm font-bold text-nowrap">{$auth.user.displayName}</span>
 			<button
-				class="cursor-pointer text-sm font-light"
+				class="cursor-pointer text-sm font-light text-nowrap"
 				onclick={() => {
 					auth.logout();
 					goto('/login');
@@ -26,5 +26,12 @@
 		</div>
 	</div>
 {:else}
-	<Button size="sm" onclick={() => goto('/login')}>Login</Button>
+	<button
+		class="cursor-pointer text-nowrap"
+		onclick={() => {
+			goto('/login');
+		}}
+	>
+		Log in
+	</button>
 {/if}

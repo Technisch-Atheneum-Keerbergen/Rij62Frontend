@@ -21,7 +21,7 @@
 
 	const variantStyle: Record<Variant, string> = {
 		primary: 'border-primary-600 bg-primary-500 active:bg-primary-600 text-light',
-		secondary: 'border-secondary-600 bg-secondary-500 active:bg-secondary-600 text-dark',
+		secondary: 'border-secondary-500 bg-secondary-400 active:bg-secondary-500 text-dark',
 		ghost: 'border-500 bg-300 active:bg-200'
 	};
 
