@@ -137,6 +137,37 @@
 		console.log('[Rij62] lastClickedId: ', lastClickedId);
 	}
 
+	function handleRowClick(e: MouseEvent, productId: number) {
+		e.stopPropagation();
+
+		let newSet = new Set(selectedIds);
+
+		if (e.shiftKey && lastClickedId !== null) {
+			const start = products.findIndex((p) => p.id === lastClickedId);
+			const end = products.findIndex((p) => p.id === productId);
+			const [from, to] = [Math.min(start, end), Math.max(start, end)];
+
+			for (let i = from; i <= to; i++) {
+				newSet.add(products[i].id);
+			}
+		} else if (e.ctrlKey) {
+			if (newSet.has(productId)) {
+				newSet.delete(productId);
+			} else {
+				newSet.add(productId);
+			}
+		} else {
+			window.location.href = `/admin/productControl/${productId}`;
+		}
+
+		selectedIds = newSet;
+		lastClickedId = productId;
+
+		console.log('[Rij62] End of handleCheckboxClick():');
+		console.log('[Rij62] selectedIds: ', selectedIds);
+		console.log('[Rij62] lastClickedId: ', lastClickedId);
+	}
+
 	let products: Product[] = $state([]);
 	let categories: Category[] = $state([]);
 
@@ -161,7 +192,7 @@
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold md:text-5xl lg:text-6xl">
 			Take
-			<Span gradient="tealToLime">Control</Span>
+			<Span class="text-highlight">Control</Span>
 			of Your Products
 		</Heading>
 	</div>
@@ -169,26 +200,17 @@
 	<!-- Product Edit Menu -->
 	<div class="flex justify-center p-3">
 		<ButtonGroup>
-			<Button
-				class="bg-primary-500 text-white hover:bg-primary-600"
-				onclick={() => toggleSelected()}
-			>
+			<Button color="primary" onclick={() => toggleSelected()}>
 				<RefreshOutline class="me-2 h-4 w-4" />
 				Toggle Activation
 			</Button>
 
-			<Button
-				class="bg-primary-500 text-white hover:bg-primary-600"
-				onclick={() => (popupModal = true)}
-			>
+			<Button color="primary" onclick={() => (popupModal = true)}>
 				<DeleteRowOutline class="me-2 h-4 w-4" />
 				Delete
 			</Button>
 
-			<Button
-				class="bg-primary-500 text-white hover:bg-primary-600"
-				href="/admin/productControl/new"
-			>
+			<Button color="primary" href="/admin/productControl/new">
 				<PlusOutline class="h-6 w-6 shrink-0" />
 				Add Product
 			</Button>
@@ -196,11 +218,11 @@
 	</div>
 
 	<!-- Table Card -->
-	<div class="overflow-hidden rounded-xl border bg-white shadow-lg">
-		<Table hoverable striped class="w-full">
-			<TableSearch placeholder="Search by title" hoverable bind:inputValue={searchTerm}>
+	<div class="border-main overflow-hidden rounded-xl border shadow-lg select-none">
+		<Table striped class="w-full">
+			<TableSearch placeholder="Search by title" bind:inputValue={searchTerm}>
 				<TableHead>
-					<TableHeadCell class="text-left">Checkbox</TableHeadCell>
+					<TableHeadCell></TableHeadCell>
 					<TableHeadCell class="text-left">Product</TableHeadCell>
 					<TableHeadCell>Category</TableHeadCell>
 					<TableHeadCell>Status</TableHeadCell>
@@ -210,11 +232,11 @@
 				<TableBody>
 					{#each filteredProducts as product}
 						<TableBodyRow
-							class="cursor-pointer transition hover:bg-gray-100"
-							onclick={() => (window.location.href = `/admin/productControl/${product.id}`)}
+							class="cursor-pointer transition hover:bg-400"
+							onclick={(e) => handleRowClick(e, product.id)}
 						>
 							<!-- Checkbox -->
-							<TableBodyCell class="p-4!">
+							<TableBodyCell class="w-10 p-2!">
 								<Checkbox
 									checked={selectedIds.has(product.id)}
 									onclick={(e) => handleCheckboxClick(e, product.id)}
@@ -260,30 +282,25 @@
 
 	<Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
 		<div class="text-center">
-			<ExclamationCircleOutline class="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-200" />
-			<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+
+			<h3 class="text-main mb-5 text-lg font-normal">
 				Are you sure you want to delete this product?
 			</h3>
 
-			<div class="space-x-2">
+			<div class="flex justify-center gap-3">
 				<Button
 					type="button"
-					class="bg-red-500 text-white hover:bg-red-600"
+					color="primary"
 					onclick={() => {
 						deleteSelected();
 						popupModal = false;
 					}}
 				>
-					Yes, I'm sure
+					Yes, delete
 				</Button>
 
-				<Button
-					type="button"
-					class="bg-gray-200 text-gray-800 hover:bg-gray-300"
-					onclick={() => (popupModal = false)}
-				>
-					No, cancel
-				</Button>
+				<Button type="button" color="ghost" onclick={() => (popupModal = false)}>Cancel</Button>
 			</div>
 		</div>
 	</Modal>

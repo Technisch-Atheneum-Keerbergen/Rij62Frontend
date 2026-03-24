@@ -27,6 +27,8 @@
 
 	let categories: Category[] = [];
 
+	let formError: string | null = null;
+
 	// --- Upload handler ---
 	async function handleUpload(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -49,8 +51,31 @@
 		}
 	}
 
+	function ValidateProduct(product: Product) {
+		if (!product) {
+			return { valid: false, error: 'Product is not loaded' };
+		}
+
+		if (product.price < 0) {
+			return {
+				valid: false,
+				error: 'Price cannot be negative'
+			};
+		}
+
+		return { valid: true };
+	}
+
 	const ApplyChanges = async () => {
 		if (!product) return;
+
+		const validation = ValidateProduct(product);
+
+		if (!validation.valid) {
+			formError = validation.error;
+			return;
+		}
+		formError = null;
 
 		try {
 			if (isNew) {
@@ -139,17 +164,17 @@
 
 							<div>
 								<Label for="Price">Price (€)</Label>
-								<Input id="Price" bind:value={product.price} type="number" />
+								<Input id="Price" bind:value={product.price} type="number" min="0" />
 							</div>
 
 							<div>
 								<Label for="Stock">Stock</Label>
-								<Input id="Stock" bind:value={product.stock} type="number" />
+								<Input id="Stock" bind:value={product.stock} type="number" min="0" />
 							</div>
 
 							<div>
 								<Label for="Btw">Btw</Label>
-								<Input id="Btw" bind:value={product.btw} type="number" />
+								<Input id="Btw" bind:value={product.btw} type="number" min="0" />
 							</div>
 							<div>
 								<Label for="Category">Category</Label>
@@ -216,4 +241,7 @@
 			</div>
 		</div>
 	</div>
+	{#if formError}
+		<p class="text-red-500">{formError}</p>
+	{/if}
 </div>
