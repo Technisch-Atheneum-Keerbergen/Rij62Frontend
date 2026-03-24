@@ -92,7 +92,7 @@
 </main>
 
 <footer class="mt-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-	<div class="mx-auto max-w-screen-xl px-4">
+	<div class="mx-auto max-w-7xl px-4">
 		<hr class="mb-6 border-gray-200 dark:border-gray-700" />
 		<p>© 2026 Rij 62. All rights reserved.</p>
 	</div>

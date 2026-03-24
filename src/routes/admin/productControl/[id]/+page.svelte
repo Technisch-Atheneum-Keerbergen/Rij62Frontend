@@ -126,7 +126,7 @@
 	</div>
 
 	<div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
-		<form class="space-y-6 rounded-xl border bg-white p-8 shadow-2xl">
+		<form class="border-main space-y-6 rounded-xl border bg-50 p-8 shadow-2xl">
 			<Tabs tabStyle="pill">
 				<!-- Back button -->
 				<Button
@@ -182,7 +182,7 @@
 								<select
 									id="Category"
 									bind:value={product.categoryId}
-									class="w-full rounded-lg border p-2"
+									class="border-main text-main w-full rounded-lg border bg-50 p-2"
 								>
 									<option value={0} disabled>Select a category</option>
 
@@ -193,10 +193,12 @@
 									{/each}
 								</select>
 							</div>
-							<div class="flex items-center justify-between rounded-lg border p-4">
+							<div
+								class="border-main flex items-center justify-between rounded-lg border bg-100 p-4"
+							>
 								<div>
 									<Label for="IsAvailable">Product Available</Label>
-									<p class="text-sm text-gray-500">Toggle product visibility</p>
+									<p class="text-muted text-sm">Toggle product visibility</p>
 								</div>
 
 								<Toggle id="IsAvailable" bind:checked={product.isAvailable} />
@@ -216,19 +218,19 @@
 				</TabItem>
 
 				<TabItem title="History">
-					<div class="p-4 text-gray-500">No history APIs available yet. Will be added later.</div>
+					<div class="text-muted p-4">No history APIs available yet. Will be added later.</div>
 				</TabItem>
 			</Tabs>
 		</form>
 
-		<div class="rounded-xl border bg-white p-6 shadow-2xl">
-			<h2 class="mb-4 text-lg font-semibold">Product Preview</h2>
+		<div class="border-main rounded-xl border bg-50 p-6 shadow-2xl">
+			<h2 class="text-main mb-4 text-lg font-semibold">Product Preview</h2>
 
 			{#if product?.imgURL && !imageError}
 				<!-- svelte-ignore a11y_missing_attribute -->
 				<img
 					src={product.imgURL}
-					class="w-full rounded-lg object-cover"
+					class="border-main w-full rounded-lg border object-cover"
 					on:error={() => (imageError = true)}
 				/>
 			{:else}
