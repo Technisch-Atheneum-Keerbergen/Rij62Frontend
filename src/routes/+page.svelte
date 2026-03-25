@@ -11,6 +11,7 @@
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
+	import { mockProducts } from './mockProducts.ts';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -23,79 +24,6 @@
 		{ id: 0, name: { English: 'Food', Dutch: 'Eten' }, screenId: 1 },
 		{ id: 1, name: { English: 'Snacks', Dutch: 'Snacks' }, screenId: 1 },
 		{ id: 2, name: { English: 'Drinks', Dutch: 'Dranken' }, screenId: 1 }
-	];
-
-	const mockProducts: Product[] = [
-		{
-			id: 1,
-			title: { English: 'Cappuccino', Dutch: 'Cappuccino' },
-			description: {
-				English: 'Fresh espresso with steamed milk and foam.',
-				Dutch: 'Verse espresso met gestoomde melk en schuim.'
-			},
-			price: 3.2,
-			btw: 6,
-			stock: 25,
-			isAvailable: true,
-			imgURL: '/images/cappuccino.jpg',
-			categoryId: 2
-		},
-		{
-			id: 2,
-			title: { English: 'Latte', Dutch: 'Latte' },
-			description: {
-				English: 'Smooth coffee with lots of steamed milk.',
-				Dutch: 'Zachte koffie met veel gestoomde melk.'
-			},
-			price: 3.5,
-			btw: 6,
-			stock: 20,
-			isAvailable: true,
-			imgURL: '/images/latte.jpg',
-			categoryId: 2
-		},
-		{
-			id: 3,
-			title: { English: 'Cheese Sandwich', Dutch: 'Kaasbroodje' },
-			description: {
-				English: 'Crispy bread with melted cheese.',
-				Dutch: 'Knapperig broodje met gesmolten kaas.'
-			},
-			price: 4.5,
-			btw: 6,
-			stock: 12,
-			isAvailable: true,
-			imgURL: '/images/sandwich.jpg',
-			categoryId: 0
-		},
-		{
-			id: 4,
-			title: { English: 'Chicken Wrap', Dutch: 'Kip Wrap' },
-			description: {
-				English: 'Grilled chicken with fresh vegetables.',
-				Dutch: 'Gegrilde kip met verse groenten.'
-			},
-			price: 6.8,
-			btw: 6,
-			stock: 10,
-			isAvailable: true,
-			imgURL: '/images/wrap.jpg',
-			categoryId: 0
-		},
-		{
-			id: 5,
-			title: { English: 'Chocolate Muffin', Dutch: 'Chocolade Muffin' },
-			description: {
-				English: 'Soft muffin with rich chocolate.',
-				Dutch: 'Zachte muffin met rijke chocolade.'
-			},
-			price: 2.8,
-			btw: 6,
-			stock: 15,
-			isAvailable: true,
-			imgURL: '/images/muffin.jpg',
-			categoryId: 1
-		}
 	];
 
 	/* ---------------- FETCHING ---------------- */

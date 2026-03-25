@@ -1,4 +1,5 @@
 import type { MultiLangString } from './multilangstring';
+import type { ProductStep } from './productstep';
 
 export interface Product {
 	id: number;
@@ -10,4 +11,5 @@ export interface Product {
 	btw: number;
 	imgURL: string;
 	categoryId: number;
+	steps: ProductStep[];
 }
