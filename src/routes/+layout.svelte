@@ -1,18 +1,13 @@
 <script lang="ts">
 	import SvgXmark from './../lib/components/SVG/SvgXmark.svelte';
-	import { fade, fly, slide } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 	import { auth } from '$lib/stores/auth';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
-	import Button from '$lib/components/Button.svelte';
 	import './layout.css';
 	import 'flowbite/dist/flowbite.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import type { Snippet } from 'svelte';
 	import UserMenu from '$lib/components/Misc/UserMenu.svelte';
 	import SvgMenu from '$lib/components/SVG/SvgMenu.svelte';
-	import { cubicInOut } from 'svelte/easing';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -36,22 +31,24 @@
 			<a href="/" class="text-xl font-medium text-primary-500 dark:text-primary-300"
 				>Rij<span class="font-bold text-secondary-500 dark:text-secondary-300">62</span></a
 			>
-
-			<div class="hidden flex-row gap-6 md:flex">
-				{#each navItems as item}
-					{#if !item.reqAuth || $auth.user}
-						<a
-							href={item.href}
-							class="rounded-lg transition-all hover:text-primary-900 dark:hover:text-primary-200"
-							onclick={() => (sideMenuIsOpen = false)}
-						>
-							{item.name}
-						</a>
-					{/if}
-				{/each}
+			<div class=" hidden items-center gap-6 md:flex">
+				<div class="flex flex-row gap-6">
+					{#each navItems as item}
+						{#if !item.reqAuth || $auth.user}
+							<a
+								href={item.href}
+								class="rounded-lg transition-all hover:text-primary-900 dark:hover:text-primary-200"
+								onclick={() => (sideMenuIsOpen = false)}
+							>
+								{item.name}
+							</a>
+						{/if}
+					{/each}
+				</div>
+				<div class="flex flex-row rounded-lg">
+					<UserMenu />
+				</div>
 			</div>
-			<div class="hidden flex-row md:flex"><UserMenu /></div>
-
 			<div class="relative block h-10 w-10 md:hidden">
 				<button
 					class="stroke-main absolute flex cursor-pointer items-center justify-center rounded-xl transition-all active:scale-95"
