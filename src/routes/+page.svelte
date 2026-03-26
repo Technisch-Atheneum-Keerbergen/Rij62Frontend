@@ -86,7 +86,23 @@
 
 	function addToBasket() {
 		if (!selectedProduct) return;
-		basket.add(selectedProduct, 1);
+
+		const choices = stepStates.flatMap((stepState, i) => {
+			const step = selectedProduct!.steps[i];
+			return stepState.options
+				.filter((o) => o.selected)
+				.map((o) => {
+					const raw = step.options.find((opt) => opt.id === o.id)!;
+					return {
+						id: o.id,
+						title: raw.title[currentLanguage],
+						price: raw.price,
+						amount: o.amount || 1
+					};
+				});
+		});
+
+		basket.add(selectedProduct, choices);
 		itemIsInBasket = true;
 	}
 

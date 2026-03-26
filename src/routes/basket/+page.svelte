@@ -5,26 +5,12 @@
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
-	const pending = new Set<number>();
-
-	function withGuard(itemId: number, fn: () => void) {
-		if (pending.has(itemId)) return;
-		pending.add(itemId);
-		fn();
-		setTimeout(() => pending.delete(itemId), 100);
+	function increase(itemIndex: number) {
+		basket.increaseAt(itemIndex);
 	}
 
-	function increase(itemId: number) {
-		withGuard(itemId, () => {
-			const item = $basket.find((i) => i.product.id === itemId);
-			if (item) basket.add(item.product, 1);
-		});
-	}
-
-	function decrease(itemId: number) {
-		withGuard(itemId, () => {
-			basket.remove(itemId, 1);
-		});
+	function decrease(itemIndex: number) {
+		basket.removeAt(itemIndex);
 	}
 </script>
 
@@ -35,7 +21,7 @@
 		<p class="py-5 text-center text-lg opacity-60">Your basket is empty.</p>
 	{:else}
 		<ul class="space-y-3">
-			{#each $basket as item (item.product.id)}
+			{#each $basket as item, i (i)}
 				<li
 					class="flex items-center justify-between rounded-2xl border-2 border-300 bg-200 p-2 shadow-sm"
 				>
@@ -47,18 +33,27 @@
 						/>
 						<div>
 							<p class="font-medium">{item.product.title[currentLanguage]}</p>
-							<p class="text-sm opacity-70">
-								€{(item.product.price * item.quantity).toFixed(2)}
+							{#if item.choices.length > 0}
+								<p class="text-muted text-xs opacity-80">
+									{item.choices
+										.map((c) => (c.amount > 1 ? `${c.title} x${c.amount}` : c.title))
+										.join(', ')}
+								</p>
+							{/if}
+							<p class="text-muted text-sm">
+								€{(
+									(item.product.price +
+										item.choices.reduce(
+											(previous, basketChoice) =>
+												previous + basketChoice.price * basketChoice.amount,
+											0
+										)) *
+									item.quantity
+								).toFixed(2)}
 							</p>
 						</div>
 					</div>
-
-					<AmountController
-						id={item.product.id}
-						{decrease}
-						{increase}
-						currentAmount={item.quantity}
-					/>
+					<AmountController id={i} {decrease} {increase} currentAmount={item.quantity} />
 				</li>
 			{/each}
 		</ul>
@@ -76,7 +71,6 @@
 	<Button class="flex-1" variant="ghost" size="sm" onclick={() => (window.location.href = '/')}>
 		Continue shopping
 	</Button>
-
 	<Button
 		class="flex-1 py-1.5"
 		size="sm"
