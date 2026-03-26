@@ -12,6 +12,8 @@
 	import { fade, fly } from 'svelte/transition';
 	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
 	import { mockProducts } from './mockProducts.ts';
+	import CheckCard from '$lib/components/Cards/CheckCard.svelte';
+	import RadioCard from '$lib/components/Cards/RadioCard.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -75,20 +77,10 @@
 		step = 2;
 	}
 
-	function getContinueText() {
-		if (!selectedProduct) return 'Continue';
-		if (step === 0) return 'Customize';
-		if (step === 1) return 'Review';
-		return 'Add to basket';
-	}
-
-	function handleContinue() {
-		if (step === 2 && selectedProduct) {
-			basket.add(selectedProduct, 1);
-			itemIsInBasket = true;
-		} else {
-			step++;
-		}
+	function addToBasket() {
+		if (!selectedProduct) return;
+		basket.add(selectedProduct, 1);
+		itemIsInBasket = true;
 	}
 
 	/* ---------------- LIFECYCLE ---------------- */
@@ -168,6 +160,28 @@
 				alt={selectedProduct.title[currentLanguage]}
 				class="mb-3 h-40 w-full rounded-2xl object-cover"
 			/>
+			<div class="flex max-h-[40vh] flex-col overflow-auto">
+				{#each selectedProduct.steps as step}
+					<h1>{step.title[currentLanguage]}</h1>
+					<div class="flex flex-row">
+						{#each step.options as option}
+							{#if step.multipleChoice}
+								<CheckCard
+									title={option.title[currentLanguage]}
+									group={String(step.id)}
+									imageSrc={option.imgURL}
+								></CheckCard>
+							{:else}
+								<RadioCard
+									title={option.title[currentLanguage]}
+									group={String(step.id)}
+									imageSrc={option.imgURL}
+								></RadioCard>
+							{/if}
+						{/each}
+					</div>
+				{/each}
+			</div>
 
 			<div class="ml-1">
 				<h2 class="text-lg font-semibold">
@@ -182,9 +196,7 @@
 			</div>
 
 			{#if !itemIsInBasket}
-				<Button class="w-full" size="lg" onclick={handleContinue}>
-					{getContinueText()}
-				</Button>
+				<Button class="w-full" size="lg" onclick={addToBasket}>Add to basket</Button>
 			{:else}
 				<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
 			{/if}
