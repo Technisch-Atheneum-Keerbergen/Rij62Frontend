@@ -54,7 +54,7 @@ export const mockProducts: Product[] = [
 						id: 22,
 						title: { English: 'Oat milk', Dutch: 'Havermelk' },
 						description: { English: '', Dutch: '' },
-						price: 0.5,
+						price: 0,
 						btw: 6,
 						stock: 999,
 						isAvailable: true,
@@ -113,7 +113,7 @@ export const mockProducts: Product[] = [
 						btw: 6,
 						stock: 999,
 						isAvailable: true,
-						imgURL: '/images/sauce.jpg',
+						imgURL: '/images/garlic.jpg',
 						categoryId: 1,
 						steps: []
 					},
@@ -125,7 +125,7 @@ export const mockProducts: Product[] = [
 						btw: 6,
 						stock: 999,
 						isAvailable: true,
-						imgURL: '/images/sauce.jpg',
+						imgURL: '/images/spicy.jpg',
 						categoryId: 1,
 						steps: []
 					}
@@ -144,6 +144,38 @@ export const mockProducts: Product[] = [
 						title: { English: 'Extra cheese', Dutch: 'Extra kaas' },
 						description: { English: '', Dutch: '' },
 						price: 1,
+						btw: 6,
+						stock: 999,
+						isAvailable: true,
+						imgURL: '/images/cheese.jpg',
+						categoryId: 1,
+						steps: []
+					},
+					{
+						id: 44,
+						title: { English: 'Avocado', Dutch: 'Avocado' },
+						description: { English: '', Dutch: '' },
+						price: 1.5,
+						btw: 6,
+						stock: 999,
+						isAvailable: true,
+						imgURL: '/images/avocado.jpg',
+						categoryId: 1,
+						steps: []
+					}
+				]
+			},
+			{
+				id: 402,
+				title: { English: 'Extra toppings', Dutch: 'Extra toppings' },
+				multipleChoice: false,
+				defaultOptionId: null,
+				options: [
+					{
+						id: 43,
+						title: { English: 'Extra cheese', Dutch: 'Extra kaas' },
+						description: { English: '', Dutch: '' },
+						price: 0,
 						btw: 6,
 						stock: 999,
 						isAvailable: true,

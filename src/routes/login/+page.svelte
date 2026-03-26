@@ -102,7 +102,7 @@
 					<input
 						class="mx-1.5 w-16 justify-center rounded-lg border-2 bg-200"
 						type="number"
-						value="0"
+						value="1"
 						id="debugLoginId"
 					/>
 					<Button
