@@ -13,24 +13,23 @@
 	let success = $state(false);
 
 	async function bypassPayment() {
-		const items: CreateOrderItem[] = [];
-		for (const item of $basket) {
-			items.push({ productId: item.product.id, choices: [] });
-		}
+		const items: CreateOrderItem[] = $basket.map((item) => ({
+			productId: item.product.id,
+			choices: item.choices.flatMap((c) => Array(c.amount).fill(c.id))
+		}));
 
 		const body: CreateOrder = {
 			pickupTime: Math.round((pickupTime ? pickupTime : new Date()).getTime() * 0.001),
-			tableNumber: null,
-			items: items
+			tableNumber: 0,
+			items
 		};
 
 		let orderId = null;
+		console.log(body);
 		try {
 			orderId = await apiFetch('/order', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body)
 			});
 		} catch (e) {
@@ -38,13 +37,10 @@
 		}
 
 		basket.clear();
-
-		pendingOrderStore.add({
-			id: orderId
-		});
-
+		pendingOrderStore.add({ id: orderId });
 		success = true;
 		setTimeout(() => {
+			return;
 			location.href = '/basket';
 		}, 1000);
 	}
