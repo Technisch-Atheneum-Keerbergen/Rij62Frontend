@@ -128,10 +128,11 @@
 		title="Add new table"
 		onaction={async ({ action }) => {
 			if (action === 'success') {
-				tableNumber++;
 				if (!(await addTable(tableNumber))) {
 					alert('Failed to create table');
+					return;
 				}
+				tableNumber++;
 			}
 		}}
 		form

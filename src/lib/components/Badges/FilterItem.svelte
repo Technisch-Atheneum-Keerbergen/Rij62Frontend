@@ -31,7 +31,7 @@
 </script>
 
 <label class="inline-flex" {...restProps}>
-	<input type="checkbox" name={group} {value} bind:checked class="peer hidden" />
+	<input type="radio" name={group} {value} class="peer hidden" />
 
 	<span class={baseStyles}>
 		{#if children}

@@ -130,7 +130,8 @@
 				description: { English: '', Dutch: '' },
 				imgURL: '/images/blueberries.jpg',
 				btw: 21,
-				categoryId: 0
+				categoryId: 0,
+				steps: []
 			};
 			isNew = true;
 		} else {
