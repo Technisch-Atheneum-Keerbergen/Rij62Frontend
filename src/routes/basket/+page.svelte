@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '$lib/components/Button.svelte';
+	import AmountController from '$lib/components/Misc/AmountController.svelte';
 	import { basket, basketTotal } from '$lib/stores/basket';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
@@ -52,29 +53,12 @@
 						</div>
 					</div>
 
-					<div class="flex items-center gap-2 text-lg">
-						<button
-							class="cursor-pointer rounded-md px-2 transition-all active:scale-95 active:bg-100"
-							onclick={(e) => {
-								e.stopPropagation();
-								decrease(item.product.id);
-							}}
-						>
-							-
-						</button>
-
-						<span class="rounded-md bg-100 px-2">{item.quantity}</span>
-
-						<button
-							class="cursor-pointer rounded-md px-2 transition-all active:scale-95 active:bg-100"
-							onclick={(e) => {
-								e.stopPropagation();
-								increase(item.product.id);
-							}}
-						>
-							+
-						</button>
-					</div>
+					<AmountController
+						id={item.product.id}
+						{decrease}
+						{increase}
+						currentAmount={item.quantity}
+					/>
 				</li>
 			{/each}
 		</ul>

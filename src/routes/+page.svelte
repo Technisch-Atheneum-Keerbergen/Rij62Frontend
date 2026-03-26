@@ -12,6 +12,8 @@
 	import { fade, fly } from 'svelte/transition';
 	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
 	import { mockProducts } from './mockProducts.ts';
+	import StepGroup from '$lib/components/Misc/StepGroup.svelte';
+	import { createStepStates } from '$lib/stores/stepState.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -46,8 +48,9 @@
 
 	let selectedProduct = $state<Product | null>(null);
 	let isSheetOpen = $state(false);
-	let step = $state(0);
 	let itemIsInBasket = $state(false);
+
+	let stepStates = $state<ReturnType<typeof createStepStates>>([]);
 
 	/* ---------------- DERIVED ---------------- */
 
@@ -67,28 +70,24 @@
 		selectedCategories = next;
 	}
 
+	function selectCategory(id: number) {
+		const next = new Set<number>();
+		next.add(id);
+		selectedCategories = next;
+	}
+
 	async function openProduct(id: number) {
 		const products = await productsPromise;
 		selectedProduct = products.find((p) => p.id === id) ?? null;
+		stepStates = createStepStates(selectedProduct?.steps ?? []);
 		isSheetOpen = true;
 		itemIsInBasket = false;
-		step = 2;
 	}
 
-	function getContinueText() {
-		if (!selectedProduct) return 'Continue';
-		if (step === 0) return 'Customize';
-		if (step === 1) return 'Review';
-		return 'Add to basket';
-	}
-
-	function handleContinue() {
-		if (step === 2 && selectedProduct) {
-			basket.add(selectedProduct, 1);
-			itemIsInBasket = true;
-		} else {
-			step++;
-		}
+	function addToBasket() {
+		if (!selectedProduct) return;
+		basket.add(selectedProduct, 1);
+		itemIsInBasket = true;
 	}
 
 	/* ---------------- LIFECYCLE ---------------- */
@@ -113,7 +112,7 @@
 					value={String(category.id)}
 					checked={selectedCategories.has(category.id)}
 					size="lg"
-					onchange={() => toggleCategory(category.id)}
+					onchange={() => selectCategory(category.id)}
 				>
 					{category.name[currentLanguage]}
 				</FilterItem>
@@ -131,8 +130,8 @@
 					<Card
 						title={product.title[currentLanguage]}
 						imageSrc={product.imgURL}
-						price={`${product.price.toFixed(2)}`}
-						onselect={() => openProduct(product.id)}
+						price={product.price}
+						onclick={() => openProduct(product.id)}
 					/>
 				{/each}
 			{:else}
@@ -160,34 +159,40 @@
 
 		<!-- sheet -->
 		<div
-			class="relative w-full max-w-md rounded-t-3xl bg-100 p-4 shadow-xl"
+			class="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl bg-100 p-4 shadow-xl"
 			transition:fly={{ y: 200, duration: 150, easing: cubicInOut }}
 		>
 			<img
 				src={selectedProduct.imgURL}
 				alt={selectedProduct.title[currentLanguage]}
-				class="mb-3 h-40 w-full rounded-2xl object-cover"
+				class="mb-3 h-40 w-full flex-none rounded-2xl object-cover"
 			/>
-
-			<div class="ml-1">
-				<h2 class="text-lg font-semibold">
-					{selectedProduct.title[currentLanguage]}
-				</h2>
-				<p class="text-muted mb-2">
-					€{selectedProduct.price.toFixed(2)}
-				</p>
-				<p class="text-muted mb-4">
-					{selectedProduct.description[currentLanguage]}
-				</p>
+			<div class="flex flex-1 flex-col overflow-y-auto">
+				{#each selectedProduct.steps as step, i}
+					<h1 class="mt-1 mb-0 ml-1">{step.title[currentLanguage]}</h1>
+					<StepGroup {step} state={stepStates[i]} language={currentLanguage} />
+				{/each}
 			</div>
 
-			{#if !itemIsInBasket}
-				<Button class="w-full" size="lg" onclick={handleContinue}>
-					{getContinueText()}
-				</Button>
-			{:else}
-				<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
-			{/if}
+			<div class="flex-none">
+				<div class="ml-1">
+					<h2 class="text-lg font-semibold">
+						{selectedProduct.title[currentLanguage]}
+					</h2>
+					<p class="text-muted mb-2">
+						€{selectedProduct.price.toFixed(2)}
+					</p>
+					<p class="text-muted mb-4">
+						{selectedProduct.description[currentLanguage]}
+					</p>
+				</div>
+
+				{#if !itemIsInBasket}
+					<Button class="w-full" size="lg" onclick={addToBasket}>Add to basket</Button>
+				{:else}
+					<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
+				{/if}
+			</div>
 		</div>
 	</div>
 {/if}
