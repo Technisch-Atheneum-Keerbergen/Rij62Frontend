@@ -98,7 +98,7 @@
 	</nav>
 </header>
 
-<main class="container mx-auto mt-16 min-h-[80vh] max-w-2xl p-2">{@render children()}</main>
+<main class="container mx-auto mt-16 min-h-[80vh] p-2">{@render children()}</main>
 
 <footer class="text-muted mt-auto py-8 text-center text-sm">
 	<div class="mx-auto max-w-7xl px-4">
