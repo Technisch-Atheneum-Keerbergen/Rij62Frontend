@@ -43,7 +43,6 @@
 
 		try {
 			const imageId = await apiUpload('/image', formData);
-
 			if (product) {
 				product.imgURL = getImageUrl(imageId);
 			}
