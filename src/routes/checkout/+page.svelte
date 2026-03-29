@@ -41,7 +41,7 @@
 		success = true;
 		setTimeout(() => {
 			return;
-			location.href = '/basket';
+			location.href = '/order-success';
 		}, 1000);
 	}
 
@@ -50,13 +50,18 @@
 	});
 </script>
 
-{#if success}
-	<FireWork message="Success"></FireWork>
-{/if}
-
 <label for="pickupTime">Choose a time for your order to be delivered</label>
 <TimeInput bind:value={pickupTime} id="pickupTime"></TimeInput>
 
 <Button class="w-full flex-1 py-1.5" size="sm" variant="primary" onclick={bypassPayment}>
 	bypass payment
 </Button>
+
+{#if success}
+	<h1 class="text-center text-xl">
+		Your order has been registered, you should get redirected soon, if this doesn't happen, click <a
+			href="/order-success"
+			class="font-bold text-primary-500 underline">here</a
+		>
+	</h1>
+{/if}

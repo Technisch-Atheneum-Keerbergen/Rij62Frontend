@@ -1,10 +1,15 @@
 import { writable } from 'svelte/store';
-import type { BasketItem } from './basket';
-import type { Product } from '$lib/api/types/product';
 import { browser } from '$app/environment';
 
 export type Order = {
 	id: number;
+};
+
+export type OrderStatus = 'Ready' | 'Pending' | 'InProgress' | 'PickedUp';
+
+export type OrderItemStatus = {
+	orderItemId: number;
+	status: OrderStatus;
 };
 
 const STORAGE_KEY = 'pendingOrders';
