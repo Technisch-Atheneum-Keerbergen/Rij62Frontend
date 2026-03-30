@@ -166,72 +166,100 @@
 
 				<TabItem open title="Product Profile">
 					{#if product}
-						<div class="space-y-5">
-							{#each Object.keys(product.title) as lang (lang)}
+						<div class="border-main space-y-6 rounded-xl border bg-100 p-6 shadow-lg">
+							<!-- Title Section -->
+							<div>
+								<h3 class="text-main text-lg font-semibold">General Information</h3>
+							</div>
+
+							<div class="space-y-5">
+								{#each Object.keys(product.title) as lang (lang)}
+									<div>
+										<Label for="Title_{lang}">Title {lang}</Label>
+										<Input
+											id="Title_{lang}"
+											bind:value={product.title[lang as keyof typeof product.title]}
+											type="text"
+											class="border-main bg-50"
+										/>
+									</div>
+								{/each}
+
+								{#each Object.keys(product.description) as lang (lang)}
+									<div>
+										<Label for="Description_{lang}">Description {lang}</Label>
+										<Input
+											id="Description_{lang}"
+											bind:value={product.description[lang as keyof typeof product.description]}
+											type="text"
+											class="border-main bg-50"
+										/>
+									</div>
+								{/each}
+
 								<div>
-									<Label for="Title_{lang}">Title {lang}</Label>
+									<Label for="Price">Price (€)</Label>
 									<Input
-										id="Title_{lang}"
-										bind:value={product.title[lang as keyof typeof product.title]}
-										type="text"
+										id="Price"
+										bind:value={product.price}
+										type="number"
+										min="0"
+										class="border-main bg-50"
 									/>
 								</div>
-							{/each}
 
-							{#each Object.keys(product.description) as lang (lang)}
 								<div>
-									<Label for="Description_{lang}">Description {lang}</Label>
+									<Label for="Stock">Stock</Label>
 									<Input
-										id="Description_{lang}"
-										bind:value={product.description[lang as keyof typeof product.description]}
-										type="text"
+										id="Stock"
+										bind:value={product.stock}
+										type="number"
+										min="0"
+										class="border-main bg-50"
 									/>
 								</div>
-							{/each}
 
-							<div>
-								<Label for="Price">Price (€)</Label>
-								<Input id="Price" bind:value={product.price} type="number" min="0" />
-							</div>
+								<div>
+									<Label for="Btw">Btw</Label>
+									<Input
+										id="Btw"
+										bind:value={product.btw}
+										type="number"
+										min="0"
+										max="100"
+										class="border-main bg-50"
+									/>
+								</div>
 
-							<div>
-								<Label for="Stock">Stock</Label>
-								<Input id="Stock" bind:value={product.stock} type="number" min="0" />
-							</div>
+								<div>
+									<Label for="Category">Category</Label>
+									<select
+										id="Category"
+										bind:value={product.categoryId}
+										class="border-main text-main w-full rounded-lg border bg-50 p-2"
+									>
+										<option value={0} disabled>Select a category</option>
 
-							<div>
-								<Label for="Btw">Btw</Label>
-								<Input id="Btw" bind:value={product.btw} type="number" min="0" max="100" />
-							</div>
-							<div>
-								<Label for="Category">Category</Label>
+										{#each categories as category}
+											<option value={category.id}>
+												{category.name[Language.English]}
+											</option>
+										{/each}
+									</select>
+								</div>
 
-								<select
-									id="Category"
-									bind:value={product.categoryId}
-									class="border-main text-main w-full rounded-lg border bg-50 p-2"
+								<div
+									class="border-main flex items-center justify-between rounded-lg border bg-100 p-4"
 								>
-									<option value={0} disabled>Select a category</option>
+									<div>
+										<Label for="IsAvailable">Product Available</Label>
+										<p class="text-muted text-sm">Toggle product visibility</p>
+									</div>
 
-									{#each categories as category}
-										<option value={category.id}>
-											{category.name[Language.English]}
-										</option>
-									{/each}
-								</select>
-							</div>
-							<div
-								class="border-main flex items-center justify-between rounded-lg border bg-100 p-4"
-							>
-								<div>
-									<Label for="IsAvailable">Product Available</Label>
-									<p class="text-muted text-sm">Toggle product visibility</p>
+									<Toggle id="IsAvailable" bind:checked={product.isAvailable} />
 								</div>
-
-								<Toggle id="IsAvailable" bind:checked={product.isAvailable} />
 							</div>
 						</div>
-
 						<div class="mt-8 flex justify-end">
 							<Button
 								type="button"
@@ -243,7 +271,100 @@
 						</div>
 					{/if}
 				</TabItem>
+				<TabItem title="Product Steps">
+					{#if product?.steps?.length}
+						<div class="space-y-6">
+							{#each product.steps as step, i (step.id)}
+								<div class="border-main space-y-5 rounded-xl border bg-100 p-6 shadow-lg">
+									<!-- Step header -->
+									<div class="flex items-center justify-between">
+										<h3 class="text-main text-lg font-semibold">
+											Step {i + 1}
+										</h3>
 
+										<Toggle bind:checked={step.multipleChoice} />
+									</div>
+
+									<p class="text-muted text-sm">Allow multiple selections</p>
+
+									<!-- Step titles -->
+									<div class="grid gap-4 md:grid-cols-2">
+										{#each Object.keys(step.title) as lang (lang)}
+											<div>
+												<Label>Title {lang}</Label>
+												<Input class="border-main bg-50" bind:value={step.title[lang]} />
+											</div>
+										{/each}
+									</div>
+
+									<!-- Options -->
+									{#if step.options?.length}
+										<div class="border-main space-y-4 rounded-lg border bg-50 p-4">
+											<h4 class="text-main text-sm font-semibold">Options</h4>
+
+											{#each step.options as option (option.id)}
+												<div class="border-main space-y-3 rounded-lg border bg-100 p-4">
+													<div class="grid gap-3 md:grid-cols-2">
+														{#each Object.keys(option.title) as lang (lang)}
+															<Input
+																class="border-main bg-50"
+																bind:value={option.title[lang]}
+																placeholder={`Title ${lang}`}
+															/>
+														{/each}
+													</div>
+
+													<div class="grid gap-3 md:grid-cols-3">
+														<div>
+															<Label>Price (€)</Label>
+															<Input
+																type="number"
+																class="border-main bg-50"
+																value={option.price}
+																on:input={(e) => (option.price = Number(e.currentTarget.value))}
+															/>
+														</div>
+
+														<div>
+															<Label>Stock</Label>
+															<Input
+																type="number"
+																class="border-main bg-50"
+																value={option.stock}
+																on:input={(e) => (option.stock = Number(e.currentTarget.value))}
+															/>
+														</div>
+
+														<div class="flex items-end justify-between">
+															<div>
+																<Label>Available</Label>
+																<p class="text-muted text-xs">Visible to users</p>
+															</div>
+															<Toggle bind:checked={option.isAvailable} />
+														</div>
+													</div>
+												</div>
+											{/each}
+										</div>
+									{/if}
+								</div>
+							{/each}
+						</div>
+						<div class="mt-8 flex justify-end">
+							<Button
+								type="button"
+								onclick={ApplyChanges}
+								class="bg-primary-500 text-white hover:bg-primary-600"
+							>
+								Apply Changes
+							</Button>
+						</div>
+					{:else}
+						<div class="border-main rounded-xl border bg-100 p-6 text-center">
+							<p class="text-muted">No steps available</p>
+						</div>
+					{/if}
+				</TabItem>
 				<TabItem title="History">
 					<div class="text-muted p-4">No history APIs available yet. Will be added later.</div>
 				</TabItem>
