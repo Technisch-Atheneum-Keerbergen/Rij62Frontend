@@ -118,7 +118,6 @@
 		// Load categories first
 		categories = (await apiFetch('/category')) as Category[];
 
-		// Check route
 		if ($page.params.id === 'new') {
 			product = {
 				id: 0,
@@ -134,8 +133,12 @@
 			};
 			isNew = true;
 		} else {
-			const products = (await apiFetch('/product')) as Product[];
-			product = products.find((p) => p.id.toString() === $page.params.id) ?? null;
+			try {
+				product = (await apiFetch(`/product/${$page.params.id}`)) as Product;
+			} catch (err) {
+				console.error('[Product Fetch] Failed:', err);
+				product = null;
+			}
 		}
 	});
 </script>

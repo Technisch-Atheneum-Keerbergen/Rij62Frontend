@@ -132,6 +132,5 @@ export async function apiUpload(endpoint: string, formData: FormData) {
 	return parseJSONSafe(res) || (await res.text());
 }
 export function getImageUrl(id: string) {
-	return `${API_BASE_URL}/api/image/${id}`;
+	return `${API_BASE_URL}/image/${id}`;
 }
-
