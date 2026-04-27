@@ -5,7 +5,8 @@
 	const controlTypes = [
 		{ type: 'product', description: 'Manage all products and inventory.' },
 		{ type: 'screen', description: 'Configure screens and displays.' },
-		{ type: 'table', description: 'Edit tables and datasets.' }
+		{ type: 'table', description: 'Edit tables and datasets.' },
+		{ type: 'category', description: 'Edit all available categories' }
 	];
 </script>
 
