@@ -20,12 +20,11 @@
 
 		const body: CreateOrder = {
 			pickupTime: Math.round((pickupTime ? pickupTime : new Date()).getTime() * 0.001),
-			tableNumber: 0,
+			tableNumber: null,
 			items
 		};
 
 		let orderId = null;
-		console.log(body);
 		try {
 			orderId = await apiFetch('/order', {
 				method: 'POST',
@@ -37,7 +36,11 @@
 		}
 
 		basket.clear();
-		pendingOrderStore.add({ id: orderId });
+		if (orderId == null) {
+			success = false;
+			return;
+		}
+		pendingOrderStore.add(orderId);
 		success = true;
 		setTimeout(() => {
 			return;

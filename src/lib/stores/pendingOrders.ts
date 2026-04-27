@@ -2,17 +2,15 @@ import { writable } from 'svelte/store';
 import type { BasketItem } from './basket';
 import type { Product } from '$lib/api/types/product';
 import { browser } from '$app/environment';
-
-export type Order = {
-	id: number;
-};
+import type { OrderId } from '$lib/api/types/order';
 
 const STORAGE_KEY = 'pendingOrders';
 
-function loadPendingOrders(): Order[] {
+function loadPendingOrders(): OrderId[] {
 	try {
-		const data = localStorage.getItem(STORAGE_KEY);
-		return data ? JSON.parse(data) : [];
+		const raw = localStorage.getItem(STORAGE_KEY);
+		if (!raw) return [];
+		return JSON.parse(raw) as OrderId[];
 	} catch (err) {
 		console.error('Failed to load pending orders:', err);
 		return [];
@@ -20,9 +18,8 @@ function loadPendingOrders(): Order[] {
 }
 
 function createPendingOrderStore() {
-	const { subscribe, update, set } = writable<Order[]>(loadPendingOrders());
+	const { subscribe, update, set } = writable<OrderId[]>(loadPendingOrders());
 
-	// persist automatically
 	subscribe((items) => {
 		if (browser) {
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -32,7 +29,7 @@ function createPendingOrderStore() {
 	return {
 		subscribe,
 
-		add(order: Order) {
+		add(order: OrderId) {
 			update((items) => {
 				items.push(order);
 				return items;
