@@ -28,6 +28,7 @@
 	let imageError = $state(false);
 	let categories = $state<Category[]>([]);
 	let SavedProduct = $state(false);
+	let allProducts = $state<Product[]>([]);
 
 	let formError = $state<string | null>(null);
 	let popupOpen = $state(false);
@@ -50,6 +51,23 @@
 		} catch (err) {
 			console.error('[Upload] Failed:', err);
 			imageError = true;
+		}
+	}
+
+	async function handleOptionUpload(event: Event, stepIndex: number, optionIndex: number) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		const formData = new FormData();
+		formData.append('image', file);
+
+		try {
+			const imageId = await apiUpload('/image', formData);
+			product!.steps[stepIndex].options[optionIndex].imgURL = getImageUrl(imageId);
+			product = product;
+		} catch (err) {
+			console.error('[Upload] Option image failed:', err);
 		}
 	}
 
@@ -114,9 +132,76 @@
 		}
 	};
 
+	const ApplyChangesForStep = async () => {
+		if (!product) return;
+
+		try {
+			// 1. Save option titles via PUT /product/{id} for each option
+			for (const step of product.steps) {
+				for (const option of step.options) {
+					if (option.id) {
+						await apiAdd(
+							`/product/${option.id}`,
+							{
+								title: option.title,
+								description: option.description,
+								price: option.price,
+								btw: option.btw,
+								stock: option.stock,
+								isAvailable: option.isAvailable,
+								imgURL: option.imgURL,
+								categoryId: option.categoryId
+							},
+							'PUT'
+						);
+					}
+				}
+			}
+
+			// 2. Update base product
+			await apiAdd(
+				`/product/${product.id}`,
+				{
+					title: product.title,
+					description: product.description,
+					price: product.price,
+					btw: product.btw,
+					stock: product.stock,
+					isAvailable: product.isAvailable,
+					imgURL: product.imgURL,
+					categoryId: product.categoryId
+				},
+				'PUT'
+			);
+
+			// 3. Delete all old steps
+			for (const step of product.steps) {
+				await apiAdd(`/product/${product.id}/step/${step.id}`, null, 'DELETE');
+			}
+
+			// 4. Recreate all steps
+			for (const step of product.steps) {
+				await apiAdd(
+					`/product/${product.id}/step`,
+					{
+						title: step.title,
+						defaultOptionId: step.defaultOptionId ?? 0,
+						multipleChoice: step.multipleChoice,
+						options: step.options.map((o) => o.id).filter(Boolean)
+					},
+					'POST'
+				);
+			}
+
+			SavedProduct = true;
+		} catch (err: any) {
+			console.error('[Rij62] Failed to update steps:', err.message);
+		}
+	};
 	onMount(async () => {
 		// Load categories first
 		categories = (await apiFetch('/category')) as Category[];
+		allProducts = (await apiFetch('/product')) as Product[];
 
 		if ($page.params.id === 'new') {
 			product = {
@@ -272,96 +357,203 @@
 					{/if}
 				</TabItem>
 				<TabItem title="Product Steps">
-					{#if product?.steps?.length}
+					{#if product}
 						<div class="space-y-6">
 							{#each product.steps as step, i (step.id)}
 								<div class="border-main space-y-5 rounded-xl border bg-100 p-6 shadow-lg">
 									<!-- Step header -->
 									<div class="flex items-center justify-between">
-										<h3 class="text-main text-lg font-semibold">
-											Step {i + 1}
-										</h3>
-
-										<Toggle bind:checked={step.multipleChoice} />
+										<h3 class="text-main text-lg font-semibold">Step {i + 1}</h3>
+										<div class="flex items-center gap-3">
+											<Toggle bind:checked={step.multipleChoice} />
+											<span class="text-muted text-sm">Multiple choice</span>
+											<Button
+												type="button"
+												color="red"
+												size="xs"
+												onclick={() => {
+													product!.steps.splice(i, 1);
+													product = product;
+												}}
+											>
+												Remove Step
+											</Button>
+										</div>
 									</div>
-
-									<p class="text-muted text-sm">Allow multiple selections</p>
 
 									<!-- Step titles -->
 									<div class="grid gap-4 md:grid-cols-2">
 										{#each Object.keys(step.title) as lang (lang)}
 											<div>
 												<Label>Title {lang}</Label>
-												<Input class="border-main bg-50" bind:value={step.title[lang]} />
+												<Input
+													class="border-main bg-50"
+													bind:value={step.title[lang as keyof typeof step.title]}
+												/>
 											</div>
 										{/each}
 									</div>
 
 									<!-- Options -->
-									{#if step.options?.length}
-										<div class="border-main space-y-4 rounded-lg border bg-50 p-4">
+									<div class="border-main space-y-3 rounded-lg border bg-50 p-4">
+										<div class="flex items-center justify-between">
 											<h4 class="text-main text-sm font-semibold">Options</h4>
+											<Button
+												type="button"
+												size="xs"
+												onclick={() => {
+													step.options = [
+														...step.options,
+														{
+															id: 0,
+															title: { English: '', Dutch: '' },
+															description: { English: '', Dutch: '' },
+															price: 0,
+															stock: 0,
+															isAvailable: false,
+															btw: 0,
+															imgURL: '',
+															categoryId: 0,
+															steps: []
+														}
+													];
+												}}
+											>
+												+ Add Option
+											</Button>
+										</div>
 
-											{#each step.options as option (option.id)}
-												<div class="border-main space-y-3 rounded-lg border bg-100 p-4">
-													<div class="grid gap-3 md:grid-cols-2">
-														{#each Object.keys(option.title) as lang (lang)}
-															<Input
-																class="border-main bg-50"
-																bind:value={option.title[lang]}
-																placeholder={`Title ${lang}`}
-															/>
-														{/each}
+										<p class="text-muted text-xs">● = default selected option</p>
+
+										{#each step.options as option, j (option.id)}
+											<div class="border-main space-y-3 rounded-lg border bg-100 p-4">
+												<div class="flex items-center gap-3">
+													<!-- Default radio -->
+													<input
+														type="radio"
+														name="default_{step.id}"
+														checked={step.defaultOptionId === option.id}
+														onchange={() => (step.defaultOptionId = option.id)}
+														class="accent-blue-500"
+														title="Set as default"
+													/>
+
+													<!-- Product picker dropdown -->
+													<div class="flex-1">
+														<Label>Option Product</Label>
+														<select
+															class="border-main text-main w-full rounded-lg border bg-50 p-2"
+															value={option.id}
+															onchange={(e) => {
+																const selected = allProducts.find(
+																	(p) => p.id === Number(e.currentTarget.value)
+																);
+																if (selected) {
+																	option.id = selected.id;
+																	option.title = selected.title;
+																	option.description = selected.description;
+																	option.price = selected.price;
+																	option.btw = selected.btw;
+																	option.stock = selected.stock;
+																	option.isAvailable = selected.isAvailable;
+																	option.imgURL = selected.imgURL;
+																	option.categoryId = selected.categoryId;
+																	product = product;
+																}
+															}}
+														>
+															<option value={0} disabled>Select a product…</option>
+															{#each allProducts as p}
+																<option value={p.id}>{p.title[Language.English]}</option>
+															{/each}
+														</select>
 													</div>
 
-													<div class="grid gap-3 md:grid-cols-3">
+													<Button
+														type="button"
+														color="red"
+														size="xs"
+														onclick={() => {
+															if (step.defaultOptionId === option.id) step.defaultOptionId = null;
+															step.options.splice(j, 1);
+															product = product;
+														}}
+													>
+														✕
+													</Button>
+												</div>
+
+												<!-- Editable titles -->
+												<div class="grid gap-3 md:grid-cols-2">
+													{#each Object.keys(option.title) as lang (lang)}
 														<div>
-															<Label>Price (€)</Label>
+															<Label>Title {lang}</Label>
 															<Input
-																type="number"
 																class="border-main bg-50"
-																value={option.price}
-																on:input={(e) => (option.price = Number(e.currentTarget.value))}
+																bind:value={option.title[lang as keyof typeof option.title]}
 															/>
 														</div>
-
-														<div>
-															<Label>Stock</Label>
-															<Input
-																type="number"
-																class="border-main bg-50"
-																value={option.stock}
-																on:input={(e) => (option.stock = Number(e.currentTarget.value))}
-															/>
-														</div>
-
-														<div class="flex items-end justify-between">
-															<div>
-																<Label>Available</Label>
-																<p class="text-muted text-xs">Visible to users</p>
-															</div>
-															<Toggle bind:checked={option.isAvailable} />
-														</div>
+													{/each}
+												</div>
+												<!-- Option image upload -->
+												<div class="flex items-center gap-4">
+													{#if option.imgURL}
+														<img
+															src={option.imgURL}
+															alt="option"
+															class="border-main h-16 w-16 rounded-lg border object-cover"
+															onerror={(e) => (e.currentTarget.style.display = 'none')}
+														/>
+													{/if}
+													<div class="flex-1">
+														<Label>Image</Label>
+														<input
+															type="file"
+															accept="image/*"
+															onchange={(e) => handleOptionUpload(e, i, j)}
+															class="text-muted block w-full text-sm"
+														/>
 													</div>
 												</div>
-											{/each}
-										</div>
-									{/if}
+											</div>
+										{/each}
+
+										{#if step.options.length === 0}
+											<p class="text-muted py-2 text-center text-sm">No options yet</p>
+										{/if}
+									</div>
 								</div>
 							{/each}
+
+							<!-- Add Step -->
+							<button
+								type="button"
+								onclick={() => {
+									product!.steps = [
+										...product!.steps,
+										{
+											id: Date.now(),
+											title: { English: '', Dutch: '' },
+											multipleChoice: false,
+											defaultOptionId: null,
+											options: []
+										}
+									];
+								}}
+								class="border-main text-muted w-full rounded-xl border-2 border-dashed bg-100 p-4 transition-colors hover:border-blue-500 hover:text-blue-500"
+							>
+								+ Add Step
+							</button>
 						</div>
+
 						<div class="mt-8 flex justify-end">
 							<Button
 								type="button"
-								onclick={ApplyChanges}
+								onclick={ApplyChangesForStep}
 								class="bg-primary-500 text-white hover:bg-primary-600"
 							>
 								Apply Changes
 							</Button>
-						</div>
-					{:else}
-						<div class="border-main rounded-xl border bg-100 p-6 text-center">
-							<p class="text-muted">No steps available</p>
 						</div>
 					{/if}
 				</TabItem>
