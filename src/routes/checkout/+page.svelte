@@ -15,7 +15,8 @@
 	async function bypassPayment() {
 		const items: CreateOrderItem[] = $basket.map((item) => ({
 			productId: item.product.id,
-			choices: item.choices.flatMap((c) => Array(c.amount).fill(c.id))
+			choices: item.choices.flatMap((c) => Array(c.amount).fill(c.id)),
+			quantity: item.quantity
 		}));
 
 		const body: CreateOrder = {

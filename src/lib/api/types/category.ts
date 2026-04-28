@@ -1,7 +1,8 @@
-import type { MultiLangString } from "./multilangstring"
+import type { MultiLangString } from './multilangstring';
 
 export interface Category {
-    id: number,
-    screenId: number,
-    name: MultiLangString
+	id: number;
+	name: MultiLangString;
+	imgUrl: string;
+	rootCategory: string;
 }
