@@ -21,7 +21,7 @@ export type OrderItem = {
 	description: MultiLangString;
 	status: OrderStatus;
 	price: number;
-	imgURL: string;
+	imgUrl: string;
 	btw: number;
 	choices: number[];
 };

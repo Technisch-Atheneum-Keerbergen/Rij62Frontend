@@ -1,8 +1,9 @@
 import type { MultiLangString } from './multilangstring';
 import type { ProductStep } from './productstep';
+export type ProductId = number;
 
 export interface Product {
-	id: number;
+	id: ProductId;
 	title: MultiLangString;
 	price: number;
 	stock: number;

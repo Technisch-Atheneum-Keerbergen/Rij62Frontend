@@ -215,10 +215,10 @@
 
 <!-- ---------------- BASKET ICON ---------------- -->
 {#if $basketCount > 0}
-	<div class="fixed bottom-0 flex w-full">
+	<div class="fixed bottom-0 left-0 flex w-screen">
 		<a
 			href="/basket"
-			class="m-6 flex h-15 w-full items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
+			class="m-5 flex h-15 w-full items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
 		>
 			<span
 				class="relative stroke-secondary-700 text-2xl font-extrabold text-secondary-700 dark:stroke-secondary-900 dark:text-secondary-900"

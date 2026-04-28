@@ -27,6 +27,17 @@
 	--color-secondary-800: oklch(0.41 0.1 91);
 	--color-secondary-900: oklch(0.3 0.07 91);
 
+	--color-green-50: oklch(0.99 0.01 145);
+	--color-green-100: oklch(0.96 0.02 145);
+	--color-green-200: oklch(0.92 0.05 145);
+	--color-green-300: oklch(0.85 0.09 145);
+	--color-green-400: oklch(0.79 0.13 145);
+	--color-green-500: oklch(0.71 0.17 145);
+	--color-green-600: oklch(0.61 0.14 145);
+	--color-green-700: oklch(0.52 0.12 145);
+	--color-green-800: oklch(0.41 0.1 145);
+	--color-green-900: oklch(0.3 0.07 145);
+
 	/*
 	These exist only so Tailwind / editor IntelliSense can autocomplete
 	utilities like `bg-50`, `bg-100`, `text-200`, etc.

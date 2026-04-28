@@ -48,7 +48,23 @@ function createBasket() {
 		subscribe,
 		add(product: Product, choices: BasketChoice[], quantity = 1) {
 			update((items) => {
-				items.push({ product, quantity, choices });
+				const existingItem = items.find((item) => {
+					console.log(product.id);
+					console.log(item.product.id);
+					console.log(choices);
+					console.log(item.choices);
+					return (
+						item.product.id === product.id &&
+						JSON.stringify(item.choices) === JSON.stringify(choices)
+					);
+				});
+
+				if (existingItem) {
+					existingItem.quantity++;
+				} else {
+					items.push({ product, choices, quantity });
+				}
+
 				return items;
 			});
 		},
