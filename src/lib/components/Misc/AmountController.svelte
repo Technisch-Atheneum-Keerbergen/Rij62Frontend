@@ -31,7 +31,7 @@
 			handleDecrease();
 		}}
 	>
-		<div class="stroke-main aspect-square h-full max-h-6">
+		<div class="stroke-main aspect-square h-6 w-6">
 			{#if currentAmount == 1}
 				<span class="stroke-red-400">
 					<SvgBin />
@@ -51,7 +51,7 @@
 			handleIncrease();
 		}}
 	>
-		<div class="stroke-main aspect-square h-full max-h-6">
+		<div class="stroke-main aspect-square h-6 w-6">
 			<SvgPlus />
 		</div>
 	</button>

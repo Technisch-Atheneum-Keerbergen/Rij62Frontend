@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { RootCategory } from '$lib/api/types/rootCategory';
+	import SvgChevronRight from './../lib/components/SVG/SvgChevronRight.svelte';
 	import { basketCount } from './../lib/stores/basket.ts';
 	import { basket } from '$lib/stores/basket';
 	import type { Category } from '$lib/api/types/category';
@@ -9,11 +11,11 @@
 	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
-	import { fade, fly } from 'svelte/transition';
-	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
+	import { fade, fly, slide } from 'svelte/transition';
 	import { mockProducts } from './mockProducts.ts';
 	import StepGroup from '$lib/components/Misc/StepGroup.svelte';
 	import { createStepStates } from '$lib/stores/stepState.svelte';
+	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -23,10 +25,27 @@
 	/* ---------------- MOCK DATA ---------------- */
 
 	const mockCategories: Category[] = [
-		{ id: 0, name: { English: 'Food', Dutch: 'Eten' }, screenId: 1 },
-		{ id: 1, name: { English: 'Snacks', Dutch: 'Snacks' }, screenId: 1 },
-		{ id: 2, name: { English: 'Drinks', Dutch: 'Dranken' }, screenId: 1 }
+		{
+			id: 0,
+			name: { English: 'Food', Dutch: 'Eten' },
+			rootCategory: 'Food',
+			imgUrl: '/images/wrap.jpg'
+		},
+		{
+			id: 1,
+			name: { English: 'Snacks', Dutch: 'Snacks' },
+			rootCategory: 'Drinks',
+			imgUrl: '/images/latte.jpg'
+		},
+		{
+			id: 2,
+			name: { English: 'Drinks', Dutch: 'Dranken' },
+			rootCategory: 'Shop',
+			imgUrl: '/images/spicy.jpg'
+		}
 	];
+
+	const mockRootCategories: RootCategory[] = ['Food', 'Drinks', 'Shop'];
 
 	/* ---------------- FETCHING ---------------- */
 
@@ -38,13 +57,21 @@
 		return isServerRunning ? apiFetch('/category') : mockCategories;
 	}
 
+	async function fetchRootCategories(): Promise<RootCategory[]> {
+		return isServerRunning ? apiFetch('/category/root') : mockRootCategories;
+	}
+
 	/* ---------------- STATE ---------------- */
 
 	let productsPromise = $state<Promise<Product[]>>(new Promise(() => {}));
 	let categoriesPromise = $state<Promise<Category[]>>(new Promise(() => {}));
+	let rootCategoriesPromise = $state<Promise<RootCategory[]>>(new Promise(() => {}));
 
 	let allProducts = $state<Product[]>([]);
-	let selectedCategories = $state(new Set<number>());
+	let allCategories = $state<Category[]>([]);
+
+	let selectedRootCategory: RootCategory = $state('Food');
+	let selectedCategoryId = $state<number | null>(null);
 
 	let selectedProduct = $state<Product | null>(null);
 	let isSheetOpen = $state(false);
@@ -54,26 +81,27 @@
 
 	/* ---------------- DERIVED ---------------- */
 
+	// Sub-categories belonging to the selected root category
+	const visibleCategories = $derived(
+		selectedRootCategory ? allCategories.filter((c) => c.rootCategory === selectedRootCategory) : []
+	);
+
+	// Products belonging to the selected sub-category
 	const filteredProducts = $derived(
-		allProducts.filter((p) => {
-			if (!p.isAvailable) return false;
-			if (selectedCategories.size === 0) return true;
-			return selectedCategories.has(p.categoryId);
-		})
+		selectedCategoryId !== null
+			? allProducts.filter((p) => p.isAvailable && p.categoryId === selectedCategoryId)
+			: []
 	);
 
 	/* ---------------- METHODS ---------------- */
 
-	function toggleCategory(id: number) {
-		const next = new Set(selectedCategories);
-		next.has(id) ? next.delete(id) : next.add(id);
-		selectedCategories = next;
+	function selectRootCategory(rootCategory: RootCategory) {
+		selectedRootCategory = rootCategory;
+		selectedCategoryId = null; // reset sub-category when switching root
 	}
 
 	function selectCategory(id: number) {
-		const next = new Set<number>();
-		next.add(id);
-		selectedCategories = next;
+		selectedCategoryId = id;
 	}
 
 	async function openProduct(id: number) {
@@ -111,51 +139,92 @@
 	onMount(() => {
 		productsPromise = fetchProducts();
 		categoriesPromise = fetchCategories();
+		rootCategoriesPromise = fetchRootCategories();
 
 		productsPromise.then((p) => (allProducts = p));
+		categoriesPromise.then((c) => (allCategories = c));
 	});
 </script>
 
 <div class="text-main text-center">
-	<!-- Categories -->
-	<div class="sticky top-17 mt-3 flex flex-wrap justify-center gap-1">
-		{#await categoriesPromise}
-			<span class="text-xs opacity-50">Loading categories...</span>
-		{:then categories}
-			{#each categories as category (category.id)}
-				<FilterItem
-					group="category"
-					value={String(category.id)}
-					checked={selectedCategories.has(category.id)}
-					size="lg"
-					onchange={() => selectCategory(category.id)}
+	<!-- Root Categories (top bar) -->
+	<div
+		class="fixed top-17 left-0 z-10 mt-3 flex w-screen flex-wrap items-center justify-center gap-1"
+	>
+		<div class="flex flex-wrap items-center justify-center gap-1">
+			<div
+				class="transition-width overflow-hidden duration-200"
+				style="width: {selectedCategoryId !== null
+					? '2.5rem'
+					: '0'}; margin-right: {selectedCategoryId !== null ? '0.25rem' : '0'}"
+			>
+				<button
+					class="flex aspect-square h-9 cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-300 bg-200 stroke-current p-1 hover:opacity-100 active:scale-95"
+					onclick={() => (selectedCategoryId = null)}
+					transition:fade={{ duration: 200 }}
 				>
-					{category.name[currentLanguage]}
-				</FilterItem>
-			{/each}
-		{/await}
+					<SvgChevronLeft />
+				</button>
+			</div>
+
+			{#await rootCategoriesPromise}
+				<span class="text-xs opacity-50">Loading categories...</span>
+			{:then rootCategories}
+				{#each rootCategories as rootCategory}
+					<FilterItem
+						group="rootCategory"
+						value={String(rootCategory)}
+						checked={selectedRootCategory === rootCategory}
+						size="lg"
+						onchange={() => selectRootCategory(rootCategory)}
+					>
+						{rootCategory}
+					</FilterItem>
+				{/each}
+			{/await}
+		</div>
 	</div>
 
-	<!-- Products -->
-	<div class="mt-4 grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-2">
-		{#await productsPromise}
-			<p class="opacity-70">Loading products...</p>
-		{:then}
-			{#if filteredProducts.length > 0}
-				{#each filteredProducts as product (product.id)}
-					<Card
-						title={product.title[currentLanguage]}
-						imageSrc={product.imgURL}
-						price={product.price}
-						onclick={() => openProduct(product.id)}
-					/>
-				{/each}
+	<!-- Sub-categories OR products -->
+	<div class="z-0 mt-14">
+		{#if selectedCategoryId === null}
+			<!-- Show sub-categories -->
+			{#if visibleCategories.length === 0}
+				<p class="text-sm opacity-50">No subcategories found.</p>
 			{:else}
-				<p class="text-sm opacity-50">No products in this category.</p>
+				<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-2">
+					{#each visibleCategories as category (category.id)}
+						<Card
+							title={category.name[currentLanguage]}
+							imageSrc={category.imgUrl}
+							onclick={() => selectCategory(category.id)}
+						/>
+					{/each}
+				</div>
 			{/if}
-		{:catch error}
-			<p class="text-red-500">Failed to load products: {error}</p>
-		{/await}
+		{:else}
+			<!-- Show products -->
+			{#await productsPromise}
+				<p class="opacity-70">Loading products...</p>
+			{:then}
+				{#if filteredProducts.length > 0}
+					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-2">
+						{#each filteredProducts as product (product.id)}
+							<Card
+								title={product.title[currentLanguage]}
+								imageSrc={product.imgURL}
+								price={product.price}
+								onclick={() => openProduct(product.id)}
+							/>
+						{/each}
+					</div>
+				{:else}
+					<p class="text-sm opacity-50">No products in this category.</p>
+				{/if}
+			{:catch error}
+				<p class="text-red-500">Failed to load products: {error}</p>
+			{/await}
+		{/if}
 	</div>
 </div>
 
@@ -163,7 +232,6 @@
 
 {#if isSheetOpen && selectedProduct}
 	<div class="fixed inset-0 z-50 flex items-end justify-center">
-		<!-- backdrop -->
 		<div
 			role="button"
 			tabindex="0"
@@ -173,7 +241,6 @@
 			onkeydown={(e) => e.key === 'Escape' && (isSheetOpen = false)}
 		></div>
 
-		<!-- sheet -->
 		<div
 			class="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl bg-100 p-4 shadow-xl"
 			transition:fly={{ y: 200, duration: 150, easing: cubicInOut }}
@@ -218,13 +285,19 @@
 	<div class="fixed bottom-0 left-0 flex w-screen">
 		<a
 			href="/basket"
-			class="m-5 flex h-15 w-full items-center justify-center rounded-full border-2 border-secondary-500 bg-secondary-400 p-1.5 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 active:dark:bg-secondary-600"
+			class="relative m-5 flex h-15 w-full items-center justify-between rounded-full border-2 border-secondary-500 bg-secondary-400 stroke-secondary-800 p-2 text-2xl font-extrabold text-secondary-800 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 dark:stroke-secondary-900 dark:text-secondary-900 active:dark:bg-secondary-600"
 		>
-			<span
-				class="relative stroke-secondary-700 text-2xl font-extrabold text-secondary-700 dark:stroke-secondary-900 dark:text-secondary-900"
+			<div
+				class="flex aspect-square h-full items-center justify-center rounded-full bg-secondary-800 dark:bg-secondary-900"
 			>
-				<span> {$basketCount}</span>
-			</span>
+				<span class="dark:text-secondary-2001 text-center text-secondary-100">
+					{$basketCount}
+				</span>
+			</div>
+
+			<span>Basket</span>
+
+			<span class="aspect-square h-full stroke-3"><SvgChevronRight /></span>
 		</a>
 	</div>
 {/if}

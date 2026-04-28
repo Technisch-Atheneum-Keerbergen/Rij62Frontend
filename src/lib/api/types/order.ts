@@ -8,6 +8,7 @@ export interface CreateOrder {
 
 export interface CreateOrderItem {
 	productId: number;
+	quantity: number;
 	choices: number[];
 }
 
@@ -23,6 +24,7 @@ export type OrderItem = {
 	price: number;
 	imgUrl: string;
 	btw: number;
+	quantity: number;
 	choices: number[];
 };
 

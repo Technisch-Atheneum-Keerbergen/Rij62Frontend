@@ -26,12 +26,12 @@
 	};
 
 	const baseStyles = $derived(
-		`border-2 mx-1 inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-sm border-300 bg-100 ${sizeStyle[size]} ${className}`
+		`border-2 mx-1 h-fit inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-lg border-300 bg-100 ${sizeStyle[size]} ${className}`
 	);
 </script>
 
 <label class="inline-flex" {...restProps}>
-	<input type="radio" name={group} {value} class="peer hidden" />
+	<input type="radio" name={group} {value} {checked} class="peer hidden" />
 
 	<span class={baseStyles}>
 		{#if children}

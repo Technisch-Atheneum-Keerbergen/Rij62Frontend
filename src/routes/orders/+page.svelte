@@ -67,7 +67,7 @@
 
 		const orders = results
 			.filter((order): order is Order => order !== null)
-			.sort((a, b) => a.createdTime - b.createdTime);
+			.sort((a, b) => b.createdTime - a.createdTime);
 
 		pendingOrders = await Promise.all(orders.map(resolveOrder));
 	}
@@ -92,12 +92,16 @@
 				<li
 					class="flex items-center justify-between rounded-2xl border-2 border-300 bg-200 p-2 shadow-sm"
 				>
-					<div class="flex grow items-center gap-3">
+					<div class="relative flex grow items-center gap-3">
 						<img
 							src={orderItem.imgUrl}
 							alt={orderItem.title[currentLanguage]}
 							class="h-12 w-12 rounded-lg object-cover"
 						/>
+						<span
+							class="absolute left-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-xl backdrop-blur-[1px]"
+							>{orderItem.quantity}</span
+						>
 						<div>
 							<p class="font-medium">{orderItem.title[currentLanguage]}</p>
 							{#if orderItem.choices.length > 0}
