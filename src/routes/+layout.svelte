@@ -11,7 +11,8 @@
 	let { children }: { children: Snippet } = $props();
 
 	const navItems = [
-		{ name: 'Order', href: '/', reqAuth: false },
+		{ name: 'Rij62', href: '/', reqAuth: false },
+		{ name: 'Orders', href: '/orders', reqAuth: false },
 		{ name: 'Basket', href: '/basket', reqAuth: false },
 		{ name: 'Admin Overview', href: '/admin/overview', reqAuth: true }
 	];

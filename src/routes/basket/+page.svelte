@@ -16,7 +16,7 @@
 
 <h2 class="mb-4 text-center text-xl font-semibold">Your Basket</h2>
 
-<div class="max-w-md rounded-2xl bg-100 p-2 shadow-md">
+<div class="rounded-2xl bg-100 p-2 shadow-md">
 	{#if $basket.length === 0}
 		<p class="py-5 text-center text-lg opacity-60">Your basket is empty.</p>
 	{:else}

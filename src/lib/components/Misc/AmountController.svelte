@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SvgBin from '../SVG/SvgBin.svelte';
 	import SvgMinus from '../SVG/SvgMinus.svelte';
 	import SvgPlus from '../SVG/SvgPlus.svelte';
 
@@ -31,7 +32,13 @@
 		}}
 	>
 		<div class="stroke-main aspect-square h-full max-h-6">
-			<SvgMinus />
+			{#if currentAmount == 1}
+				<span class="stroke-red-400">
+					<SvgBin />
+				</span>
+			{:else}
+				<SvgMinus />
+			{/if}
 		</div>
 	</button>
 
