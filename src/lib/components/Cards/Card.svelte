@@ -59,7 +59,7 @@
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}
 	class="flex {divSizeStyle[
 		size
-	]} h-fit cursor-pointer flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
+	]} h-full cursor-pointer flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
         {selectable && selected ? 'border-primary-300 bg-300' : 'border-300 bg-200'}
         hover:shadow-md active:scale-95 {className}"
 >
@@ -72,7 +72,7 @@
 			<h3 class="text-center text-xs font-semibold">{title}</h3>
 
 			{#if price > 0}
-				<p class="text-muted w-full text-center text-sm">€{price.toFixed(2)}</p>
+				<p class="text-muted mt-auto w-full text-center text-sm">€{price.toFixed(2)}</p>
 			{/if}
 		</div>
 

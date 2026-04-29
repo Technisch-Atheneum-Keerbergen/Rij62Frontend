@@ -44,8 +44,7 @@
 		pendingOrderStore.add(orderId);
 		success = true;
 		setTimeout(() => {
-			return;
-			location.href = '/basket';
+			location.href = '/orders';
 		}, 1000);
 	}
 

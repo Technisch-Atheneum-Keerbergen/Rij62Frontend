@@ -17,6 +17,7 @@
 	import { createStepStates } from '$lib/stores/stepState.svelte';
 	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
 	import NavCard from '$lib/components/Cards/NavCard.svelte';
+	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -289,7 +290,18 @@
 				{#if !itemIsInBasket}
 					<Button class="w-full" size="lg" onclick={addToBasket}>Add to basket</Button>
 				{:else}
-					<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
+					<div class="flex flex-row gap-2">
+						<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
+						<Button
+							class="relative h-10 w-16 stroke-secondary-900"
+							size="lg"
+							onclick={() => {
+								window.location.href = '/basket';
+							}}
+							variant="secondary"
+							><p class="absolute top-1 left-3 aspect-square h-7"><SvgBasket /></p></Button
+						>
+					</div>
 				{/if}
 			</div>
 		</div>

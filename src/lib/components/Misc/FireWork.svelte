@@ -33,7 +33,7 @@
 <div
 	class="center fixed top-1/2 left-1/2 w-3xl -translate-x-1/2 -translate-y-1/2 transform rounded-2xl bg-100 shadow-xl"
 >
-	<h1 class="text-highlight m-5 text-center text-9xl font-bold">{message}</h1>
+	<h1 class="text-highlight m-5 text-center text-2xl font-bold">{message}</h1>
 	{#each particles as part}
 		<div
 			class="rounded-full"
