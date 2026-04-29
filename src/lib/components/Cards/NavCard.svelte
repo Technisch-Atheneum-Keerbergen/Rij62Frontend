@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SvgChevronRight from './../SVG/SvgChevronRight.svelte';
 	import { slide } from 'svelte/transition';
 	import AmountController from '$lib/components/Misc/AmountController.svelte';
 
@@ -11,7 +12,7 @@
 		selectable = false,
 		selected = false,
 		amount = 0,
-		price = 0,
+
 		ontoggle,
 		onamount,
 		onclick,
@@ -25,7 +26,7 @@
 		selectable?: boolean;
 		selected?: boolean;
 		amount?: number;
-		price?: number;
+
 		ontoggle?: () => void;
 		onamount?: (delta: number) => void;
 		onclick?: () => void;
@@ -37,12 +38,10 @@
 		lg: 'max-w-48 min-w-48'
 	};
 	const imgSizeStyle = {
-		sm: 'max-h-15 min-h-15',
+		sm: 'max-h-20 min-h-20',
 		md: 'max-h-25 min-h-25',
 		lg: 'max-h-35 min-h-35'
 	};
-
-	const showAmount = $derived(selected && price > 0);
 
 	function handleClick() {
 		if (selectable) ontoggle?.();
@@ -59,7 +58,7 @@
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}
 	class="flex {divSizeStyle[
 		size
-	]} h-fit cursor-pointer flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
+	]} h-fit cursor-pointer flex-col overflow-hidden rounded-3xl p-1 shadow-sm transition-all
         {selectable && selected ? 'border-primary-300 bg-300' : 'border-300 bg-200'}
         hover:shadow-md active:scale-95 {className}"
 >
@@ -67,30 +66,16 @@
 		<img src={imageSrc} {alt} class="{imgSizeStyle[size]} w-full rounded-[20px] object-cover" />
 	{/if}
 
-	<div class="mt-1 flex h-full flex-col items-center justify-between">
-		<div class="flex h-full flex-col items-center">
-			<h3 class="text-center text-xs font-semibold">{title}</h3>
-
-			{#if price > 0}
-				<p class="text-muted w-full text-center text-sm">€{price.toFixed(2)}</p>
-			{/if}
+	<div
+		class="relative m-1 mt-2 flex h-full flex-col justify-between rounded-full border border-400/50 bg-300 px-2 py-0.5"
+	>
+		<div class=" flex h-full flex-row items-center">
+			<h3 class="max-w-[85%] min-w-0 truncate text-center text-sm font-semibold">
+				{title}
+			</h3>
+			<span class="stroke-main absolute right-1 aspect-square h-6">
+				<SvgChevronRight />
+			</span>
 		</div>
-
-		{#if showAmount}
-			<div
-				role="none"
-				class="mt-1"
-				onclick={(e) => e.stopPropagation()}
-				onkeydown={(e) => e.stopPropagation()}
-			>
-				<div class="mb-0.5">
-					<AmountController
-						currentAmount={amount}
-						decrease={() => onamount?.(-1)}
-						increase={() => onamount?.(1)}
-					/>
-				</div>
-			</div>
-		{/if}
 	</div>
 </div>

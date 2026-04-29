@@ -20,13 +20,13 @@
 	} = $props();
 
 	const sizeStyle: Record<Size, string> = {
-		sm: 'text-xs rounded-xl px-2.5 py-0.5',
-		md: 'text-sm rounded-xl px-3 py-0.5',
-		lg: 'text-base rounded-2xl px-3.5 py-1'
+		sm: 'text-xs px-2.5 py-0.5',
+		md: 'text-sm px-3 py-0.5',
+		lg: 'text-base px-3.5 py-1'
 	};
 
 	const baseStyles = $derived(
-		`border-2 mx-1 h-fit inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-lg border-300 bg-100 ${sizeStyle[size]} ${className}`
+		`border-2 mx-1 rounded-full h-fit inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-lg border-300 bg-100 ${sizeStyle[size]} ${className}`
 	);
 </script>
 

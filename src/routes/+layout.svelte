@@ -26,7 +26,7 @@
 </svelte:head>
 
 <header class="fixed top-0 z-20 flex w-full justify-center p-2">
-	<nav class="w-full max-w-2xl rounded-3xl bg-200/80 px-4 py-2 shadow-lg backdrop-blur-md">
+	<nav class="w-full max-w-2xl rounded-3xl bg-200/60 px-4 py-2 shadow-lg backdrop-blur-md">
 		<div class="flex w-full items-center justify-between">
 			<a href="/" class="text-xl font-medium text-primary-500 dark:text-primary-300"
 				>Rij<span class="font-bold text-secondary-500 dark:text-secondary-300">62</span></a

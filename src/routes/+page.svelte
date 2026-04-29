@@ -16,6 +16,7 @@
 	import StepGroup from '$lib/components/Misc/StepGroup.svelte';
 	import { createStepStates } from '$lib/stores/stepState.svelte';
 	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
+	import NavCard from '$lib/components/Cards/NavCard.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -34,14 +35,14 @@
 		{
 			id: 1,
 			name: { English: 'Snacks', Dutch: 'Snacks' },
-			rootCategory: 'Drinks',
-			imgUrl: '/images/latte.jpg'
+			rootCategory: 'Food',
+			imgUrl: '/images/muffin.jpg'
 		},
 		{
 			id: 2,
-			name: { English: 'Drinks', Dutch: 'Dranken' },
-			rootCategory: 'Shop',
-			imgUrl: '/images/spicy.jpg'
+			name: { English: 'Coffee', Dutch: 'Koffie' },
+			rootCategory: 'Drinks',
+			imgUrl: '/images/latte.jpg'
 		}
 	];
 
@@ -98,10 +99,18 @@
 	function selectRootCategory(rootCategory: RootCategory) {
 		selectedRootCategory = rootCategory;
 		selectedCategoryId = null; // reset sub-category when switching root
+		window.scrollTo({
+			top: 0,
+			behavior: 'smooth'
+		});
 	}
 
 	function selectCategory(id: number) {
 		selectedCategoryId = id;
+		window.scrollTo({
+			top: 0,
+			behavior: 'smooth'
+		});
 	}
 
 	async function openProduct(id: number) {
@@ -146,21 +155,28 @@
 	});
 </script>
 
-<div class="text-main text-center">
+<section class="text-main mx-auto max-w-2xl text-center">
 	<!-- Root Categories (top bar) -->
 	<div
 		class="fixed top-17 left-0 z-10 mt-3 flex w-screen flex-wrap items-center justify-center gap-1"
 	>
 		<div class="flex flex-wrap items-center justify-center gap-1">
 			<div
-				class="transition-width overflow-hidden duration-200"
+				class="transition-width duration-200"
 				style="width: {selectedCategoryId !== null
 					? '2.5rem'
-					: '0'}; margin-right: {selectedCategoryId !== null ? '0.25rem' : '0'}"
+					: '0'}; margin-right: {selectedCategoryId !== null ? '0.5rem' : '0'};
+					overflow-x: {selectedCategoryId !== null ? 'visible' : 'hidden'}"
 			>
 				<button
-					class="flex aspect-square h-9 cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-300 bg-200 stroke-current p-1 hover:opacity-100 active:scale-95"
-					onclick={() => (selectedCategoryId = null)}
+					class="flex aspect-square h-9 cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-300 bg-200 stroke-current p-1 shadow-lg hover:opacity-100 active:scale-95"
+					onclick={() => {
+						selectedCategoryId = null;
+						window.scrollTo({
+							top: 0,
+							behavior: 'smooth'
+						});
+					}}
 					transition:fade={{ duration: 200 }}
 				>
 					<SvgChevronLeft />
@@ -192,9 +208,9 @@
 			{#if visibleCategories.length === 0}
 				<p class="text-sm opacity-50">No subcategories found.</p>
 			{:else}
-				<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-2">
+				<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
 					{#each visibleCategories as category (category.id)}
-						<Card
+						<NavCard
 							title={category.name[currentLanguage]}
 							imageSrc={category.imgUrl}
 							onclick={() => selectCategory(category.id)}
@@ -208,7 +224,7 @@
 				<p class="opacity-70">Loading products...</p>
 			{:then}
 				{#if filteredProducts.length > 0}
-					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-2">
+					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
 						{#each filteredProducts as product (product.id)}
 							<Card
 								title={product.title[currentLanguage]}
@@ -226,7 +242,7 @@
 			{/await}
 		{/if}
 	</div>
-</div>
+</section>
 
 <!-- ---------------- SHEET ---------------- -->
 
@@ -242,7 +258,7 @@
 		></div>
 
 		<div
-			class="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl bg-100 p-4 shadow-xl"
+			class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 shadow-xl"
 			transition:fly={{ y: 200, duration: 150, easing: cubicInOut }}
 		>
 			<img
@@ -282,15 +298,15 @@
 
 <!-- ---------------- BASKET ICON ---------------- -->
 {#if $basketCount > 0}
-	<div class="fixed bottom-0 left-0 flex w-screen">
+	<div class="fixed bottom-0 left-0 flex w-screen justify-center">
 		<a
 			href="/basket"
-			class="relative m-5 flex h-15 w-full items-center justify-between rounded-full border-2 border-secondary-500 bg-secondary-400 stroke-secondary-800 p-2 text-2xl font-extrabold text-secondary-800 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 dark:stroke-secondary-900 dark:text-secondary-900 active:dark:bg-secondary-600"
+			class="relative m-5 flex h-15 w-full max-w-2xl items-center justify-between rounded-full border-2 border-secondary-500 bg-secondary-400 stroke-secondary-900 p-2 text-2xl font-extrabold text-secondary-900 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 dark:stroke-secondary-50 dark:text-secondary-50 active:dark:bg-secondary-600"
 		>
 			<div
-				class="flex aspect-square h-full items-center justify-center rounded-full bg-secondary-800 dark:bg-secondary-900"
+				class="flex aspect-square h-full items-center justify-center rounded-full bg-secondary-500 dark:bg-secondary-600"
 			>
-				<span class="dark:text-secondary-2001 text-center text-secondary-100">
+				<span class="text-center text-secondary-50 dark:text-secondary-50">
 					{$basketCount}
 				</span>
 			</div>
