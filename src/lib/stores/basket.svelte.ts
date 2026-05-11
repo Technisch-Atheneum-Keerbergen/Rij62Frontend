@@ -1,7 +1,6 @@
 // src/lib/stores/basket.svelte.ts
 import { browser } from '$app/environment';
 import { apiFetch } from '$lib/api/client';
-
 import type { Product, ProductId } from '$lib/api/types/product';
 
 // ---------------------------------------------------------------------------
@@ -13,20 +12,17 @@ export interface BasketChoice {
 	quantity: number;
 }
 
-/** What we persist – minimal, price-free snapshot */
 export interface BasketItem {
 	productId: ProductId;
 	quantity: number;
 	choices: BasketChoice[];
 }
 
-/** A choice is just a product + how many of it were selected */
 export interface LoadedBasketChoice {
 	product: Product;
 	quantity: number;
 }
 
-/** Fully resolved item, enriched lazily from the API */
 export interface LoadedBasketItem {
 	product: Product;
 	quantity: number;
@@ -64,12 +60,11 @@ function saveToStorage(items: BasketItem[]): void {
 }
 
 // ---------------------------------------------------------------------------
-// Core reactive state (module-level $state = singleton, shared app-wide)
+// Core reactive state
 // ---------------------------------------------------------------------------
 
 let items = $state<BasketItem[]>(loadFromStorage());
 
-// Persist whenever items change
 $effect.root(() => {
 	$effect(() => {
 		if (browser) saveToStorage(items);
@@ -96,7 +91,7 @@ function fetchProduct(productId: ProductId): Promise<Product> {
 		productCache.set(
 			productId,
 			apiFetch('/product/' + productId).catch((err) => {
-				productCache.delete(productId); // evict on failure so next call retries
+				productCache.delete(productId);
 				throw err;
 			})
 		);
@@ -105,64 +100,119 @@ function fetchProduct(productId: ProductId): Promise<Product> {
 }
 
 // ---------------------------------------------------------------------------
-// Derived loaded items
-// Re-derives as a new Promise whenever items changes, so quantity updates
-// and additions/removals are reflected without re-fetching from the network
-// (products stay cached).
+// Stable loaded items state
 // ---------------------------------------------------------------------------
 
-function buildLoadedItems(snapshot: BasketItem[]): Promise<LoadedBasketItem[]> {
-	return Promise.allSettled(
-		snapshot.map(async (item): Promise<LoadedBasketItem> => {
-			const [product, ...choiceProducts] = await Promise.all([
-				fetchProduct(item.productId),
-				...item.choices.map((c) => fetchProduct(c.id))
-			]);
+let loadedItemsState = $state<LoadedBasketItem[]>([]);
+let loadedItemsLoading = $state(true);
+let loadedItemsError = $state(false);
 
-			return {
-				product,
-				quantity: item.quantity,
-				choices: choiceProducts.map((choiceProduct, i) => ({
-					product: choiceProduct,
-					quantity: item.choices[i].quantity
-				}))
-			};
-		})
-	).then((settled) =>
-		settled
-			.filter((r): r is PromiseFulfilledResult<LoadedBasketItem> => r.status === 'fulfilled')
-			.map((r) => r.value)
-	);
+function choicesKey(choices: BasketChoice[]): string {
+	return JSON.stringify(choices.map((c) => ({ id: c.id, quantity: c.quantity })));
 }
 
-// $derived re-runs buildLoadedItems every time items (or any nested value) changes.
-// Because products are cached, re-runs after quantity changes resolve instantly.
-const loadedItems = $derived(buildLoadedItems(items));
+function loadedChoicesKey(choices: LoadedBasketChoice[]): string {
+	return JSON.stringify(choices.map((c) => ({ id: c.product.id, quantity: c.quantity })));
+}
+
+async function syncLoadedItems(snapshot: BasketItem[]): Promise<void> {
+	loadedItemsError = false;
+
+	// Remove items no longer in the basket
+	for (let i = loadedItemsState.length - 1; i >= 0; i--) {
+		const loaded = loadedItemsState[i];
+		const stillExists = snapshot.find(
+			(s) =>
+				s.productId === loaded.product.id &&
+				choicesKey(s.choices) === loadedChoicesKey(loaded.choices)
+		);
+		if (!stillExists) {
+			loadedItemsState.splice(i, 1);
+		} else {
+			loadedItemsState[i].quantity = stillExists.quantity;
+		}
+	}
+
+	const newItems = snapshot.filter(
+		(s) =>
+			!loadedItemsState.find(
+				(l) => l.product.id === s.productId && loadedChoicesKey(l.choices) === choicesKey(s.choices)
+			)
+	);
+
+	if (newItems.length === 0) {
+		loadedItemsLoading = false;
+		return;
+	}
+
+	loadedItemsLoading = true;
+
+	try {
+		const fetched = await Promise.allSettled(
+			newItems.map(async (item): Promise<LoadedBasketItem> => {
+				const [product, ...choiceProducts] = await Promise.all([
+					fetchProduct(item.productId),
+					...item.choices.map((c) => fetchProduct(c.id))
+				]);
+
+				return {
+					product,
+					quantity: item.quantity,
+					choices: choiceProducts.map((cp, i) => ({
+						product: cp,
+						quantity: item.choices[i].quantity
+					}))
+				};
+			})
+		);
+
+		fetched
+			.filter((r): r is PromiseFulfilledResult<LoadedBasketItem> => r.status === 'fulfilled')
+			.forEach((r) => loadedItemsState.push(r.value));
+	} catch {
+		loadedItemsError = true;
+	} finally {
+		loadedItemsLoading = false;
+	}
+}
+
+$effect.root(() => {
+	$effect(() => {
+		// Touch quantities so Svelte tracks deep mutations
+		items.forEach((i) => i.quantity);
+		const snapshot = items.map((item) => ({
+			productId: item.productId,
+			quantity: item.quantity,
+			choices: item.choices.map((c) => ({ id: c.id, quantity: c.quantity }))
+		}));
+		syncLoadedItems(snapshot);
+	});
+});
 
 // ---------------------------------------------------------------------------
 // Basket
 // ---------------------------------------------------------------------------
 
 export const basket = {
-	/** Read-only access to raw persisted items (reactive) */
 	get items(): BasketItem[] {
 		return items;
 	},
 
-	/**
-	 * Fully enriched basket, reactive.
-	 * Rebuilds whenever items changes; products are cached so only new
-	 * products hit the network. Quantity changes resolve instantly.
-	 */
-	get loadedItems(): Promise<LoadedBasketItem[]> {
-		return loadedItems;
+	get loadedItems(): LoadedBasketItem[] {
+		return loadedItemsState;
+	},
+
+	get loading(): boolean {
+		return loadedItemsLoading;
+	},
+
+	get error(): boolean {
+		return loadedItemsError;
 	},
 
 	add(product: Product, choices: BasketChoice[], quantity = 1): void {
-		const choicesKey = JSON.stringify(choices);
-		const existing = items.find(
-			(i) => i.productId === product.id && JSON.stringify(i.choices) === choicesKey
-		);
+		const key = choicesKey(choices);
+		const existing = items.find((i) => i.productId === product.id && choicesKey(i.choices) === key);
 		if (existing) {
 			existing.quantity += quantity;
 		} else {
@@ -170,7 +220,6 @@ export const basket = {
 		}
 	},
 
-	/** Remove by productId (first matching entry) */
 	remove(productId: ProductId, quantity = 1): void {
 		const idx = items.findIndex((i) => i.productId === productId);
 		if (idx === -1) return;
@@ -196,6 +245,7 @@ export const basket = {
 
 	clear(): void {
 		items = [];
+		loadedItemsState = [];
 		productCache.clear();
 	}
 };

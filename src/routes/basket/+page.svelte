@@ -5,32 +5,10 @@
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
-	let resolvedItems = $state<LoadedBasketItem[]>([]);
-	let loading = $state(true);
-	let error = $state(false);
-
-	// Re-runs whenever basket.items (or any nested value like quantity) changes.
-	// basket.loadedItems resolves instantly for cached products, so there's no flicker.
-	$effect(() => {
-		// Reading basket.items here is what makes the effect track mutations.
-		// We need to touch the quantities explicitly so Svelte tracks deep changes.
-		basket.items.forEach((i) => i.quantity);
-
-		loading = true;
-		error = false;
-		console.log('a');
-
-		basket.loadedItems
-			.then((items) => {
-				resolvedItems = items;
-				console.log(resolvedItems);
-				loading = false;
-			})
-			.catch(() => {
-				error = true;
-				loading = false;
-			});
-	});
+	// Derived directly from the store's stable state — no $effect needed
+	let resolvedItems = $derived(basket.loadedItems);
+	let loading = $derived(basket.loading);
+	let error = $derived(basket.error);
 
 	function increase(itemIndex: number) {
 		basket.increaseAt(itemIndex);
@@ -56,7 +34,7 @@
 			<p class="py-5 text-center text-lg opacity-60">Loading...</p>
 		{:else}
 			<ul class="space-y-3">
-				{#each resolvedItems as item, i (i)}
+				{#each resolvedItems as item, i (item.product.id + JSON.stringify(item.choices.map((c) => c.product.id)))}
 					<li
 						class="flex items-center justify-between rounded-2xl border-2 border-300 bg-200 p-2 shadow-sm"
 					>
