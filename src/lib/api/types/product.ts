@@ -8,6 +8,7 @@ export interface Product {
 	price: number;
 	stock: number;
 	isAvailable: boolean;
+	enabledByPreset: boolean;
 	description: MultiLangString;
 	btw: number;
 	imgURL: string;

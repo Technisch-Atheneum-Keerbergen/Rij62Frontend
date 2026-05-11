@@ -91,7 +91,9 @@
 	// Products belonging to the selected sub-category
 	const filteredProducts = $derived(
 		selectedCategoryId !== null
-			? allProducts.filter((p) => p.isAvailable && p.categoryId === selectedCategoryId)
+			? allProducts.filter(
+					(p) => p.isAvailable && p.categoryId === selectedCategoryId && p.enabledByPreset
+				)
 			: []
 	);
 

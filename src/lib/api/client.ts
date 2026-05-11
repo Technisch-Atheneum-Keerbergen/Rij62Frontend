@@ -37,11 +37,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 	return parseJSONSafe(res);
 }
 
-export async function apiAdd<T = unknown>(
-	endpoint: string,
-	data: T,
-	method: 'POST' | 'PUT' = 'POST'
-) {
+export async function apiAdd<T = unknown>(endpoint: string, data: T, method: string = 'POST') {
 	const options: RequestInit = addAuth({
 		method,
 		headers: { 'Content-Type': 'application/json' },
