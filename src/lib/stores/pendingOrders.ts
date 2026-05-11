@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { BasketItem } from './basket';
+import type { BasketItem } from './basket.svelte';
 import type { Product } from '$lib/api/types/product';
 import { browser } from '$app/environment';
 import type { OrderId } from '$lib/api/types/order';

@@ -1,23 +1,24 @@
 <script lang="ts">
 	import type { RootCategory } from '$lib/api/types/rootCategory';
-	import SvgChevronRight from './../lib/components/SVG/SvgChevronRight.svelte';
-	import { basketCount } from './../lib/stores/basket.ts';
-	import { basket } from '$lib/stores/basket';
 	import type { Category } from '$lib/api/types/category';
 	import type { Product } from '$lib/api/types/product';
 	import { apiFetch } from '$lib/api/client';
-	import Button from '$lib/components/Button.svelte';
-	import Card from '$lib/components/Cards/Card.svelte';
-	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
-	import { fade, fly, slide } from 'svelte/transition';
-	import { mockProducts } from './mockProducts.ts';
-	import StepGroup from '$lib/components/Misc/StepGroup.svelte';
+	import { fade, fly } from 'svelte/transition';
+
+	import { basket, basketCount } from '$lib/stores/basket.svelte';
 	import { createStepStates } from '$lib/stores/stepState.svelte';
-	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
+	import { mockProducts } from './mockProducts.ts';
+
+	import Button from '$lib/components/Button.svelte';
+	import Card from '$lib/components/Cards/Card.svelte';
 	import NavCard from '$lib/components/Cards/NavCard.svelte';
+	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
+	import StepGroup from '$lib/components/Misc/StepGroup.svelte';
 	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
+	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
+	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -72,7 +73,7 @@
 	let allProducts = $state<Product[]>([]);
 	let allCategories = $state<Category[]>([]);
 
-	let selectedRootCategory: RootCategory = $state('Food');
+	let selectedRootCategory = $state<RootCategory>('Food');
 	let selectedCategoryId = $state<number | null>(null);
 
 	let selectedProduct = $state<Product | null>(null);
@@ -83,12 +84,10 @@
 
 	/* ---------------- DERIVED ---------------- */
 
-	// Sub-categories belonging to the selected root category
 	const visibleCategories = $derived(
-		selectedRootCategory ? allCategories.filter((c) => c.rootCategory === selectedRootCategory) : []
+		allCategories.filter((c) => c.rootCategory === selectedRootCategory)
 	);
 
-	// Products belonging to the selected sub-category
 	const filteredProducts = $derived(
 		selectedCategoryId !== null
 			? allProducts.filter(
@@ -101,19 +100,13 @@
 
 	function selectRootCategory(rootCategory: RootCategory) {
 		selectedRootCategory = rootCategory;
-		selectedCategoryId = null; // reset sub-category when switching root
-		window.scrollTo({
-			top: 0,
-			behavior: 'smooth'
-		});
+		selectedCategoryId = null;
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
 	function selectCategory(id: number) {
 		selectedCategoryId = id;
-		window.scrollTo({
-			top: 0,
-			behavior: 'smooth'
-		});
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
 	async function openProduct(id: number) {
@@ -127,20 +120,14 @@
 	function addToBasket() {
 		if (!selectedProduct) return;
 
-		const choices = stepStates.flatMap((stepState, i) => {
-			const step = selectedProduct!.steps[i];
-			return stepState.options
+		const choices = stepStates.flatMap((stepState, i) =>
+			stepState.options
 				.filter((o) => o.selected)
-				.map((o) => {
-					const raw = step.options.find((opt) => opt.id === o.id)!;
-					return {
-						id: o.id,
-						title: raw.title[currentLanguage],
-						price: raw.price,
-						amount: o.amount || 1
-					};
-				});
-		});
+				.map((o) => ({
+					id: o.id,
+					quantity: o.quantity || 1
+				}))
+		);
 
 		basket.add(selectedProduct, choices);
 		itemIsInBasket = true;
@@ -175,10 +162,7 @@
 					class="flex aspect-square h-9 cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-300 bg-200 stroke-current p-1 shadow-lg hover:opacity-100 active:scale-95"
 					onclick={() => {
 						selectedCategoryId = null;
-						window.scrollTo({
-							top: 0,
-							behavior: 'smooth'
-						});
+						window.scrollTo({ top: 0, behavior: 'smooth' });
 					}}
 					transition:fade={{ duration: 200 }}
 				>
@@ -207,7 +191,6 @@
 	<!-- Sub-categories OR products -->
 	<div class="z-0 mt-14">
 		{#if selectedCategoryId === null}
-			<!-- Show sub-categories -->
 			{#if visibleCategories.length === 0}
 				<p class="text-sm opacity-50">No subcategories found.</p>
 			{:else}
@@ -222,7 +205,6 @@
 				</div>
 			{/if}
 		{:else}
-			<!-- Show products -->
 			{#await productsPromise}
 				<p class="opacity-70">Loading products...</p>
 			{:then}
@@ -281,12 +263,8 @@
 					<h2 class="text-lg font-semibold">
 						{selectedProduct.title[currentLanguage]}
 					</h2>
-					<p class="text-muted mb-2">
-						€{selectedProduct.price.toFixed(2)}
-					</p>
-					<p class="text-muted mb-4">
-						{selectedProduct.description[currentLanguage]}
-					</p>
+					<p class="text-muted mb-2">€{selectedProduct.price.toFixed(2)}</p>
+					<p class="text-muted mb-4">{selectedProduct.description[currentLanguage]}</p>
 				</div>
 
 				{#if !itemIsInBasket}
@@ -297,12 +275,11 @@
 						<Button
 							class="relative h-10 w-16 stroke-secondary-900"
 							size="lg"
-							onclick={() => {
-								window.location.href = '/basket';
-							}}
+							onclick={() => (window.location.href = '/basket')}
 							variant="secondary"
-							><p class="absolute top-1 left-3 aspect-square h-7"><SvgBasket /></p></Button
 						>
+							<p class="absolute top-1 left-3 aspect-square h-7"><SvgBasket /></p>
+						</Button>
 					</div>
 				{/if}
 			</div>
@@ -310,8 +287,9 @@
 	</div>
 {/if}
 
-<!-- ---------------- BASKET ICON ---------------- -->
-{#if $basketCount > 0}
+<!-- ---------------- BASKET BAR ---------------- -->
+
+{#if basketCount() > 0}
 	<div class="fixed bottom-0 left-0 flex w-screen justify-center">
 		<a
 			href="/basket"
@@ -320,13 +298,9 @@
 			<div
 				class="flex aspect-square h-full items-center justify-center rounded-full bg-secondary-500 dark:bg-secondary-600"
 			>
-				<span class="text-center text-secondary-50 dark:text-secondary-50">
-					{$basketCount}
-				</span>
+				<span class="text-center text-secondary-50 dark:text-secondary-50">{basketCount()}</span>
 			</div>
-
 			<span>Basket</span>
-
 			<span class="aspect-square h-full stroke-3"><SvgChevronRight /></span>
 		</a>
 	</div>
