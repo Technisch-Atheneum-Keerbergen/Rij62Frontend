@@ -23,7 +23,7 @@
 			imageSrc={option.imgURL}
 			price={option.price}
 			selected={optState.selected}
-			amount={optState.amount}
+			amount={optState.quantity}
 			selectable={true}
 			ontoggle={() => toggleOption(state, option.id, option.price)}
 			onamount={(delta) => changeAmount(state, option.id, delta)}

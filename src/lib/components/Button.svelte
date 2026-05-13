@@ -16,8 +16,7 @@
 		size?: Size;
 	} = $props();
 
-	const baseStyle =
-		'border-2 inline cursor-pointer px-2 py-0.5 transition-all active:scale-95 shadow-sm';
+	const baseStyle = 'border-2 inline px-2 py-0.5 transition-all shadow-sm';
 
 	const variantStyle: Record<Variant, string> = {
 		primary: 'border-primary-600 bg-primary-500 active:bg-primary-600 text-light',
@@ -33,7 +32,7 @@
 
 	const styles = $derived(
 		`${baseStyle} ${variantStyle[variant]} ${sizeStyle[size]} ${className} ${
-			disabled ? 'text-muted pointer-events-none' : ''
+			disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer active:scale-95'
 		}`
 	);
 </script>
