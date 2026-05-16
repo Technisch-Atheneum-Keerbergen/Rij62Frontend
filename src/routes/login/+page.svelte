@@ -3,23 +3,27 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
 	import { Card, Spinner } from 'flowbite-svelte';
-	import { apiFetch } from '$lib/api/client';
+	import { apiFetch, apiFetchJson } from '$lib/api/client';
 	import Button from '$lib/components/Button.svelte';
+	import { page } from '$app/state';
+	import type { GoogleLoginResponse } from '$lib/api/types/auth';
 
-	let loading = false;
+	const linkKey = page.url.searchParams.get('linkKey');
+
+	let loading = $state(false);
 
 	async function handleCredentialResponse(response: any) {
 		loading = true;
 		try {
-			const res = await apiFetch('/auth/google', {
+			const res = await apiFetchJson<GoogleLoginResponse>('/auth/google', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ token: response.credential })
+				body: JSON.stringify({ token: response.credential, linkKey: linkKey })
 			});
 			auth.login(res.token);
 			goto('/admin/overview');
 		} catch (err) {
-			console.error('Login failed:', err);
+			alert('Login failed: ' + err);
 		} finally {
 			loading = false;
 		}

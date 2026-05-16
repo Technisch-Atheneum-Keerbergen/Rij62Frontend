@@ -34,12 +34,19 @@ export async function apiCall(endpoint: string, options: RequestInit = {}): Prom
 
 	if (!res.ok) {
 		let error = null;
+		let responseText = '';
 		try {
-			error = (await res.json())?.title;
-		} catch (e) {
-			error = 'Failed to parse error json: ' + e;
+			responseText = await res.text();
+		} catch {
+			error = 'Failed to read response';
 		}
-		throw new Error(res.statusText + ': ' + error);
+
+		try {
+			error = JSON.parse(responseText)?.title;
+		} catch (e) {
+			error = responseText;
+		}
+		throw new Error("Got '" + res.statusText + "' from server: " + error);
 	}
 	return res;
 }

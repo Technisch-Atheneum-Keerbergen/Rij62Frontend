@@ -15,7 +15,7 @@
 		TableHead,
 		TableHeadCell
 	} from 'flowbite-svelte';
-	import { TrashBinSolid } from 'flowbite-svelte-icons';
+	import { AdjustmentsVerticalSolid, TrashBinSolid } from 'flowbite-svelte-icons';
 	import type { CreateUserResponse, User } from '$lib/api/types/user';
 	import CopyableText from '$lib/components/Misc/CopyableText.svelte';
 
@@ -38,18 +38,21 @@
 			this.dialogOpen = true;
 		}
 	}
+	type UserEditAction = 'none' | 'edit' | 'delete';
 	class UserEditController {
 		dialogOpen: boolean;
 		deleteDialogOpen: boolean;
 
 		displayName: string;
 		userId: number;
+		action: UserEditAction;
 
 		constructor() {
 			this.dialogOpen = $state(false);
 			this.deleteDialogOpen = $state(false);
 			this.displayName = $state('');
-			this.userId = $state(-1);
+			this.userId = $state(0);
+			this.action = $state('none');
 		}
 
 		editUser(user: User) {
@@ -58,40 +61,38 @@
 
 			this.dialogOpen = true;
 			this.deleteDialogOpen = false;
+			this.action = 'edit';
 		}
 
 		deleteUser(user: User) {
 			this.editUser(user);
 			this.dialogOpen = false;
 			this.deleteDialogOpen = true;
-		}
-
-		inEditProgress(): boolean {
-			return this.userId != -1;
+			this.action = 'delete';
 		}
 
 		async applyUserEdit() {
 			const result = await updateUser(this.userId, this.displayName);
+			this.endUserEdit();
 			if (typeof result == 'string') {
 				alert(result);
 				return;
 			}
-			this.endUserEdit();
 		}
 
 		endUserEdit() {
 			this.dialogOpen = false;
 			this.deleteDialogOpen = false;
-			this.userId = -1;
+			this.action = 'none';
 		}
 
 		async applyUserDelete() {
 			const result = await removeUser(this.userId);
+			this.endUserEdit();
 			if (typeof result == 'string') {
 				alert(result);
 				return;
 			}
-			this.endUserEdit();
 		}
 	}
 
@@ -168,7 +169,7 @@
 	}
 
 	function getLinkFromLinkKey(linkkey: string): string {
-		return `${window.location.origin}/claimKey?key=${linkkey}`;
+		return `${window.location.origin}/login?linkKey=${linkkey}`;
 	}
 
 	onMount(async () => {
@@ -289,10 +290,26 @@
 								}}
 							>
 								<div class="h-4 max-h-4">
-									{#if userEditController.userId == user.id}
+									{#if userEditController.action == 'delete' && userEditController.userId == user.id}
 										<Spinner class="h-full w-4 max-w-4"></Spinner>
 									{:else}
 										<TrashBinSolid class="h-full max-h-full w-4 max-w-4"></TrashBinSolid>
+									{/if}
+								</div>
+							</Button>
+
+							<Button
+								class="cursor-pointer"
+								onclick={() => {
+									userEditController.editUser(user);
+								}}
+							>
+								<div class="h-4 max-h-4">
+									{#if userEditController.action == 'edit' && userEditController.userId == user.id}
+										<Spinner class="h-full w-4 max-w-4"></Spinner>
+									{:else}
+										<AdjustmentsVerticalSolid class="h-full max-h-full w-4 max-w-4"
+										></AdjustmentsVerticalSolid>
 									{/if}
 								</div>
 							</Button>
