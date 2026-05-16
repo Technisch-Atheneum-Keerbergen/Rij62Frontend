@@ -1,0 +1,15 @@
+[Unit]
+Description=Rij62 Frontend
+
+[Service]
+ExecStart=/home/ldev/.bun/bin/bun run ./index.js
+WorkingDirectory=/opt/Rij62Frontend
+User=ldev
+Group=ldev
+
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
