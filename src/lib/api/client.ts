@@ -23,6 +23,39 @@ function addAuth(options: RequestInit = {}): RequestInit {
 	};
 }
 
+/* Calls the api at 'endpoint' not expecting any data.
+ * If the request fails this function will throw an Error
+ */
+export async function apiCall(endpoint: string, options: RequestInit = {}): Promise<Response> {
+	const res = await fetch(`${API_BASE_URL}${endpoint}`, addAuth(options));
+	if (res.status === 401) {
+		auth.logout();
+	}
+
+	if (!res.ok) {
+		let error = null;
+		try {
+			error = (await res.json())?.title;
+		} catch (e) {
+			error = 'Failed to parse error json: ' + e;
+		}
+		throw new Error(res.statusText + ': ' + error);
+	}
+	return res;
+}
+
+/* Fetches the api at 'endpoint' and returns the result as T parsed as json.
+ * If the request fails or the server returns invalid json this function will throw an Error
+ */
+export async function apiFetchJson<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+	const res = await apiCall(endpoint, options);
+	try {
+		return (await res.json()) as T;
+	} catch (e) {
+		throw new Error('Failed to parse data returned by server: ' + e);
+	}
+}
+
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 	const res = await fetch(`${API_BASE_URL}${endpoint}`, addAuth(options));
 	if (res.status === 401) {
