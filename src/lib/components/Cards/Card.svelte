@@ -10,11 +10,13 @@
 		size = 'md',
 		selectable = false,
 		selected = false,
+		disabled = false,
 		amount = 0,
 		price = 0,
 		ontoggle,
 		onamount,
 		onclick,
+
 		...restProps
 	}: {
 		title?: string;
@@ -24,10 +26,12 @@
 		size?: 'sm' | 'md' | 'lg';
 		selectable?: boolean;
 		selected?: boolean;
+		disabled?: boolean;
 		amount?: number;
 		price?: number;
 		ontoggle?: () => void;
 		onamount?: (delta: number) => void;
+
 		onclick?: () => void;
 	} = $props();
 
@@ -54,14 +58,17 @@
 	{...restProps}
 	role="button"
 	transition:slide={{ duration: 200 }}
-	tabindex="0"
-	onclick={handleClick}
-	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}
+	tabindex={disabled ? -1 : 0}
+	onclick={!disabled ? handleClick : undefined}
+	onkeydown={(e) => !disabled && (e.key === 'Enter' || e.key === ' ') && handleClick()}
 	class="flex {divSizeStyle[
 		size
-	]} h-full cursor-pointer flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
+	]} h-full flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
         {selectable && selected ? 'border-primary-300 bg-300' : 'border-300 bg-200'}
-        hover:shadow-md active:scale-95 {className}"
+        {disabled
+		? 'pointer-events-none cursor-not-allowed opacity-50 grayscale'
+		: 'cursor-pointer hover:shadow-md active:scale-95'}
+        {className}"
 >
 	{#if imageSrc}
 		<img src={imageSrc} {alt} class="{imgSizeStyle[size]} w-full rounded-[20px] object-cover" />

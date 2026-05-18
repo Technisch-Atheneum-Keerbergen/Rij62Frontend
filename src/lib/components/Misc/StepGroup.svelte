@@ -2,6 +2,7 @@
 	import { slide } from 'svelte/transition';
 	import { changeAmount, toggleOption, type StepState } from '$lib/stores/stepState.svelte';
 	import Card from '../Cards/Card.svelte';
+	import { productIsAvailable } from '$lib/api/types/product';
 
 	let {
 		step,
@@ -25,6 +26,7 @@
 			selected={optState.selected}
 			amount={optState.quantity}
 			selectable={true}
+			disabled={!productIsAvailable(option)}
 			ontoggle={() => toggleOption(state, option.id, option.price)}
 			onamount={(delta) => changeAmount(state, option.id, delta)}
 		/>

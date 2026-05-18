@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { RootCategory } from '$lib/api/types/rootCategory';
 	import type { Category } from '$lib/api/types/category';
-	import type { Product } from '$lib/api/types/product';
+	import { productIsAvailable, type Product } from '$lib/api/types/product';
 	import { apiFetch } from '$lib/api/client';
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
@@ -90,8 +90,8 @@
 
 	const filteredProducts = $derived(
 		selectedCategoryId !== null
-			? allProducts.filter(
-					(p) => p.isAvailable && p.categoryId === selectedCategoryId && p.enabledByPreset
+			? [...allProducts.filter((p) => p.categoryId === selectedCategoryId)].sort(
+					(a, b) => (productIsAvailable(a) ? 0 : 1) - (productIsAvailable(b) ? 0 : 1)
 				)
 			: []
 	);
@@ -215,6 +215,7 @@
 								title={product.title[currentLanguage]}
 								imageSrc={product.imgURL}
 								price={product.price}
+								disabled={!product.isAvailable || !product.enabledByPreset}
 								onclick={() => openProduct(product.id)}
 							/>
 						{/each}
