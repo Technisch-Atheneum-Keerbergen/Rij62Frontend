@@ -29,6 +29,7 @@
 	let categories = $state<Category[]>([]);
 	let SavedProduct = $state(false);
 	let allProducts = $state<Product[]>([]);
+	let stepDefaults = $state<Record<number, number[]>>({});
 
 	let formError = $state<string | null>(null);
 	let popupOpen = $state(false);
@@ -75,35 +76,18 @@
 		if (!product) {
 			return { valid: false, error: 'Product is not loaded' };
 		}
-
 		if (product.price < 0) {
-			return {
-				valid: false,
-				error: 'Price cannot be negative'
-			};
+			return { valid: false, error: 'Price cannot be negative' };
 		}
-
 		if (product.stock < 0) {
-			return {
-				valid: false,
-				error: 'Stock cannot be negative'
-			};
+			return { valid: false, error: 'Stock cannot be negative' };
 		}
-
 		if (product.btw < 0) {
-			return {
-				valid: false,
-				error: 'Btw cannot be negative'
-			};
+			return { valid: false, error: 'Btw cannot be negative' };
 		}
-
 		if (product.btw > 100) {
-			return {
-				valid: false,
-				error: 'Btw cannot be more than 100'
-			};
+			return { valid: false, error: 'Btw cannot be more than 100' };
 		}
-
 		return { valid: true };
 	}
 
@@ -111,7 +95,6 @@
 		if (!product) return;
 
 		const validation = ValidateProduct(product);
-
 		if (!validation.valid) {
 			formError = validation.error ?? null;
 			popupOpen = true;
@@ -124,7 +107,6 @@
 			} else {
 				await apiAdd(`/product/${product.id}`, product, 'PUT');
 			}
-
 			console.log('[Rij62] Product saved successfully!');
 			SavedProduct = true;
 		} catch (err: any) {
@@ -185,7 +167,7 @@
 					`/product/${product.id}/step`,
 					{
 						title: step.title,
-						defaultOptionId: step.defaultOptionId ?? 0,
+						defaultOptionId: stepDefaults[step.id]?.[0] ?? null,
 						multipleChoice: step.multipleChoice,
 						options: step.options.map((o) => o.id).filter(Boolean)
 					},
@@ -198,8 +180,8 @@
 			console.error('[Rij62] Failed to update steps:', err.message);
 		}
 	};
+
 	onMount(async () => {
-		// Load categories first
 		categories = (await apiFetch('/category')) as Category[];
 		allProducts = (await apiFetch('/product')) as Product[];
 
@@ -221,6 +203,11 @@
 		} else {
 			try {
 				product = (await apiFetch(`/product/${$page.params.id}`)) as Product;
+				if (product?.steps) {
+					for (const step of product.steps) {
+						stepDefaults[step.id] = step.defaultOptionId != null ? [step.defaultOptionId] : [];
+					}
+				}
 			} catch (err) {
 				console.error('[Product Fetch] Failed:', err);
 				product = null;
@@ -241,7 +228,6 @@
 	<div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
 		<form class="border-main space-y-6 rounded-xl border bg-50 p-8 shadow-2xl">
 			<Tabs tabStyle="pill">
-				<!-- Back button -->
 				<Button
 					type="button"
 					onclick={() => goto('/admin/productControl')}
@@ -253,7 +239,6 @@
 				<TabItem open title="Product Profile">
 					{#if product}
 						<div class="border-main space-y-6 rounded-xl border bg-100 p-6 shadow-lg">
-							<!-- Title Section -->
 							<div>
 								<h3 class="text-main text-lg font-semibold">General Information</h3>
 							</div>
@@ -325,7 +310,6 @@
 										class="border-main text-main w-full rounded-lg border bg-50 p-2"
 									>
 										<option value={0} disabled>Select a category</option>
-
 										{#each categories as category}
 											<option value={category.id}>
 												{category.name[Language.English]}
@@ -341,7 +325,6 @@
 										<Label for="IsAvailable">Product Available</Label>
 										<p class="text-muted text-sm">Toggle product visibility</p>
 									</div>
-
 									<Toggle id="IsAvailable" bind:checked={product.isAvailable} />
 								</div>
 							</div>
@@ -357,12 +340,12 @@
 						</div>
 					{/if}
 				</TabItem>
+
 				<TabItem title="Product Steps">
 					{#if product}
 						<div class="space-y-6">
 							{#each product.steps as step, i (step.id)}
 								<div class="border-main space-y-5 rounded-xl border bg-100 p-6 shadow-lg">
-									<!-- Step header -->
 									<div class="flex items-center justify-between">
 										<h3 class="text-main text-lg font-semibold">Step {i + 1}</h3>
 										<div class="flex items-center gap-3">
@@ -370,9 +353,10 @@
 											<span class="text-muted text-sm">Multiple choice</span>
 											<Button
 												type="button"
-												color="red"
+												variant="ghost"
 												size="xs"
 												onclick={() => {
+													delete stepDefaults[step.id];
 													product!.steps.splice(i, 1);
 													product = product;
 												}}
@@ -382,7 +366,6 @@
 										</div>
 									</div>
 
-									<!-- Step titles -->
 									<div class="grid gap-4 md:grid-cols-2">
 										{#each Object.keys(step.title) as lang (lang)}
 											<div>
@@ -395,7 +378,6 @@
 										{/each}
 									</div>
 
-									<!-- Options -->
 									<div class="border-main space-y-3 rounded-lg border bg-50 p-4">
 										<div class="flex items-center justify-between">
 											<h4 class="text-main text-sm font-semibold">Options</h4>
@@ -425,22 +407,41 @@
 											</Button>
 										</div>
 
-										<p class="text-muted text-xs">● = default selected option</p>
+										<p class="text-muted text-xs">☑ = default selected</p>
 
 										{#each step.options as option, j (option.id)}
 											<div class="border-main space-y-3 rounded-lg border bg-100 p-4">
 												<div class="flex items-center gap-3">
-													<!-- Default radio -->
-													<input
-														type="radio"
-														name="default_{step.id}"
-														checked={step.defaultOptionId === option.id}
-														onchange={() => (step.defaultOptionId = option.id)}
-														class="accent-blue-500"
+													<!-- Styled default checkbox -->
+													<button
+														type="button"
 														title="Set as default"
-													/>
+														onclick={() => {
+															const current = stepDefaults[step.id] ?? [];
+															if (current.includes(option.id)) {
+																stepDefaults[step.id] = current.filter((id) => id !== option.id);
+															}
+															stepDefaults[step.id] = [...current, option.id];
+														}}
+														class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-all
+															{(stepDefaults[step.id] ?? []).includes(option.id)
+															? 'border-primary-500 bg-primary-500 text-white'
+															: 'border-main bg-50 text-transparent hover:border-primary-400'}"
+													>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															class="h-3.5 w-3.5"
+															viewBox="0 0 20 20"
+															fill="currentColor"
+														>
+															<path
+																fill-rule="evenodd"
+																d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z"
+																clip-rule="evenodd"
+															/>
+														</svg>
+													</button>
 
-													<!-- Product picker dropdown -->
 													<div class="flex-1">
 														<Label>Option Product</Label>
 														<select
@@ -473,9 +474,11 @@
 
 													<Button
 														type="button"
-														color="red"
+														variant="ghost"
 														size="xs"
 														onclick={() => {
+															const current = stepDefaults[step.id] ?? [];
+															stepDefaults[step.id] = current.filter((id) => id !== option.id);
 															if (step.defaultOptionId === option.id) step.defaultOptionId = null;
 															step.options.splice(j, 1);
 															product = product;
@@ -485,7 +488,6 @@
 													</Button>
 												</div>
 
-												<!-- Editable titles -->
 												<div class="grid gap-3 md:grid-cols-2">
 													{#each Object.keys(option.title) as lang (lang)}
 														<div>
@@ -497,7 +499,7 @@
 														</div>
 													{/each}
 												</div>
-												<!-- Option image upload -->
+
 												<div class="flex items-center gap-4">
 													{#if option.imgURL}
 														<img
@@ -527,14 +529,15 @@
 								</div>
 							{/each}
 
-							<!-- Add Step -->
 							<button
 								type="button"
 								onclick={() => {
+									const newId = Date.now();
+									stepDefaults[newId] = [];
 									product!.steps = [
 										...product!.steps,
 										{
-											id: Date.now(),
+											id: newId,
 											title: { English: '', Dutch: '' },
 											multipleChoice: false,
 											defaultOptionId: null,
@@ -559,6 +562,7 @@
 						</div>
 					{/if}
 				</TabItem>
+
 				<TabItem title="History">
 					<div class="text-muted p-4">No history APIs available yet. Will be added later.</div>
 				</TabItem>
@@ -579,55 +583,48 @@
 				<ImagePlaceholder />
 			{/if}
 
-			<!-- Upload input -->
 			<div class="mt-4">
 				<input type="file" accept="image/*" onchange={handleUpload} class="block w-full text-sm" />
 			</div>
 		</div>
 	</div>
-	{#if popupOpen}
-		<Modal bind:open={popupOpen} size="xs" transition={slide}>
-			<div class="text-center">
-				<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
 
-				<h3 class="text-main mb-5 text-lg font-normal">
-					{formError}
-				</h3>
-
-				<div class="flex justify-center gap-3">
-					<Button
-						type="button"
-						color="primary"
-						onclick={() => {
-							popupOpen = false;
-							formError = null;
-						}}
-					>
-						Okay
-					</Button>
-				</div>
+	<Modal bind:open={popupOpen} size="xs" transition={slide}>
+		<div class="text-center">
+			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+			<h3 class="text-main mb-5 text-lg font-normal">
+				{formError}
+			</h3>
+			<div class="flex justify-center gap-3">
+				<Button
+					type="button"
+					color="primary"
+					onclick={() => {
+						popupOpen = false;
+						formError = null;
+					}}
+				>
+					Okay
+				</Button>
 			</div>
-		</Modal>
-	{/if}
-	{#if SavedProduct}
-		<Modal bind:open={SavedProduct} size="xs" transition={slide}>
-			<div class="text-center">
-				<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+		</div>
+	</Modal>
 
-				<h3 class="text-main mb-5 text-lg font-normal">Saved Product Successfully</h3>
-
-				<div class="flex justify-center gap-3">
-					<Button
-						type="button"
-						color="primary"
-						onclick={() => {
-							goto('/admin/productControl');
-						}}
-					>
-						Okay
-					</Button>
-				</div>
+	<Modal bind:open={SavedProduct} size="xs" transition={slide}>
+		<div class="text-center">
+			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+			<h3 class="text-main mb-5 text-lg font-normal">Saved Product Successfully</h3>
+			<div class="flex justify-center gap-3">
+				<Button
+					type="button"
+					color="primary"
+					onclick={() => {
+						goto('/admin/productControl');
+					}}
+				>
+					Okay
+				</Button>
 			</div>
-		</Modal>
-	{/if}
+		</div>
+	</Modal>
 </div>
