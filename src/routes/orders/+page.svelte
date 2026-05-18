@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { apiFetch } from '$lib/api/client';
-	import type { Order, OrderId, OrderItem, OrderStatus } from '$lib/api/types/order';
-	import type { Product, ProductId } from '$lib/api/types/product';
+	import type { Order, OrderId, OrderStatus } from '$lib/api/types/order';
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
@@ -20,15 +19,7 @@
 		PickedUp: 'Picked up'
 	};
 
-	interface OrderItemDisplay extends OrderItem {
-		choiceNames: string;
-	}
-
-	interface OrderDisplay extends Order {
-		items: OrderItemDisplay[];
-	}
-
-	let pendingOrders: OrderDisplay[] = [];
+	let pendingOrders: Order[] = [];
 
 	async function getOrder(id: OrderId): Promise<Order | null> {
 		const result = await apiFetch(`/order/${id}`);
@@ -36,49 +27,20 @@
 		return result as unknown as Order;
 	}
 
-	async function getProductName(id: ProductId): Promise<string | null> {
-		const result = await apiFetch(`/product/${id}`);
-		if (!result) return null;
-		const product = result as unknown as Product;
-		return product.title[currentLanguage] ?? null;
-	}
-
-	async function resolveChoiceNames(choices: ProductId[]): Promise<string> {
-		const names = await Promise.all(choices.map(getProductName));
-		return names.filter((name): name is string => name !== null).join(', ');
-	}
-
-	async function resolveOrderItem(item: OrderItem): Promise<OrderItemDisplay> {
-		return {
-			...item,
-			choiceNames: await resolveChoiceNames(item.choices)
-		};
-	}
-
-	async function resolveOrder(order: Order): Promise<OrderDisplay> {
-		return {
-			...order,
-			items: await Promise.all(order.items.map(resolveOrderItem))
-		};
-	}
-
 	async function updatePendingOrders() {
 		const results = await Promise.all($pendingOrderStore.map(getOrder));
-
-		const orders = results
+		pendingOrders = results
 			.filter((order): order is Order => order !== null)
 			.sort((a, b) => b.createdTime - a.createdTime);
-
-		pendingOrders = await Promise.all(orders.map(resolveOrder));
 	}
 
-	setTimeout(updatePendingOrders, 5000);
+	setInterval(updatePendingOrders, 5000);
 </script>
 
 <section class="mx-auto max-w-2xl">
 	{#await updatePendingOrders()}
 		<p class="text-center">Loading...</p>
-	{:then hello}
+	{:then}
 		<h1 class="m-2 text-center text-2xl font-semibold">
 			{#if pendingOrders.length > 0}
 				Your orders
@@ -87,48 +49,52 @@
 			{/if}
 		</h1>
 
-		{#if pendingOrders.length == 0}
+		{#if pendingOrders.length === 0}
 			<p class="text-center">
 				Make a new order <a class="font-bold text-primary-500 underline" href="/">here</a>
 			</p>
 		{/if}
+
 		{#each pendingOrders as order}
 			{@const date = new Date(order.createdTime * 1000)}
 			<div class="mb-1 p-2">
 				<h2 class="mb-1 flex items-baseline justify-end text-lg font-bold">
 					Order {date.getHours()}:{String(date.getMinutes()).padStart(2, '0')}
-					<span class=" ml-auto h-fit text-sm font-light opacity-100">
+					<span class="ml-auto h-fit text-sm font-light opacity-100">
 						{date.getDate()}/{date.getMonth() + 1}
 					</span>
 				</h2>
 
 				<ul class="flex flex-col gap-2">
-					{#each order.items as orderItem}
+					{#each order.items as item (item.id)}
 						<li
 							class="flex items-center justify-between rounded-2xl border-2 border-300 bg-200 p-2 shadow-sm"
 						>
 							<div class="relative flex grow items-center gap-3">
 								<img
-									src={orderItem.imgUrl}
-									alt={orderItem.title[currentLanguage]}
+									src={item.product.imgUrl}
+									alt={item.product.title[currentLanguage]}
 									class="h-12 w-12 rounded-lg object-cover"
 								/>
 								<span
 									class="inset-shadow-lg absolute left-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-xl text-light shadow-md backdrop-blur-[1px]"
-									>{orderItem.quantity}</span
 								>
+									{item.quantity}
+								</span>
 								<div>
-									<p class="font-medium">{orderItem.title[currentLanguage]}</p>
-									{#if orderItem.choices.length > 0}
-										<p class="text-muted text-xs opacity-80">{orderItem.choiceNames}</p>
+									<p class="font-medium">{item.product.title[currentLanguage]}</p>
+									{#if item.choices.length > 0}
+										<p class="text-muted text-xs opacity-80">
+											{item.choices.map((c) => c.product.title[currentLanguage]).join(', ')}
+										</p>
 									{/if}
 								</div>
 
 								<div
-									class="ml-auto font-bold text-nowrap {statusColors[orderItem.status] ??
+									class="ml-auto font-bold text-nowrap {statusColors[item.status] ??
 										'text-gray-500'}"
 								>
-									{statusNames[orderItem.status]}
+									{statusNames[item.status]}
 								</div>
 							</div>
 						</li>

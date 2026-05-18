@@ -26,7 +26,7 @@
 	};
 	const styles = $derived(
 		`${baseStyle} ${variantStyle[variant]} ${sizeStyle[size]} ${className} ${
-			disabled ? 'opacity-40 cursor-not-allowed' : ''
+			disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
 		}`
 	);
 </script>

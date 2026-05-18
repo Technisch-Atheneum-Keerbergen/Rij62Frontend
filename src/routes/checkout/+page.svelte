@@ -6,6 +6,7 @@
 	import TimeInput from '$lib/components/Misc/TimeInput.svelte';
 	import { basket } from '$lib/stores/basket.svelte';
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
+	import type { UUID } from 'crypto';
 	import { onMount } from 'svelte';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
@@ -30,9 +31,12 @@
 			items
 		};
 
-		let orderId = null;
+		let orderResponse: {
+			validationErrors: any[];
+			orderId: UUID;
+		} | null = null;
 		try {
-			orderId = await apiFetch('/order', {
+			orderResponse = await apiFetch('/order', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body)
@@ -44,12 +48,12 @@
 
 		basket.clear();
 
-		if (orderId == null) {
+		if (orderResponse == null) {
 			success = false;
 			return;
 		}
 
-		pendingOrderStore.add(orderId);
+		pendingOrderStore.add(orderResponse.orderId);
 		success = true;
 		setTimeout(() => {
 			location.href = '/orders';
