@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiDelete, apiFetch, apiToggle, apiUpload, getImageUrl } from '$lib/api/client';
+	import { apiDelete, apiFetch, apiToggle } from '$lib/api/client';
 	import { Language } from '$lib/api/types/multilangstring';
 	import type { Category } from '$lib/api/types/category';
 	import type { Product } from '$lib/api/types/product';
@@ -38,6 +38,9 @@
 		if (e.key === 'Escape') {
 			popupModal = false;
 		}
+		if (e.key == 'Enter') {
+			toggleSelected();
+		}
 	}
 
 	const deleteSelected = async () => {
@@ -47,10 +50,7 @@
 			for (const id of selectedIds) {
 				await apiDelete(`/product/${id}`);
 			}
-			// remove deleted products from UI
 			products = products.filter((p) => !selectedIds.has(p.id));
-
-			// clear selection
 			selectedIds = new Set();
 			console.log('[Rij62] Products removed successfully!');
 		} catch (err: any) {
@@ -61,26 +61,29 @@
 	async function toggleSelected() {
 		if (!selectedIds || selectedIds.size === 0) return;
 
+		const presetLocked = [...selectedIds].filter(
+			(id) =>
+				products.find((p) => p.id === id)?.menuPresetId !== null &&
+				products.find((p) => p.id === id)?.menuPresetId !== undefined
+		);
+
+		if (presetLocked.length > 0) {
+			lockedModal = true;
+			return;
+		}
+
 		try {
 			for (const id of selectedIds) {
 				const updated = await apiToggle(id);
-				if (!updated) continue; // skip null updates
-
-				products = products.map((p) => (p.id === id ? updated : p)).filter(Boolean); // removes nulls if any
+				if (!updated) continue;
+				products = products.map((p) => (p.id === id ? updated : p)).filter(Boolean);
 			}
-			try {
-				products = (await apiFetch('/product')) as Product[];
-				console.log('this fixes it');
-				console.log('[Rij62] Products refreshed');
-			} catch (err: any) {
-				console.error('[Rij62] Failed to refresh products:', err.message);
-			}
+			products = (await apiFetch('/product')) as Product[];
 		} catch (err: any) {
 			console.log(`[Rij62] Failed to toggle availability: ${err.message}`);
 		}
 	}
 
-	//Search in Table
 	let searchTerm = $state('');
 	let filteredProducts = $derived.by(() =>
 		products.filter(
@@ -90,24 +93,11 @@
 		)
 	);
 
-	//for popup
 	let popupModal = $state(false);
+	let lockedModal = $state(false);
 
-	//Checkbox Logic
 	let selectedIds = $state(new Set<number>());
 	let lastClickedId: number | null = $state(null);
-
-	function toggle(id: number) {
-		const newSet = new Set(selectedIds);
-
-		if (newSet.has(id)) {
-			newSet.delete(id);
-		} else {
-			newSet.add(id);
-		}
-
-		selectedIds = newSet;
-	}
 
 	function handleCheckboxClick(e: MouseEvent, productId: number) {
 		e.stopPropagation();
@@ -118,7 +108,6 @@
 			const start = products.findIndex((p) => p.id === lastClickedId);
 			const end = products.findIndex((p) => p.id === productId);
 			const [from, to] = [Math.min(start, end), Math.max(start, end)];
-
 			for (let i = from; i <= to; i++) {
 				newSet.add(products[i].id);
 			}
@@ -132,10 +121,6 @@
 
 		selectedIds = newSet;
 		lastClickedId = productId;
-
-		console.log('[Rij62] End of handleCheckboxClick():');
-		console.log('[Rij62] selectedIds: ', selectedIds);
-		console.log('[Rij62] lastClickedId: ', lastClickedId);
 	}
 
 	function handleRowClick(e: MouseEvent, productId: number) {
@@ -147,7 +132,6 @@
 			const start = products.findIndex((p) => p.id === lastClickedId);
 			const end = products.findIndex((p) => p.id === productId);
 			const [from, to] = [Math.min(start, end), Math.max(start, end)];
-
 			for (let i = from; i <= to; i++) {
 				newSet.add(products[i].id);
 			}
@@ -163,10 +147,6 @@
 
 		selectedIds = newSet;
 		lastClickedId = productId;
-
-		console.log('[Rij62] End of handleCheckboxClick():');
-		console.log('[Rij62] selectedIds: ', selectedIds);
-		console.log('[Rij62] lastClickedId: ', lastClickedId);
 	}
 
 	let products: Product[] = $state([]);
@@ -174,9 +154,7 @@
 
 	onMount(() => {
 		window.addEventListener('keydown', handleKeydown);
-
 		loadData();
-
 		return () => {
 			window.removeEventListener('keydown', handleKeydown);
 		};
@@ -189,7 +167,6 @@
 </script>
 
 <div class="mx-auto max-w-7xl p-8">
-	<!-- Heading -->
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold md:text-5xl lg:text-6xl">
 			Take
@@ -198,7 +175,6 @@
 		</Heading>
 	</div>
 
-	<!-- Product Edit Menu -->
 	<div class="flex justify-center p-3">
 		<ButtonGroup>
 			<Button color="primary" onclick={() => toggleSelected()}>
@@ -218,7 +194,6 @@
 		</ButtonGroup>
 	</div>
 
-	<!-- Table Card -->
 	<div class="border-main overflow-hidden rounded-xl border shadow-lg select-none">
 		<Table striped class="w-full">
 			<TableSearch placeholder="Search by title" bind:inputValue={searchTerm}>
@@ -236,7 +211,6 @@
 							class="cursor-pointer transition hover:bg-400"
 							onclick={(e) => handleRowClick(e, product.id)}
 						>
-							<!-- Checkbox -->
 							<TableBodyCell class="w-10 p-2!">
 								<Checkbox
 									checked={selectedIds.has(product.id)}
@@ -244,33 +218,29 @@
 								/>
 							</TableBodyCell>
 
-							<!-- Name -->
 							<TableBodyCell class="font-semibold">
 								{product.title[currentLanguage]}
 							</TableBodyCell>
 
-							<!-- Category -->
 							<TableBodyCell>
 								{#if categories.length}
 									{@const category = categories.find((c) => c.id === product.categoryId)}
 									{#if category}
-										<Badge color="blue">
-											{category.name[currentLanguage]}
-										</Badge>
+										<Badge color="blue">{category.name[currentLanguage]}</Badge>
 									{/if}
 								{/if}
 							</TableBodyCell>
 
-							<!-- Availability (unchanged colors as requested) -->
 							<TableBodyCell>
-								{#if product.isAvailable}
+								{#if product.menuPresetId !== null && product.menuPresetId !== undefined}
+									<Badge color="yellow">In preset</Badge>
+								{:else if product.isAvailable}
 									<Badge color="green">Available</Badge>
 								{:else}
 									<Badge color="red">Unavailable</Badge>
 								{/if}
 							</TableBodyCell>
 
-							<!-- Price -->
 							<TableBodyCell class="text-right font-medium">
 								€{product.price.toFixed(2)}
 							</TableBodyCell>
@@ -284,11 +254,9 @@
 	<Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
 		<div class="text-center">
 			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
-
 			<h3 class="text-main mb-5 text-lg font-normal">
 				Are you sure you want to delete this product?
 			</h3>
-
 			<div class="flex justify-center gap-3">
 				<Button
 					type="button"
@@ -300,8 +268,19 @@
 				>
 					Yes, delete
 				</Button>
+				<Button type="button" variant="ghost" onclick={() => (popupModal = false)}>Cancel</Button>
+			</div>
+		</div>
+	</Modal>
 
-				<Button type="button" class="ghost" onclick={() => (popupModal = false)}>Cancel</Button>
+	<Modal form bind:open={lockedModal} size="xs" transition={slide} permanent>
+		<div class="text-center">
+			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+			<h3 class="text-main mb-5 text-lg font-normal">
+				This item is currently in a preset. Unable to toggle activation.
+			</h3>
+			<div class="flex justify-center gap-3">
+				<Button type="button" color="primary" onclick={() => (lockedModal = false)}>Okay</Button>
 			</div>
 		</div>
 	</Modal>

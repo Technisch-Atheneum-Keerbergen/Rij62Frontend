@@ -3,11 +3,16 @@
 	import { Heading, P, Span } from 'flowbite-svelte';
 
 	const controlTypes = [
-		{ type: 'product', description: 'Manage all products and inventory.' },
-		{ type: 'screen', description: 'Configure screens and displays.' },
-		{ type: 'table', description: 'Edit tables and datasets.' },
-		{ type: 'category', description: 'Edit all available categories' },
-		{ type: 'user', description: 'Manage users' }
+		{ name: 'product control', type: 'product', description: 'Manage all products and inventory.' },
+		{ name: 'screen control', type: 'screen', description: 'Configure screens and displays.' },
+		{ name: 'table control', type: 'table', description: 'Edit tables and datasets.' },
+		{ name: 'category control', type: 'category', description: 'Edit all available categories' },
+		{ name: 'user control', type: 'user', description: 'Manage users' },
+		{
+			name: 'schedule preset control',
+			type: 'preset',
+			description: 'Manage wich product are active on specific days'
+		}
 	];
 </script>
 
@@ -30,7 +35,7 @@
 				class="rounded-lg border border-none bg-100 transition-shadow duration-300 hover:shadow-xl dark:bg-100"
 			>
 				<div class="flex h-full flex-col justify-between p-6">
-					<h2 class="mb-2 text-xl font-semibold capitalize">{item.type} Control</h2>
+					<h2 class="mb-2 text-xl font-semibold capitalize">{item.name}</h2>
 					<p class="mb-4 text-gray-500">{item.description}</p>
 					<Button
 						href={`/admin/${item.type}Control`}
