@@ -15,3 +15,7 @@ export interface Product {
 	categoryId: number;
 	steps: ProductStep[];
 }
+
+export function productIsAvailable(product: Product) {
+	return product.isAvailable && product.enabledByPreset;
+}

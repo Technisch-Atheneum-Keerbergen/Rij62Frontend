@@ -4,23 +4,28 @@
 	import Button from '$lib/components/Button.svelte';
 	import FireWork from '$lib/components/Misc/FireWork.svelte';
 	import TimeInput from '$lib/components/Misc/TimeInput.svelte';
-	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
-	import { basket } from '$lib/stores/basket';
+	import { basket } from '$lib/stores/basket.svelte';
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
 	import { onMount } from 'svelte';
+
+	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
 	let pickupTime = $state<Date | null>(null);
 	let success = $state(false);
 
+	onMount(() => {
+		pickupTime = new Date();
+	});
+
 	async function bypassPayment() {
-		const items: CreateOrderItem[] = $basket.map((item) => ({
-			productId: item.product.id,
-			choices: item.choices.flatMap((c) => Array(c.amount).fill(c.id)),
+		const items: CreateOrderItem[] = basket.items.map((item) => ({
+			productId: item.productId,
+			choices: item.choices.flatMap((c) => Array(c.quantity).fill(c.id)),
 			quantity: item.quantity
 		}));
 
 		const body: CreateOrder = {
-			pickupTime: Math.round((pickupTime ? pickupTime : new Date()).getTime() * 0.001),
+			pickupTime: Math.round((pickupTime ?? new Date()).getTime() / 1000),
 			tableNumber: null,
 			items
 		};
@@ -34,31 +39,30 @@
 			});
 		} catch (e) {
 			alert('Something went wrong\n' + e);
+			return;
 		}
 
 		basket.clear();
+
 		if (orderId == null) {
 			success = false;
 			return;
 		}
+
 		pendingOrderStore.add(orderId);
 		success = true;
 		setTimeout(() => {
 			location.href = '/orders';
 		}, 1000);
 	}
-
-	onMount(() => {
-		pickupTime = new Date();
-	});
 </script>
 
 {#if success}
-	<FireWork message="Success"></FireWork>
+	<FireWork message="Success" />
 {/if}
 
 <label for="pickupTime">Choose a time for your order to be delivered</label>
-<TimeInput bind:value={pickupTime} id="pickupTime"></TimeInput>
+<TimeInput bind:value={pickupTime} id="pickupTime" />
 
 <Button class="w-full flex-1 py-1.5" size="sm" variant="primary" onclick={bypassPayment}>
 	bypass payment

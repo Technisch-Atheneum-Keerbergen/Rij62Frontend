@@ -3,36 +3,57 @@
 	import SvgMinus from '../SVG/SvgMinus.svelte';
 	import SvgPlus from '../SVG/SvgPlus.svelte';
 
-	type Props = {
+	let {
+		disabled = false,
+		disableIncrease = false,
+		currentAmount = 0,
+		decrease = () => {},
+		increase = () => {},
+		remove = () => {},
+		...restProps
+	}: {
 		decrease: (value?: any) => void;
 		increase: (value?: any) => void;
+		remove?: (value?: any) => void;
 		currentAmount: number;
+		disabled?: boolean;
+		disableIncrease?: boolean;
 		id?: any;
-	};
+	} = $props();
 
-	let props: Props = $props();
-
-	const currentAmount = $derived(props.currentAmount);
+	let increaseDisabled = $derived(disabled || disableIncrease);
 
 	function handleDecrease() {
-		props.decrease(props.id);
+		if (disabled) return;
+		decrease(restProps.id);
 	}
-
 	function handleIncrease() {
-		props.increase(props.id);
+		if (increaseDisabled) return;
+		increase(restProps.id);
+	}
+	function handleRemove() {
+		if (disabled) return;
+		remove(restProps.id);
 	}
 </script>
 
 <div class="flex items-center gap-2 text-lg">
 	<button
-		class="cursor-pointer rounded-md transition-all active:scale-95 active:bg-100"
+		class="rounded-md transition-all"
+		class:cursor-pointer={!disabled}
+		class:cursor-not-allowed={disabled}
+		class:opacity-40={disabled}
+		class:active:scale-95={!disabled}
+		class:active:bg-100={!disabled}
+		{disabled}
 		onclick={(e) => {
 			e.stopPropagation();
-			handleDecrease();
+			if (disableIncrease) handleRemove();
+			else handleDecrease();
 		}}
 	>
 		<div class="stroke-main aspect-square h-6 w-6">
-			{#if currentAmount == 1}
+			{#if currentAmount == 1 || disableIncrease}
 				<span class="stroke-red-400">
 					<SvgBin />
 				</span>
@@ -45,7 +66,13 @@
 	<span class="rounded-md bg-100 px-2">{currentAmount}</span>
 
 	<button
-		class="cursor-pointer rounded-md transition-all active:scale-95 active:bg-100"
+		class="rounded-md transition-all"
+		class:cursor-pointer={!increaseDisabled}
+		class:cursor-not-allowed={increaseDisabled}
+		class:opacity-40={increaseDisabled}
+		class:active:scale-95={!increaseDisabled}
+		class:active:bg-100={!increaseDisabled}
+		disabled={increaseDisabled}
 		onclick={(e) => {
 			e.stopPropagation();
 			handleIncrease();
