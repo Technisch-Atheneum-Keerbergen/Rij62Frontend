@@ -65,5 +65,5 @@
 <TimeInput bind:value={pickupTime} id="pickupTime" />
 
 <Button class="w-full flex-1 py-1.5" size="sm" variant="primary" onclick={bypassPayment}>
-	bypass payment
+	Go to payment
 </Button>

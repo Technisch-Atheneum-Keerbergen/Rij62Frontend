@@ -1,3 +1,4 @@
+import { productIsAvailable } from '$lib/api/types/product';
 import type { ProductStep } from '$lib/api/types/productstep';
 
 export type OptionState = {
@@ -16,10 +17,10 @@ export function createStepStates(steps: ProductStep[]): StepState[] {
 	return steps.map((step) => ({
 		stepId: step.id,
 		multipleChoice: step.multipleChoice,
-		options: step.options.map((opt) => ({
-			id: opt.id,
-			selected: opt.id === step.defaultOptionId,
-			quantity: opt.id === step.defaultOptionId ? 1 : 0
+		options: step.options.map((product) => ({
+			id: product.id,
+			selected: product.id === step.defaultOptionId && productIsAvailable(product),
+			quantity: product.id === step.defaultOptionId && productIsAvailable(product) ? 1 : 0
 		}))
 	}));
 }
