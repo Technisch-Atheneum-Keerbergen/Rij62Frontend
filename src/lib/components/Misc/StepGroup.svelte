@@ -23,7 +23,7 @@
 			title={option.title[language]}
 			imageSrc={option.imgURL}
 			price={option.price}
-			selected={optState.selected}
+			selected={optState.selected && productIsAvailable(option)}
 			amount={optState.quantity}
 			selectable={true}
 			disabled={!productIsAvailable(option)}
