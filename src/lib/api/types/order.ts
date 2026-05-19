@@ -1,6 +1,7 @@
 import type { UUID } from 'crypto';
 import type { MultiLangString } from './multilangstring';
 import type { ProductId } from './product';
+import type { RootCategory } from './rootCategory';
 
 export interface CreateOrder {
 	pickupTime: number;
@@ -38,6 +39,7 @@ export type OrderProduct = {
 	description: MultiLangString;
 	price: number;
 	btw: number;
+	rootCategory: RootCategory;
 	imgUrl: string;
 };
 
@@ -57,6 +59,7 @@ let i: Order = {
 					English: 'Croque ham/kaas',
 					Dutch: 'Croque ham/cheese'
 				},
+				rootCategory: 'Food',
 				description: {
 					English: 'Huisgemaakt brood, ketchup & mayo',
 					Dutch: 'Homemade bread, ketchup & mayo'
@@ -75,6 +78,7 @@ let i: Order = {
 							English: 'Croque ham/kaas',
 							Dutch: 'Croque ham/cheese'
 						},
+						rootCategory: 'Food',
 						description: {
 							English: 'Huisgemaakt brood, ketchup & mayo',
 							Dutch: 'Homemade bread, ketchup & mayo'
@@ -91,6 +95,7 @@ let i: Order = {
 							English: 'Croque ham/kaas',
 							Dutch: 'Croque ham/cheese'
 						},
+						rootCategory: 'Food',
 						description: {
 							English: 'Huisgemaakt brood, ketchup & mayo',
 							Dutch: 'Homemade bread, ketchup & mayo'
@@ -107,6 +112,7 @@ let i: Order = {
 							English: 'Croque ham/kaas',
 							Dutch: 'Croque ham/cheese'
 						},
+						rootCategory: 'Food',
 						description: {
 							English: 'Huisgemaakt brood, ketchup & mayo',
 							Dutch: 'Homemade bread, ketchup & mayo'
@@ -123,6 +129,7 @@ let i: Order = {
 							English: 'Croque ham/kaas',
 							Dutch: 'Croque ham/cheese'
 						},
+						rootCategory: 'Food',
 						description: {
 							English: 'Huisgemaakt brood, ketchup & mayo',
 							Dutch: 'Homemade bread, ketchup & mayo'
