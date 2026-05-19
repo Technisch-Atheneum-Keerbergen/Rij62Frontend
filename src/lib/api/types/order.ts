@@ -1,6 +1,6 @@
 import type { UUID } from 'crypto';
 import type { MultiLangString } from './multilangstring';
-import type { Product, ProductId } from './product';
+import type { ProductId } from './product';
 
 export interface CreateOrder {
 	pickupTime: number;
@@ -42,7 +42,6 @@ export type OrderProduct = {
 };
 
 export type OrderStatus = `Pending` | `InProgress` | `Ready` | `PickedUp`;
-
 
 let i: Order = {
 	id: 'daad4b7a-cd4d-493e-aaea-b1f442804fcc',

@@ -39,11 +39,20 @@
 
 	const statusCycle: OrderStatus[] = ['Pending', 'InProgress', 'Ready', 'PickedUp'];
 
-	const statusColor: Record<OrderStatus, string> = {
-		Pending: 'bg-yellow-400/20 text-yellow-600 hover:bg-yellow-400/40',
-		InProgress: 'bg-blue-400/20   text-blue-600   hover:bg-blue-400/40',
-		Ready: 'bg-green-400/20  text-green-600  hover:bg-green-400/40',
-		PickedUp: 'bg-gray-400/20   text-gray-400   hover:bg-gray-400/40'
+	// Applied to the whole row (bg glow + border tint)
+	const statusRowColor: Record<OrderStatus, string> = {
+		Pending: 'border-yellow-400/40 shadow-[inset_0_0_0_1px] shadow-yellow-400/20 bg-yellow-400/5',
+		InProgress: 'border-blue-400/40   shadow-[inset_0_0_0_1px] shadow-blue-400/20   bg-blue-400/5',
+		Ready: 'border-green-400/40  shadow-[inset_0_0_0_1px] shadow-green-400/20  bg-green-400/5',
+		PickedUp: 'border-gray-400/20   bg-300'
+	};
+
+	// Plain (non-interactive) badge colours
+	const statusBadgeColor: Record<OrderStatus, string> = {
+		Pending: 'bg-yellow-400/15 text-yellow-600',
+		InProgress: 'bg-blue-400/15   text-blue-600',
+		Ready: 'bg-green-400/15  text-green-600',
+		PickedUp: 'bg-gray-400/15   text-gray-400'
 	};
 
 	function formatTime(unix: number) {
@@ -78,7 +87,7 @@
 		} catch {
 			localStatuses[item.id] = current; // rollback
 		}
-            */
+		*/
 	}
 </script>
 
@@ -92,7 +101,6 @@
 	class="flex h-fit w-72 cursor-pointer flex-col overflow-hidden rounded-3xl border-300 bg-200 p-1
 		shadow-sm hover:shadow-md {className}"
 >
-	{console.log(order)}
 	<!-- Header pill -->
 	<div
 		class="relative m-1 flex flex-col justify-between rounded-2xl border border-400/50 bg-300 px-3 py-2"
@@ -123,7 +131,9 @@
 			{@const status = getStatus(item)}
 			<button
 				onclick={(e) => cycleStatus(e, item)}
-				class="flex items-center gap-2 rounded-2xl border border-400/30 bg-300 px-3 py-1.5 transition-all active:scale-95"
+				class="flex cursor-pointer items-center gap-2 rounded-2xl border px-3 py-1.5 transition-all active:scale-95 {statusRowColor[
+					status
+				]}"
 			>
 				<!-- Quantity badge -->
 				<span
@@ -133,7 +143,7 @@
 				</span>
 
 				<!-- Name + choices -->
-				<div class="min-w-0 flex-1">
+				<div class="min-w-0 flex-1 text-left">
 					<p class="text-main truncate text-sm font-semibold">
 						{item.product.title[currentLanguage]}
 					</p>
@@ -144,8 +154,9 @@
 					{/if}
 				</div>
 
+				<!-- Plain badge — no hover/click styles, pointer-events none -->
 				<span
-					class="shrink-0 cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors active:scale-95 {statusColor[
+					class="pointer-events-none shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {statusBadgeColor[
 						status
 					]}"
 				>

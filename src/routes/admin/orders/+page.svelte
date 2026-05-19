@@ -21,11 +21,24 @@
 	type ChefDish = {
 		key: string;
 		title: string;
+		choicesLabel: string;
 		totalQuantity: number;
 		prepared: number;
 		sourceOrders: { label: string; pickupTime: number }[];
 		earliestPickup: number;
 	};
+
+	function itemKey(item: {
+		product: { title: Record<string, string> };
+		choices?: { product: { title: Record<string, string> } }[];
+	}): string {
+		const base = item.product.title[currentLanguage];
+		const extras = (item.choices ?? [])
+			.map((c) => c.product.title[currentLanguage])
+			.sort()
+			.join('+');
+		return extras ? `${base}||${extras}` : base;
+	}
 
 	function aggregateForChef(orders: Order[]): ChefDish[] {
 		const map = new Map<string, ChefDish>();
@@ -35,11 +48,18 @@
 
 			for (const item of order.items) {
 				if (item.status === 'PickedUp') continue;
-				const key = item.product.title[currentLanguage];
+
+				const key = itemKey(item);
+				const title = item.product.title[currentLanguage];
+				const choicesLabel = (item.choices ?? [])
+					.map((c) => c.product.title[currentLanguage])
+					.join(', ');
+
 				if (!map.has(key)) {
 					map.set(key, {
 						key,
-						title: key,
+						title,
+						choicesLabel,
 						totalQuantity: 0,
 						prepared: 0,
 						sourceOrders: [],
@@ -166,6 +186,10 @@
 											{dish.title}
 										</p>
 									</div>
+									<!-- Choices label (only when present) -->
+									{#if dish.choicesLabel}
+										<p class="text-main/50 truncate text-xs">+ {dish.choicesLabel}</p>
+									{/if}
 									<!-- Source order pickup-time chips -->
 									<div class="flex flex-wrap gap-1">
 										{#each dish.sourceOrders as src}
