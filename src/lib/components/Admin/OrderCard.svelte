@@ -2,6 +2,7 @@
 	import { slide } from 'svelte/transition';
 	import { apiFetch } from '$lib/api/client';
 	import type { Order, OrderId, OrderItem, OrderStatus } from '$lib/api/types/order';
+	import StatusBadge from '../Badges/StatusBadge.svelte';
 
 	let {
 		order = {
@@ -39,7 +40,7 @@
 
 	const statusCycle: OrderStatus[] = ['Pending', 'InProgress', 'Ready', 'PickedUp'];
 
-	// Applied to the whole row (bg glow + border tint)
+	// Row background tint per status
 	const statusRowColor: Record<OrderStatus, string> = {
 		Pending: 'border-yellow-400/40 shadow-[inset_0_0_0_1px] shadow-yellow-400/20 bg-yellow-400/5',
 		InProgress: 'border-blue-400/40   shadow-[inset_0_0_0_1px] shadow-blue-400/20   bg-blue-400/5',
@@ -47,13 +48,7 @@
 		PickedUp: 'border-gray-400/20   bg-300'
 	};
 
-	// Plain (non-interactive) badge colours
-	const statusBadgeColor: Record<OrderStatus, string> = {
-		Pending: 'bg-yellow-400/15 text-yellow-600',
-		InProgress: 'bg-blue-400/15   text-blue-600',
-		Ready: 'bg-green-400/15  text-green-600',
-		PickedUp: 'bg-gray-400/15   text-gray-400'
-	};
+	// Badge colours per status
 
 	function formatTime(unix: number) {
 		return new Date(unix * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -78,16 +73,15 @@
 
 		localStatuses[item.id] = next; // optimistic
 
-		/*
 		try {
-			await apiFetch(`/order/${order.id}/item/${item.id}/status`, {
+			await apiFetch(`/order/${order.id}/status/${item.id}`, {
 				method: 'PUT',
-				body: JSON.stringify({ status: next })
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(next)
 			});
 		} catch {
 			localStatuses[item.id] = current; // rollback
 		}
-		*/
 	}
 </script>
 
@@ -99,9 +93,9 @@
 	{onclick}
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onclick?.()}
 	class="flex h-fit w-72 cursor-pointer flex-col overflow-hidden rounded-3xl border-300 bg-200 p-1
-		shadow-sm hover:shadow-md {className}"
+		shadow-sm {className}"
 >
-	<!-- Header pill -->
+	<!-- Header -->
 	<div
 		class="relative m-1 flex flex-col justify-between rounded-2xl border border-400/50 bg-300 px-3 py-2"
 	>
@@ -125,7 +119,7 @@
 		</div>
 	</div>
 
-	<!-- Items list -->
+	<!-- Items -->
 	<div class="mx-1 mt-0.5 mb-1 flex flex-col gap-1">
 		{#each order.items as item (item.id)}
 			{@const status = getStatus(item)}
@@ -135,14 +129,12 @@
 					status
 				]}"
 			>
-				<!-- Quantity badge -->
 				<span
 					class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-300/30 text-xs font-bold text-primary-600 dark:bg-primary-600 dark:text-primary-100"
 				>
 					{item.quantity}
 				</span>
 
-				<!-- Name + choices -->
 				<div class="min-w-0 flex-1 text-left">
 					<p class="text-main truncate text-sm font-semibold">
 						{item.product.title[currentLanguage]}
@@ -154,14 +146,7 @@
 					{/if}
 				</div>
 
-				<!-- Plain badge — no hover/click styles, pointer-events none -->
-				<span
-					class="pointer-events-none shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {statusBadgeColor[
-						status
-					]}"
-				>
-					{status}
-				</span>
+				<StatusBadge {status} />
 			</button>
 		{/each}
 	</div>

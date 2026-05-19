@@ -30,6 +30,7 @@
 			tableNumber: null,
 			items
 		};
+		console.log(body);
 
 		let orderResponse: {
 			validationErrors: any[];
@@ -55,6 +56,7 @@
 
 		pendingOrderStore.add(orderResponse.orderId);
 		success = true;
+		return;
 		setTimeout(() => {
 			location.href = '/orders';
 		}, 1000);

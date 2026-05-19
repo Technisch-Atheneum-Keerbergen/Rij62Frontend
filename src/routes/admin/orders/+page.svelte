@@ -4,30 +4,24 @@
 	import type { Order, OrderStatus } from '$lib/api/types/order';
 	import { slide } from 'svelte/transition';
 	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
+	import type { ChefDish } from '$lib/api/types/dish';
+	import ChefCard from '$lib/components/Admin/ChefCard.svelte';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
-	// ── View toggle ──────────────────────────────────────────────────────────────
+	// View toggle
 	let activeView = $state<'orders' | 'chef' | 'both'>('both');
 
-	// ── Data ─────────────────────────────────────────────────────────────────────
-	async function getAllOrders(): Promise<Order[]> {
-		return (await apiFetch('/order')) as Order[];
+	// Orders state — kept mutable so optimistic updates reflect immediately
+	let orders = $state<Order[]>([]);
+
+	async function loadOrders() {
+		orders = (await apiFetch('/order')) as Order[];
 	}
 
-	let ordersPromise = $state(getAllOrders());
+	let ordersPromise = $state(loadOrders());
 
-	// ── Chef view aggregation ─────────────────────────────────────────────────────
-	type ChefDish = {
-		key: string;
-		title: string;
-		choicesLabel: string;
-		totalQuantity: number;
-		prepared: number;
-		sourceOrders: { label: string; pickupTime: number }[];
-		earliestPickup: number;
-	};
-
+	// Item key — identifies a dish+choices combination across orders
 	function itemKey(item: {
 		product: { title: Record<string, string> };
 		choices?: { product: { title: Record<string, string> } }[];
@@ -40,6 +34,7 @@
 		return extras ? `${base}||${extras}` : base;
 	}
 
+	// Chef view aggregation
 	function aggregateForChef(orders: Order[]): ChefDish[] {
 		const map = new Map<string, ChefDish>();
 
@@ -66,12 +61,16 @@
 						earliestPickup: order.pickupTime ?? order.createdTime
 					});
 				}
+
 				const dish = map.get(key)!;
 				dish.totalQuantity += item.quantity;
-				if (item.status === 'Ready' || item.status === 'InProgress') {
+
+				if (item.status === 'Ready') {
 					dish.prepared += item.quantity;
 				}
+
 				dish.sourceOrders.push({ label, pickupTime: order.pickupTime ?? order.createdTime });
+
 				if ((order.pickupTime ?? order.createdTime) < dish.earliestPickup) {
 					dish.earliestPickup = order.pickupTime ?? order.createdTime;
 				}
@@ -81,30 +80,78 @@
 		return [...map.values()].sort((a, b) => a.earliestPickup - b.earliestPickup);
 	}
 
-	// ── Chef dish local state ─────────────────────────────────────────────────────
-	let chefState = $state<Record<string, { prepared: number }>>({});
+	// Returns all items matching a dish key, sorted by urgency (earliest pickup first),
+	// with each item annotated with its parent order id.
+	function itemsForKey(key: string): { orderId: string; item: Order['items'][number] }[] {
+		const result: { orderId: string; item: Order['items'][number] }[] = [];
 
-	function getChefPrepared(key: string, fallback: number) {
-		return chefState[key]?.prepared ?? fallback;
+		for (const order of orders) {
+			for (const item of order.items) {
+				if (item.status === 'PickedUp') continue;
+				if (itemKey(item) === key) {
+					result.push({ orderId: order.id, item });
+				}
+			}
+		}
+
+		result.sort((a, b) => {
+			const tA = orders.find((o) => o.id === a.orderId)?.pickupTime ?? 0;
+			const tB = orders.find((o) => o.id === b.orderId)?.pickupTime ?? 0;
+			return tA - tB;
+		});
+
+		return result;
 	}
 
-	function adjustPrepared(key: string, total: number, delta: number) {
-		const current = chefState[key]?.prepared ?? 0;
-		chefState[key] = { prepared: Math.max(0, Math.min(total, current + delta)) };
+	// Called by ChefCard when the chef increments or decrements prepared count.
+	// delta +1 → mark the most urgent pending item as Ready (optimistic).
+	// delta -1 → roll back the most recently readied item to Pending (optimistic).
+	async function handleChefAdjust(key: string, delta: 1 | -1) {
+		const candidates = itemsForKey(key);
+		console.log(key);
+		let target: { orderId: string; item: Order['items'][number] } | undefined;
+		let nextStatus: OrderStatus;
+
+		if (delta === 1) {
+			// Find the first item not yet marked Ready/InProgress
+			target = candidates.find(
+				(c) => c.item.status === 'Pending' || c.item.status === 'InProgress'
+			);
+			nextStatus = 'Ready';
+		} else {
+			// Find the last item that was marked Ready, rolling back the most urgent first
+			target = [...candidates].reverse().find((c) => c.item.status === 'Ready');
+			nextStatus = 'InProgress';
+		}
+
+		if (!target) return;
+
+		const previous = target.item.status;
+
+		// Optimistic update
+		target.item.status = nextStatus;
+		orders = [...orders]; // trigger reactivity
+
+		try {
+			await apiFetch(`/order/${target.orderId}/status/${target.item.id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(nextStatus)
+			});
+		} catch {
+			// Rollback
+			target.item.status = previous;
+			orders = [...orders];
+		}
 	}
 
-	function markAllReady(key: string, total: number) {
-		chefState[key] = { prepared: total };
-	}
-
-	// ── Helpers ───────────────────────────────────────────────────────────────────
 	function formatTime(unix: number) {
 		return new Date(unix * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	}
 </script>
 
 <div class="flex h-screen flex-col gap-3 overflow-hidden p-4">
-	<!-- ── View switcher ──────────────────────────────────────────────────────── -->
+	<!-- View switcher -->
 	<div class="flex shrink-0 items-center gap-1">
 		<FilterItem
 			group="kitchen-view"
@@ -131,14 +178,14 @@
 
 	{#await ordersPromise}
 		<p class="text-main/40 text-sm">Loading orders…</p>
-	{:then orders}
-		<!-- ── Top: workflow views ────────────────────────────────────────────────── -->
+	{:then}
+		<!-- Workflow views -->
 		<div
 			class="grid min-h-0 flex-1 gap-4 transition-all"
 			class:grid-cols-2={activeView === 'both'}
 			class:grid-cols-1={activeView !== 'both'}
 		>
-			<!-- ── 1. Order-Maker View ──────────────────────────────────────────── -->
+			<!-- Order view -->
 			{#if activeView === 'both' || activeView === 'orders'}
 				<section
 					class="flex min-h-0 flex-col gap-2"
@@ -155,7 +202,7 @@
 				</section>
 			{/if}
 
-			<!-- ── 2. Chef View ─────────────────────────────────────────────────── -->
+			<!-- Chef view -->
 			{#if activeView === 'both' || activeView === 'chef'}
 				<section
 					class="flex min-h-0 flex-col gap-2"
@@ -166,103 +213,12 @@
 					</h2>
 					<div class="flex min-h-0 flex-1 flex-row gap-3 overflow-x-auto overflow-y-hidden pb-2">
 						{#each aggregateForChef(orders) as dish (dish.key)}
-							{@const prepared = getChefPrepared(dish.key, dish.prepared)}
-							{@const allDone = prepared >= dish.totalQuantity}
-							<div
-								transition:slide={{ axis: 'x', duration: 200 }}
-								class="flex h-fit w-56 shrink-0 flex-col overflow-hidden rounded-3xl border-300 bg-200 p-1 shadow-sm transition-all hover:shadow-md"
-							>
-								<!-- Header pill -->
-								<div
-									class="relative m-1 flex flex-col gap-1 rounded-2xl border border-400/50 bg-300 px-3 py-2"
-								>
-									<div class="flex items-center gap-2">
-										<span
-											class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-300/30 text-sm font-bold text-primary-600 dark:bg-primary-600 dark:text-primary-100"
-										>
-											{dish.totalQuantity}×
-										</span>
-										<p class="text-main min-w-0 flex-1 truncate text-sm font-bold">
-											{dish.title}
-										</p>
-									</div>
-									<!-- Choices label (only when present) -->
-									{#if dish.choicesLabel}
-										<p class="text-main/50 truncate text-xs">+ {dish.choicesLabel}</p>
-									{/if}
-									<!-- Source order pickup-time chips -->
-									<div class="flex flex-wrap gap-1">
-										{#each dish.sourceOrders as src}
-											<span
-												class="text-main/60 rounded-full bg-400/20 px-1.5 py-0.5 text-[10px] font-medium"
-											>
-												{src.label}
-											</span>
-										{/each}
-									</div>
-								</div>
-
-								<!-- Progress + controls -->
-								<div
-									class="mx-1 mt-0.5 mb-1 flex flex-col gap-1.5 rounded-2xl border border-400/30 bg-300 px-3 py-2"
-								>
-									<div class="flex items-center gap-2">
-										<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-400/30">
-											<div
-												class="h-full rounded-full transition-all duration-300 {allDone
-													? 'bg-green-500'
-													: 'bg-blue-500'}"
-												style="width: {(prepared / dish.totalQuantity) * 100}%"
-											></div>
-										</div>
-										<span class="text-main/50 text-xs tabular-nums">
-											{prepared}/{dish.totalQuantity}
-										</span>
-									</div>
-									<div class="flex items-center gap-1">
-										<button
-											onclick={() => adjustPrepared(dish.key, dish.totalQuantity, -1)}
-											disabled={prepared === 0}
-											class="text-main/60 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-400/50 bg-200 text-sm font-bold transition hover:bg-400/30 active:scale-90 disabled:opacity-30"
-											aria-label="Decrease">−</button
-										>
-										<button
-											onclick={() => adjustPrepared(dish.key, dish.totalQuantity, 1)}
-											disabled={allDone}
-											class="text-main/60 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-400/50 bg-200 text-sm font-bold transition hover:bg-400/30 active:scale-90 disabled:opacity-30"
-											aria-label="Increase">+</button
-										>
-										<button
-											onclick={() => markAllReady(dish.key, dish.totalQuantity)}
-											class="flex-1 rounded-full px-2 py-1 text-xs font-semibold transition active:scale-95
-												{allDone
-												? 'bg-green-500/20 text-green-600'
-												: 'bg-primary-300/20 text-primary-600 hover:bg-primary-300/40'}"
-										>
-											{allDone ? '✓ Ready' : 'Mark ready'}
-										</button>
-									</div>
-								</div>
-							</div>
+							<ChefCard {dish} onAdjust={(delta) => handleChefAdjust(dish.key, delta)} />
 						{/each}
 					</div>
 				</section>
 			{/if}
 		</div>
-
-		<!-- ── Bottom: completed orders ───────────────────────────────────────────── -->
-		<section class="flex shrink-0 flex-col gap-2 border-t border-400/30 pt-3">
-			<h2 class="text-main/30 px-1 text-xs font-semibold tracking-widest uppercase">
-				Completed orders
-			</h2>
-			<div class="flex flex-row gap-3 overflow-x-auto pb-1">
-				{#each orders.filter( (o) => o.items.every((i) => i.status === 'PickedUp') ) as order (order.id)}
-					<OrderCard {order} class="shrink-0 opacity-40" />
-				{:else}
-					<p class="self-center text-xs italic text-main/30">No completed orders yet.</p>
-				{/each}
-			</div>
-		</section>
 	{:catch err}
 		<p class="text-sm text-red-500">Failed to load orders: {err.message}</p>
 	{/await}

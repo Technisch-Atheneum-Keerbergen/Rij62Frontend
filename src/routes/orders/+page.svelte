@@ -1,23 +1,10 @@
 <script lang="ts">
 	import { apiFetch } from '$lib/api/client';
-	import type { Order, OrderId, OrderStatus } from '$lib/api/types/order';
+	import { type Order, type OrderId } from '$lib/api/types/order';
+	import StatusBadge from '$lib/components/Badges/StatusBadge.svelte';
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
-
-	const statusColors: Record<OrderStatus, string> = {
-		Pending: 'text-muted',
-		InProgress: 'text-secondary-500',
-		Ready: 'text-green-500',
-		PickedUp: 'text-primary-500'
-	};
-
-	const statusNames: Record<OrderStatus, string> = {
-		Pending: 'Pending...',
-		InProgress: 'Being made...',
-		Ready: 'Ready!',
-		PickedUp: 'Picked up'
-	};
 
 	let pendingOrders: Order[] = [];
 
@@ -90,11 +77,8 @@
 									{/if}
 								</div>
 
-								<div
-									class="ml-auto font-bold text-nowrap {statusColors[item.status] ??
-										'text-gray-500'}"
-								>
-									{statusNames[item.status]}
+								<div class="ml-auto">
+									<StatusBadge size="md" status={item.status} />
 								</div>
 							</div>
 						</li>
