@@ -6,6 +6,7 @@
 	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
 	import type { ChefDish, UrgencyLevel } from '$lib/api/types/dish';
 	import ChefCard from '$lib/components/Admin/ChefCard.svelte';
+	import ReadyChefCard from '$lib/components/Admin/ReadyChefCard.svelte';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
@@ -148,14 +149,16 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(nextStatus)
 			});
-			orders = orders.map((o) =>
-				o.id !== orderId
-					? o
-					: {
-							...o,
-							items: o.items.map((i) => (i.id !== itemId ? i : { ...i, status: nextStatus }))
-						}
-			);
+			orders = orders.map((order) => {
+				if (order.id !== orderId) return order;
+				return {
+					...order,
+					items: order.items.map((item) => {
+						if (item.id !== itemId) return item;
+						return { ...item, status: nextStatus };
+					})
+				};
+			});
 		} catch {
 			preparedCounts[itemId] = current;
 		}
@@ -180,87 +183,66 @@
 		await applyPreparedDelta(orderId, itemId, quantity, delta);
 	}
 
-	// "Start all" — mark every live item on the order as InProgress (prepared = 0, just status flip)
-	async function handleOrderPrimaryAction(
-		orderId: string,
-		action: 'Pending' | 'InProgress' | 'Ready'
-	) {
+	async function handleOrderPrimaryAction(orderId: string, action: OrderStatus) {
 		const order = orders.find((o) => o.id === orderId);
 		if (!order) return;
 
-		if (action === 'Pending') {
-			// Mark all Pending items InProgress
-			for (const item of order.items) {
-				if (item.status === 'Pending') {
-					try {
-						await apiFetch(`/order/${orderId}/status/${item.id}`, {
-							method: 'PUT',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify('InProgress' satisfies OrderStatus)
-						});
-					} catch {}
-				}
-			}
-			orders = orders.map((o) =>
-				o.id !== orderId
-					? o
-					: {
-							...o,
-							items: o.items.map((i) =>
-								i.status === 'Pending' ? { ...i, status: 'InProgress' as OrderStatus } : i
-							)
-						}
-			);
-		} else if (action === 'InProgress') {
-			// Reset all InProgress items back to Pending
-			for (const item of order.items) {
-				if (item.status === 'InProgress') {
-					try {
-						await apiFetch(`/order/${orderId}/status/${item.id}`, {
-							method: 'PUT',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify('Pending' satisfies OrderStatus)
-						});
-					} catch {}
-				}
-			}
-			orders = orders.map((o) =>
-				o.id !== orderId
-					? o
-					: {
-							...o,
-							items: o.items.map((i) =>
-								i.status === 'InProgress' ? { ...i, status: 'Pending' as OrderStatus } : i
-							)
-						}
-			);
-		} else {
-			// Mark entire order PickedUp
-			try {
-				await apiFetch(`/order/${orderId}/pickup`, { method: 'PUT' });
-			} catch {}
-			orders = orders.map((o) =>
-				o.id !== orderId
-					? o
-					: { ...o, items: o.items.map((i) => ({ ...i, status: 'PickedUp' as OrderStatus })) }
-			);
-		}
+		const statusMap: Partial<Record<OrderStatus, OrderStatus>> = {
+			Pending: 'InProgress',
+			InProgress: 'Pending',
+			Ready: 'PickedUp',
+			PickedUp: 'Ready'
+		};
+
+		const nextStatus = statusMap[action];
+		if (!nextStatus) return;
+
+		const itemsToUpdate =
+			action === 'PickedUp' ? order.items : order.items.filter((item) => item.status === action);
+
+		await Promise.all(
+			itemsToUpdate.map((item) =>
+				apiFetch(`/order/${orderId}/status/${item.id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(nextStatus)
+				}).catch(() => {})
+			)
+		);
+		orders = orders.map((order) => {
+			if (order.id !== orderId) return order;
+			return {
+				...order,
+				items: order.items.map((item) => {
+					const shouldUpdate = itemsToUpdate.some((updated) => updated.id === item.id);
+					if (!shouldUpdate) return item;
+					return { ...item, status: nextStatus };
+				})
+			};
+		});
 	}
 
 	const allChefDishes = $derived(aggregateForChef(orders, now));
 
+	const inCategory = (d: ChefDish) => chefCategory === 'all' || d.rootCategory === chefCategory;
+
 	const urgentDishes = $derived(
 		allChefDishes.filter(
 			(d) =>
+				d.prepared < d.totalQuantity &&
 				(d.urgency === 'red' || d.urgency === 'yellow') &&
-				(chefCategory === 'all' || d.rootCategory === chefCategory)
+				inCategory(d)
 		)
 	);
 
 	const laterDishes = $derived(
 		allChefDishes.filter(
-			(d) => d.urgency === 'green' && (chefCategory === 'all' || d.rootCategory === chefCategory)
+			(d) => d.prepared < d.totalQuantity && d.urgency === 'green' && inCategory(d)
 		)
+	);
+
+	const readyDishes = $derived(
+		allChefDishes.filter((d) => d.prepared >= d.totalQuantity && inCategory(d))
 	);
 
 	function formatTime(unix: number) {
@@ -338,7 +320,7 @@
 						Order view
 					</h2>
 					<div class="flex min-h-0 flex-1 flex-row gap-4 overflow-x-auto overflow-y-hidden pb-2">
-						{#each orders.filter( (o) => o.items.some((i) => i.status !== 'PickedUp') ) as order (order.id)}
+						{#each orders as order (order.id)}
 							<OrderCard
 								{order}
 								{preparedCounts}
@@ -362,13 +344,33 @@
 					</h2>
 
 					<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+						{#if readyDishes.length > 0}
+							<div class="flex shrink-0 flex-col gap-1.5">
+								<div class="flex items-center gap-2 px-1">
+									<span class="h-2 w-2 rounded-full bg-green-500"></span>
+									<span class="text-sm font-semibold tracking-widest text-green-500/80 uppercase">
+										Ready
+									</span>
+									<div class="h-px flex-1 bg-green-400/20"></div>
+								</div>
+								<div class="m-2 flex flex-row gap-3 overflow-x-auto p-2">
+									{#each readyDishes as dish (dish.key)}
+										<ReadyChefCard
+											{dish}
+											onAdjust={(delta) => handleChefAdjust(dish.dishKey, dish.urgency, delta)}
+										/>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
 						{#if urgentDishes.length > 0}
 							<div class="flex shrink-0 flex-col gap-1.5">
 								<div class="flex items-center gap-2 px-1">
 									<span class="h-2 w-2 animate-pulse rounded-full bg-red-500"></span>
-									<span class="text-sm font-semibold tracking-widest text-red-500/80 uppercase"
-										>Urgent</span
-									>
+									<span class="text-sm font-semibold tracking-widest text-red-500/80 uppercase">
+										Urgent
+									</span>
 									<div class="h-px flex-1 bg-red-400/20"></div>
 								</div>
 								<div class="m-2 flex flex-row gap-3 overflow-x-auto p-2">
@@ -387,9 +389,9 @@
 							<div class="flex shrink-0 flex-col gap-1.5">
 								<div class="flex items-center gap-2 px-1">
 									<span class="h-2 w-2 rounded-full bg-green-500"></span>
-									<span class="text-sm font-semibold tracking-widest text-green-500/80 uppercase"
-										>Later</span
-									>
+									<span class="text-sm font-semibold tracking-widest text-green-500/80 uppercase">
+										Later
+									</span>
 									<div class="h-px flex-1 bg-green-400/20"></div>
 								</div>
 								<div class="flex flex-row gap-3 overflow-x-auto p-2">
@@ -404,7 +406,7 @@
 							</div>
 						{/if}
 
-						{#if urgentDishes.length === 0 && laterDishes.length === 0}
+						{#if urgentDishes.length === 0 && laterDishes.length === 0 && readyDishes.length === 0}
 							<p class="text-main/30 px-1 text-sm">No active dishes.</p>
 						{/if}
 					</div>
