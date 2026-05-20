@@ -77,9 +77,9 @@
 
 		<div class="flex items-center gap-2">
 			<span
-				class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-300/30 text-sm font-bold text-primary-600 dark:bg-primary-600 dark:text-primary-100"
+				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-300/30 font-bold text-primary-600 dark:bg-primary-600 dark:text-primary-100"
 			>
-				{dish.totalQuantity}×
+				{dish.totalQuantity}
 			</span>
 			<p class="text-main min-w-0 flex-1 text-sm font-bold">{dish.title}</p>
 		</div>
@@ -130,7 +130,7 @@
 				onclick={() => {
 					for (let i = dish.prepared; i < dish.totalQuantity; i++) onAdjust(1);
 				}}
-				class="flex-1 cursor-pointer rounded-full bg-primary-300/20 px-2 py-1 text-xs font-semibold text-primary-500 transition active:scale-95 dark:bg-primary-500 dark:text-primary-50"
+				class="flex-1 cursor-pointer rounded-full bg-primary-300/20 px-2 py-1 text-xs font-semibold text-primary-500 transition active:scale-95 active:bg-primary-400/20 dark:bg-primary-500 dark:text-primary-50 dark:active:bg-primary-600"
 			>
 				Mark ready
 			</button>

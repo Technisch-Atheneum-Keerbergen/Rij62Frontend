@@ -37,7 +37,7 @@
 		order?: Order;
 		preparedCounts?: Record<number, number>;
 		onitemdelta?: (itemId: number, quantity: number, delta: 1 | -1) => void;
-		onprimaryaction?: (action: OrderStatus) => void;
+		onprimaryaction?: (nextStatus: OrderStatus) => void;
 		onclick?: () => void;
 		class?: string;
 	} = $props();
@@ -56,7 +56,6 @@
 	// Live items = not yet PickedUp
 	const liveItems = $derived(order.items.filter((i) => i.status !== 'PickedUp'));
 
-	// Card-level state booleans — allPickedUp uses order.items directly
 	const allPending = $derived(
 		liveItems.length > 0 && liveItems.every((i) => i.status === 'Pending')
 	);
@@ -66,19 +65,34 @@
 	const allReady = $derived(liveItems.length > 0 && liveItems.every((i) => i.status === 'Ready'));
 	const allPickedUp = $derived(order.items.every((i) => i.status === 'PickedUp'));
 
-	function handleUnitTap(e: MouseEvent, item: OrderItem, unitIndex: number) {
+	// Cycle: 0 → 1 → … → quantity → 0 (wraps back down)
+	function handleItemTap(e: MouseEvent, item: OrderItem) {
 		e.stopPropagation();
+		if (!onitemdelta || item.status === 'PickedUp') return;
 		const prepared = preparedCounts[item.id] ?? 0;
-		if (unitIndex < prepared) onitemdelta?.(item.id, item.quantity, -1);
-		else if (unitIndex === prepared) onitemdelta?.(item.id, item.quantity, 1);
+		// If fully prepared, wrap back to 0 by decrementing all the way
+		const delta: 1 | -1 = prepared >= item.quantity ? -1 : 1;
+		onitemdelta(item.id, item.quantity, delta);
 	}
 
-	function unitStatus(item: OrderItem, unitIndex: number): OrderStatus {
-		const prepared = preparedCounts[item.id] ?? 0;
+	// Effective status for a single-item row, accounting for partial preparation
+	function effectiveStatus(item: OrderItem): OrderStatus {
 		if (item.status === 'PickedUp') return 'PickedUp';
-		return unitIndex < prepared ? 'Ready' : item.status;
+		const prepared = preparedCounts[item.id] ?? 0;
+		if (prepared >= item.quantity) return 'Ready';
+		if (prepared > 0) return 'InProgress';
+		return item.status;
 	}
 
+	// Progress bar fill colour (matches row accent)
+	const progressColor: Record<OrderStatus, string> = {
+		Pending: 'bg-amber-400/30',
+		InProgress: 'bg-primary-400/40',
+		Ready: 'bg-green-400/35',
+		PickedUp: 'bg-400/20'
+	};
+
+	// Outer row border / shadow tint — same as before
 	const rowColor: Record<OrderStatus, string> = {
 		Pending: 'border-amber-400/40 shadow-[inset_0_0_0_1px] shadow-amber-400/20 bg-amber-400/5',
 		InProgress:
@@ -86,13 +100,6 @@
 		Ready: 'border-green-400/40 shadow-[inset_0_0_0_1px] shadow-green-400/20 bg-green-400/5',
 		PickedUp: 'border-400/20 bg-400/5 opacity-40'
 	};
-
-	function rowColorFor(item: OrderItem, unitIndex: number): string {
-		if (item.status === 'PickedUp') return rowColor.PickedUp;
-		const prepared = preparedCounts[item.id] ?? 0;
-		if (unitIndex < prepared) return rowColor.Ready;
-		return rowColor[item.status];
-	}
 
 	// Category grouping
 	const foodItems = $derived(
@@ -111,16 +118,16 @@
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onclick?.()}
 	class="flex h-fit w-72 cursor-pointer flex-col overflow-hidden rounded-3xl border-300 bg-200 p-1 shadow-sm {className}"
 >
-	<!-- Header — tap target for primary action when all Pending or all Ready -->
+	<!-- Header — tap target when allPending (→ InProgress) or allReady (→ PickedUp) -->
 	<button
 		onclick={(e) => {
 			e.stopPropagation();
-			if (allPending) onprimaryaction?.('Pending');
-			else if (allReady) onprimaryaction?.('Ready');
+			if (allPending) onprimaryaction?.('InProgress');
+			else if (allReady) onprimaryaction?.('PickedUp');
 		}}
 		disabled={!allPending && !allReady}
 		class="relative m-1 flex flex-col justify-between rounded-2xl border border-400/50 bg-300 px-3 py-2
-			text-left transition-all active:scale-[0.98]
+			text-left transition-all
 			{allPending ? 'hover:border-amber-400/40' : ''}
 			{allReady ? 'hover:border-green-400/40' : ''}"
 	>
@@ -153,104 +160,142 @@
 		</div>
 	</button>
 
-	<!-- Items grouped by category -->
+	<!-- Items grouped by category — one row per item, progress bar background -->
 	<div class="mx-1 mt-0.5 flex flex-col gap-1">
 		{#if foodItems.length > 0}
 			{#if hasBoth}
 				<div class="flex items-center gap-1.5 px-1 pt-0.5">
-					<span class="text-[10px] font-semibold tracking-wide text-orange-500/70 uppercase"
-						>🍽️ Food</span
-					>
+					<span class="text-[10px] font-semibold tracking-wide text-orange-500/70 uppercase">
+						🍽️ Food
+					</span>
 					<div class="h-px flex-1 bg-orange-400/20"></div>
 				</div>
 			{/if}
 			{#each foodItems as item (item.id)}
 				{@const prepared = preparedCounts[item.id] ?? 0}
-				{#each { length: item.quantity } as _, unitIndex}
-					{@const isNext = unitIndex === prepared}
-					{@const isPickedUp = item.status === 'PickedUp'}
-					<button
-						onclick={(e) => handleUnitTap(e, item, unitIndex)}
-						class="flex cursor-pointer items-center gap-2 rounded-2xl border px-3 py-1.5 transition-all active:scale-95
-							{rowColorFor(item, unitIndex)}
-							{!isPickedUp && !isNext && (preparedCounts[item.id] ?? 0) < unitIndex ? 'opacity-50' : ''}"
-					>
-						<div class="min-w-0 flex-1 text-left">
-							<p class="text-main truncate text-sm font-semibold">
-								{item.product.title[currentLanguage]}
+				{@const status = effectiveStatus(item)}
+				{@const pct = item.quantity > 0 ? (prepared / item.quantity) * 100 : 0}
+				{@const isPickedUp = item.status === 'PickedUp'}
+				<button
+					onclick={(e) => handleItemTap(e, item)}
+					disabled={isPickedUp || !onitemdelta}
+					class="relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-2xl border px-3 py-1.5
+						transition-all active:scale-95 disabled:cursor-default
+						{rowColor[status]}"
+				>
+					<!-- Progress bar fills from left, same accent colour -->
+					{#if !isPickedUp && item.quantity > 1}
+						<div
+							class="pointer-events-none absolute inset-0 origin-left rounded-2xl transition-all duration-300 {progressColor[
+								status
+							]}"
+							style="width: {pct}%"
+						></div>
+					{/if}
+
+					<div class="relative min-w-0 flex-1 text-left">
+						<p class="text-main truncate text-sm font-semibold">
+							{item.product.title[currentLanguage]}
+						</p>
+						{#if item.choices && item.choices.length > 0}
+							<p class="text-main/40 truncate text-xs">
+								{item.choices.map((c) => c.product.title[currentLanguage]).join(', ')}
 							</p>
-							{#if item.choices && item.choices.length > 0}
-								<p class="text-main/40 truncate text-xs">
-									{item.choices.map((c) => c.product.title[currentLanguage]).join(', ')}
-								</p>
-							{/if}
-						</div>
-						<StatusBadge status={unitStatus(item, unitIndex)} />
-					</button>
-				{/each}
+						{/if}
+					</div>
+
+					<!-- Quantity + status badge -->
+					<div class="relative flex shrink-0 items-center gap-1.5">
+						{#if item.quantity > 1}
+							<span class="text-main/40 text-xs tabular-nums">
+								{prepared}/{item.quantity}
+							</span>
+						{/if}
+						<StatusBadge {status} />
+					</div>
+				</button>
 			{/each}
 		{/if}
 
 		{#if drinkItems.length > 0}
 			{#if hasBoth}
 				<div class="flex items-center gap-1.5 px-1 pt-1">
-					<span class="text-[10px] font-semibold tracking-wide text-blue-500/70 uppercase"
-						>🥤 Drinks</span
-					>
+					<span class="text-[10px] font-semibold tracking-wide text-blue-500/70 uppercase">
+						🥤 Drinks
+					</span>
 					<div class="h-px flex-1 bg-blue-400/20"></div>
 				</div>
 			{/if}
 			{#each drinkItems as item (item.id)}
 				{@const prepared = preparedCounts[item.id] ?? 0}
-				{#each { length: item.quantity } as _, unitIndex}
-					{@const isNext = unitIndex === prepared}
-					{@const isPickedUp = item.status === 'PickedUp'}
-					<button
-						onclick={(e) => handleUnitTap(e, item, unitIndex)}
-						class="flex cursor-pointer items-center gap-2 rounded-2xl border px-3 py-1.5 transition-all active:scale-95
-							{rowColorFor(item, unitIndex)}
-							{!isPickedUp && !isNext && (preparedCounts[item.id] ?? 0) < unitIndex ? 'opacity-50' : ''}"
+				{@const status = effectiveStatus(item)}
+				{@const pct = item.quantity > 0 ? (prepared / item.quantity) * 100 : 0}
+				{@const isPickedUp = item.status === 'PickedUp'}
+				<button
+					onclick={(e) => handleItemTap(e, item)}
+					disabled={isPickedUp || !onitemdelta}
+					class="relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-2xl border px-3 py-1.5
+						transition-all active:scale-95 disabled:cursor-default
+						{rowColor[status]}"
+				>
+					{#if !isPickedUp && item.quantity > 1}
+						<div
+							class="pointer-events-none absolute inset-0 origin-left rounded-2xl transition-all duration-300 {progressColor[
+								status
+							]}"
+							style="width: {pct}%"
+						></div>
+					{/if}
+
+					<span
+						class="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-300/30 text-xs font-bold text-blue-600 dark:bg-blue-600 dark:text-blue-100"
+						>🥤</span
 					>
-						<span
-							class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-300/30 text-xs font-bold text-blue-600 dark:bg-blue-600 dark:text-blue-100"
-						></span>
-						<div class="min-w-0 flex-1 text-left">
-							<p class="text-main truncate text-sm font-semibold">
-								{item.product.title[currentLanguage]}
+
+					<div class="relative min-w-0 flex-1 text-left">
+						<p class="text-main truncate text-sm font-semibold">
+							{item.product.title[currentLanguage]}
+						</p>
+						{#if item.choices && item.choices.length > 0}
+							<p class="text-main/40 truncate text-xs">
+								{item.choices.map((c) => c.product.title[currentLanguage]).join(', ')}
 							</p>
-							{#if item.choices && item.choices.length > 0}
-								<p class="text-main/40 truncate text-xs">
-									{item.choices.map((c) => c.product.title[currentLanguage]).join(', ')}
-								</p>
-							{/if}
-						</div>
-						<StatusBadge status={unitStatus(item, unitIndex)} />
-					</button>
-				{/each}
+						{/if}
+					</div>
+
+					<div class="relative flex shrink-0 items-center gap-1.5">
+						{#if item.quantity > 1}
+							<span class="text-main/40 text-xs tabular-nums">
+								{prepared}/{item.quantity}
+							</span>
+						{/if}
+						<StatusBadge {status} />
+					</div>
+				</button>
 			{/each}
 		{/if}
 	</div>
 
-	<!-- Footer: Pending → Start all | InProgress → reset link | mixed → nothing | Ready → Picked up | PickedUp → undo -->
+	<!-- Footer -->
 	{#if allPending}
-		<div class="mx-1 mt-0.5 mb-1" transition:slide={{ duration: 150 }}>
-			<button
-				onclick={(e) => {
-					e.stopPropagation();
-					onprimaryaction?.('Pending');
-				}}
-				class="w-full rounded-2xl bg-amber-400/15 px-3 py-2 text-sm font-semibold text-amber-500
-					transition-all hover:bg-amber-400/25 active:scale-[0.97] dark:bg-amber-500/20 dark:text-amber-300"
-			>
-				Start all
-			</button>
-		</div>
-	{:else if allInProgress}
-		<div class="mx-1 mt-0.5 mb-1 flex justify-end" transition:slide={{ duration: 150 }}>
+		<div class="m-1" transition:slide={{ duration: 150 }}>
 			<button
 				onclick={(e) => {
 					e.stopPropagation();
 					onprimaryaction?.('InProgress');
+				}}
+				class="w-full rounded-2xl bg-amber-400/15 px-3 py-2 text-sm font-semibold text-amber-500
+					transition-all active:scale-[0.97] active:bg-amber-400/25 dark:bg-amber-500/20 dark:text-amber-300"
+			>
+				Accept order
+			</button>
+		</div>
+	{:else if allInProgress}
+		<div class="m-1 flex justify-end" transition:slide={{ duration: 150 }}>
+			<button
+				onclick={(e) => {
+					e.stopPropagation();
+					onprimaryaction?.('Pending');
 				}}
 				class="text-main/30 hover:text-main/60 px-3 py-1.5 text-xs transition-all active:scale-95"
 			>
@@ -258,24 +303,24 @@
 			</button>
 		</div>
 	{:else if allReady}
-		<div class="mx-1 mt-0.5 mb-1" transition:slide={{ duration: 150 }}>
-			<button
-				onclick={(e) => {
-					e.stopPropagation();
-					onprimaryaction?.('Ready');
-				}}
-				class="w-full rounded-2xl bg-green-400/15 px-3 py-2 text-sm font-semibold text-green-500
-					transition-all hover:bg-green-400/25 active:scale-[0.97] dark:bg-green-500/20 dark:text-green-300"
-			>
-				✓ Picked up
-			</button>
-		</div>
-	{:else if allPickedUp}
-		<div class="mx-1 mt-0.5 mb-1 flex justify-end" transition:slide={{ duration: 150 }}>
+		<div class="m-1" transition:slide={{ duration: 150 }}>
 			<button
 				onclick={(e) => {
 					e.stopPropagation();
 					onprimaryaction?.('PickedUp');
+				}}
+				class="w-full rounded-2xl bg-green-400/15 px-3 py-2 text-sm font-semibold text-green-500
+					transition-all active:scale-[0.97] active:bg-green-400/25 dark:bg-green-500/20 dark:text-green-300"
+			>
+				Picked up
+			</button>
+		</div>
+	{:else if allPickedUp}
+		<div class="m-1 flex justify-end" transition:slide={{ duration: 150 }}>
+			<button
+				onclick={(e) => {
+					e.stopPropagation();
+					onprimaryaction?.('Ready');
 				}}
 				class="text-main/30 hover:text-main/60 px-3 py-1.5 text-xs transition-all active:scale-95"
 			>
