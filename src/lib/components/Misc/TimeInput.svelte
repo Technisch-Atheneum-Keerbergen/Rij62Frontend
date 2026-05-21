@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import Button from '../Button.svelte';
 
 	let { value = $bindable<Date | null>(null), id } = $props();

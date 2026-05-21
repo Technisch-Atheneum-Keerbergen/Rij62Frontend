@@ -1,7 +1,6 @@
 <script lang="ts">
 	import SvgChevronRight from './../SVG/SvgChevronRight.svelte';
 	import { slide } from 'svelte/transition';
-	import AmountController from '$lib/components/Misc/AmountController.svelte';
 
 	let {
 		title = '',

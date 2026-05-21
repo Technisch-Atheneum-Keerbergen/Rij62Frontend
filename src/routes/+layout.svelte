@@ -99,11 +99,14 @@
 	</nav>
 </header>
 
-<main class="container mx-auto mt-16 min-h-[80vh] p-2">{@render children()}</main>
+<main class="mt-16 p-2">{@render children()}</main>
 
+<!--
+	
 <footer class="text-muted mt-auto py-8 text-center text-sm">
 	<div class="mx-auto max-w-7xl px-4">
 		<hr class="mb-4 border-200" />
 		<p>© {new Date().getFullYear()} Rij 62. All rights reserved.</p>
 	</div>
 </footer>
+-->
