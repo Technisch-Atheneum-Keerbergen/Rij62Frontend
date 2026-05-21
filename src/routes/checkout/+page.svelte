@@ -55,6 +55,17 @@
 		}
 
 		pendingOrderStore.add(orderResponse.orderId);
+
+		try {
+			orderResponse = await apiFetch(`/payment/pay/${orderResponse.orderId}?bypassPayment=true`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+		} catch (e) {
+			alert('Something went wrong\n' + e);
+			return;
+		}
+
 		success = true;
 		return;
 		setTimeout(() => {

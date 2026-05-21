@@ -1,5 +1,5 @@
 <script lang="ts">
-	import OrderCard from './../../../lib/components/Admin/OrderCard.svelte';
+	import OrderCard from '../../../lib/components/Admin/OrderCard/OrderCard.svelte';
 	import { apiFetch } from '$lib/api/client';
 	import type { Order, OrderItem, OrderStatus } from '$lib/api/types/order';
 	import { slide } from 'svelte/transition';
@@ -11,8 +11,9 @@
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
-	let activeView = $state<'orders' | 'chef' | 'both'>('both');
+	let activeView = $state<'orders' | 'chef' | 'both'>('orders');
 	let chefCategory = $state<'all' | 'Food' | 'Drinks'>('all');
+	let orderCategory = $state<'all' | 'Food' | 'Drinks'>('all');
 
 	let orders = $state<Order[]>([]);
 
@@ -251,6 +252,14 @@
 			.sort((a, b) => (a.pickupTime ?? a.createdTime) - (b.pickupTime ?? b.createdTime))
 	);
 
+	const filteredOrders = $derived(
+		orderCategory === 'all'
+			? orders
+			: orders.filter((o) =>
+					o.items.some((i) => (i.product.rootCategory ?? 'Food') === orderCategory)
+				)
+	);
+
 	function formatTime(unix: number) {
 		return new Date(unix * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	}
@@ -260,13 +269,6 @@
 	<!-- Top bar: view + category filters -->
 	<div class="flex shrink-0 items-center justify-between gap-2">
 		<div class="flex items-center gap-1">
-			<FilterItem
-				group="kitchen-view"
-				label="Both"
-				value="both"
-				checked={activeView === 'both'}
-				onclick={() => (activeView = 'both')}
-			/>
 			<FilterItem
 				group="kitchen-view"
 				label="Orders"
@@ -280,6 +282,13 @@
 				value="chef"
 				checked={activeView === 'chef'}
 				onclick={() => (activeView = 'chef')}
+			/>
+			<FilterItem
+				group="kitchen-view"
+				label="Both"
+				value="both"
+				checked={activeView === 'both'}
+				onclick={() => (activeView = 'both')}
 			/>
 		</div>
 
@@ -331,19 +340,45 @@
 						class="flex min-h-0 flex-col gap-2"
 						transition:slide={{ axis: 'x', duration: 200 }}
 					>
-						<h2 class="text-main/50 px-1 text-xs font-semibold tracking-widest uppercase">
-							Order view
-						</h2>
+						<div class="flex shrink-0 items-center justify-between px-1">
+							<h2 class="text-main/50 text-xs font-semibold tracking-widest uppercase">
+								Order view
+							</h2>
+							<div class="flex items-center gap-1">
+								<FilterItem
+									group="order-category"
+									label="All"
+									value="all"
+									checked={orderCategory === 'all'}
+									onclick={() => (orderCategory = 'all')}
+								/>
+								<FilterItem
+									group="order-category"
+									label="🍽️ Food"
+									value="Food"
+									checked={orderCategory === 'Food'}
+									onclick={() => (orderCategory = 'Food')}
+								/>
+								<FilterItem
+									group="order-category"
+									label="🥤 Drinks"
+									value="Drinks"
+									checked={orderCategory === 'Drinks'}
+									onclick={() => (orderCategory = 'Drinks')}
+								/>
+							</div>
+						</div>
 						<div class="min-h-0 flex-1 overflow-y-auto pr-1">
 							<div
-								class="grid gap-3"
+								class="grid gap-3 p-2"
 								style="grid-template-columns: repeat(auto-fill, minmax(288px, 1fr))"
 							>
-								{#each orders as order (order.id)}
+								{#each filteredOrders as order (order.id)}
 									{@const isPending = order.items.every((i: OrderItem) => i.status === 'Pending')}
 									<OrderCard
 										{order}
 										{preparedCounts}
+										activeCategory={orderCategory}
 										onitemdelta={isPending
 											? undefined
 											: (itemId, quantity, delta) =>
@@ -401,7 +436,7 @@
 									</div>
 									<div
 										class="grid gap-4 p-2"
-										style="grid-template-columns: repeat(auto-fill, 224px)"
+										style="grid-template-columns: repeat(auto-fill, minmax(224px, 1fr))"
 									>
 										{#each activeDishes as dish (dish.key)}
 											<ChefCard

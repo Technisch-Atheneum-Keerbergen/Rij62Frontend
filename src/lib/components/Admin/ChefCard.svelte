@@ -47,7 +47,7 @@
 
 <div
 	transition:slide={{ axis: 'x', duration: 200 }}
-	class="flex h-fit w-56 shrink-0 flex-col overflow-hidden rounded-3xl border-300 bg-200 p-1 shadow-sm transition-all {urgencyRing[
+	class="flex h-fit w-full min-w-56 shrink-0 flex-col overflow-hidden rounded-3xl border-300 bg-200 p-1 shadow-sm transition-all {urgencyRing[
 		dish.urgency
 	]}"
 >
