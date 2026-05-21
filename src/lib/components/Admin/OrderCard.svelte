@@ -116,7 +116,7 @@
 	tabindex="0"
 	{onclick}
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onclick?.()}
-	class="flex h-fit w-72 cursor-pointer flex-col overflow-hidden rounded-3xl border-300 bg-200 p-1 shadow-sm {className}"
+	class="flex h-fit w-full min-w-72 cursor-pointer flex-col gap-1 overflow-hidden rounded-3xl border-300 bg-200 p-2 shadow-sm {className}"
 >
 	<!-- Header — tap target when allPending (→ InProgress) or allReady (→ PickedUp) -->
 	<button
@@ -126,7 +126,7 @@
 			else if (allReady) onprimaryaction?.('PickedUp');
 		}}
 		disabled={!allPending && !allReady}
-		class="relative m-1 flex flex-col justify-between rounded-2xl border border-400/50 bg-300 px-3 py-2
+		class="relative flex flex-col justify-between rounded-2xl border border-400/50 bg-300 px-3 py-2
 			text-left transition-all
 			{allPending ? 'hover:border-amber-400/40' : ''}
 			{allReady ? 'hover:border-green-400/40' : ''}"
@@ -161,7 +161,7 @@
 	</button>
 
 	<!-- Items grouped by category — one row per item, progress bar background -->
-	<div class="mx-1 mt-0.5 flex flex-col gap-1">
+	<div class="flex flex-col gap-1">
 		{#if foodItems.length > 0}
 			{#if hasBoth}
 				<div class="flex items-center gap-1.5 px-1 pt-0.5">
@@ -184,14 +184,13 @@
 						{rowColor[status]}"
 				>
 					<!-- Progress bar fills from left, same accent colour -->
-					{#if !isPickedUp && item.quantity > 1}
-						<div
-							class="pointer-events-none absolute inset-0 origin-left rounded-2xl transition-all duration-300 {progressColor[
-								status
-							]}"
-							style="width: {pct}%"
-						></div>
-					{/if}
+
+					<div
+						class="pointer-events-none absolute inset-0 origin-left rounded-2xl transition-all duration-300 {progressColor[
+							status
+						]}"
+						style="width: {pct}%"
+					></div>
 
 					<div class="relative min-w-0 flex-1 text-left">
 						<p class="text-main truncate text-sm font-semibold">
@@ -278,7 +277,7 @@
 
 	<!-- Footer -->
 	{#if allPending}
-		<div class="m-1" transition:slide={{ duration: 150 }}>
+		<div transition:slide={{ duration: 150 }}>
 			<button
 				onclick={(e) => {
 					e.stopPropagation();
@@ -291,19 +290,19 @@
 			</button>
 		</div>
 	{:else if allInProgress}
-		<div class="m-1 flex justify-end" transition:slide={{ duration: 150 }}>
+		<div transition:slide={{ duration: 150 }}>
 			<button
 				onclick={(e) => {
 					e.stopPropagation();
 					onprimaryaction?.('Pending');
 				}}
-				class="text-main/30 hover:text-main/60 px-3 py-1.5 text-xs transition-all active:scale-95"
+				class="text-main/30 hover:text-main/60 w-full px-3 py-1.5 text-right text-xs transition-all active:scale-95"
 			>
 				↩ Reset to pending
 			</button>
 		</div>
 	{:else if allReady}
-		<div class="m-1" transition:slide={{ duration: 150 }}>
+		<div transition:slide={{ duration: 150 }}>
 			<button
 				onclick={(e) => {
 					e.stopPropagation();
@@ -316,13 +315,13 @@
 			</button>
 		</div>
 	{:else if allPickedUp}
-		<div class="m-1 flex justify-end" transition:slide={{ duration: 150 }}>
+		<div transition:slide={{ duration: 150 }}>
 			<button
 				onclick={(e) => {
 					e.stopPropagation();
 					onprimaryaction?.('Ready');
 				}}
-				class="text-main/30 hover:text-main/60 px-3 py-1.5 text-xs transition-all active:scale-95"
+				class="text-main/30 hover:text-main/60 w-full px-3 py-1.5 text-right text-xs transition-all active:scale-95"
 			>
 				↩ Undo pickup
 			</button>

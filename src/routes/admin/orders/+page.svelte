@@ -42,8 +42,8 @@
 
 	function urgencyFor(pickupUnix: number, nowMs: number): UrgencyLevel {
 		const diffMin = (pickupUnix * 1000 - nowMs) / 60_000;
-		if (diffMin <= 30) return 'red';
-		if (diffMin <= 90) return 'yellow';
+		if (diffMin <= 5) return 'red';
+		if (diffMin <= 30) return 'yellow';
 		return 'green';
 	}
 
