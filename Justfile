@@ -1,6 +1,9 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
 run:
+  bun run dev
+
+open:
   bun run dev --open
 
 [positional-arguments]

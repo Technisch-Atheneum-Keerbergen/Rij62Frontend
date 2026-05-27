@@ -7,6 +7,9 @@
 	import UserMenu from '$lib/components/Misc/UserMenu.svelte';
 	import SvgMenu from '$lib/components/SVG/SvgMenu.svelte';
 	import './layout.css';
+	import { tableNumberStore } from '$lib/stores/tableNumber.svelte';
+	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -18,6 +21,12 @@
 	];
 
 	let sideMenuIsOpen = $state(false);
+
+	// Initialize table number store from URL param or localStorage (runs once in browser)
+	if (browser) {
+		const urlTableParam = $page.url.searchParams.get('table');
+		tableNumberStore.init(urlTableParam);
+	}
 </script>
 
 <svelte:head>
