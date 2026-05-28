@@ -82,7 +82,6 @@
 
 	function getDisplayError(itemIndex: number): string | null {
 		const errors = getItemErrors(itemIndex);
-		console.log(errors);
 		const itemError = errors.find((e) => e.choiceProduct === null);
 
 		if (itemError) {
@@ -214,8 +213,9 @@
 
 			if (data.orderId) {
 				pendingOrderStore.add(data.orderId);
+				// basket.clear()
 				tableNumberStore.set(null);
-				// window.location.href = `/orders/${data.orderId}`;
+				window.location.href = `/orders/${data.orderId}`;
 			} else {
 				placeError = 'Something went wrong placing your order. Please try again.';
 			}
@@ -237,10 +237,11 @@
 </script>
 
 <section class="mx-auto max-w-2xl">
-	<h2 class="mb-4 text-center text-xl font-semibold">Your Basket</h2>
-	<div class="flex flex-row justify-center gap-2">
+	<div class="flex flex-row items-center justify-center gap-2">
+		<!--
 		<TablePicker bind:tableNumber />
-
+		-->
+		<h2 class="mb-4 text-center text-lg font-semibold">Time:</h2>
 		<TimePicker bind:scheduledTime />
 	</div>
 
@@ -288,7 +289,6 @@
 									<p class="text-muted text-xs opacity-80">
 										{#each item.choices as choice, choiceIndex}
 											{@const choiceErrors = getChoiceErrors(i, choice.product.id)}
-											{console.log(choiceErrors)}
 											<span
 												class:line-through={choiceErrors.length > 0}
 												class:text-red-400={choiceErrors.length > 0}

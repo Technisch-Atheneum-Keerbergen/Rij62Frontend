@@ -1,6 +1,7 @@
 <!-- TimePicker.svelte -->
 <script lang="ts">
 	import { slide } from 'svelte/transition';
+	import Button from '../Button.svelte';
 
 	let { scheduledTime = $bindable<Date | null>(null) } = $props();
 
@@ -99,7 +100,7 @@
 
 <div bind:this={wrapper} class="relative mb-4 flex flex-col items-center">
 	<button
-		class="flex items-center gap-2 rounded-full border-2 border-300 bg-200 px-4 py-1.5 text-sm font-medium shadow-sm transition-all hover:border-primary-400 active:scale-95"
+		class="flex items-center gap-1 rounded-full border-2 border-300 bg-200 px-4 py-1.5 text-sm font-medium shadow-sm transition-all hover:border-primary-400 active:scale-95"
 		onclick={(e) => {
 			e.stopPropagation();
 
@@ -112,10 +113,8 @@
 		{#if scheduledTime}
 			<span>{formatScheduled(scheduledTime)}</span>
 		{:else}
-			<span>ASAP</span>
+			<span>Now</span>
 		{/if}
-
-		<span class="text-xs font-normal opacity-50">· Change</span>
 	</button>
 
 	{#if open}
@@ -134,18 +133,18 @@
 					<button
 						class="rounded-xl border-2 px-4 py-2 text-sm font-medium transition-all active:scale-95"
 						class:border-primary-400={scheduledTime === null}
-						class:bg-primary-100={scheduledTime === null}
+						class:bg-300={scheduledTime === null}
 						class:border-300={scheduledTime !== null}
 						onclick={() => select(null)}
 					>
-						ASAP
+						Now
 					</button>
 
 					{#each slots as slot}
 						<button
 							class="rounded-xl border-2 px-4 py-2 text-sm font-medium transition-all active:scale-95"
 							class:border-primary-400={scheduledTime?.getTime() === slot.getTime()}
-							class:bg-primary-100={scheduledTime?.getTime() === slot.getTime()}
+							class:bg-300={scheduledTime?.getTime() === slot.getTime()}
 							class:border-300={scheduledTime?.getTime() !== slot.getTime()}
 							onclick={() => select(slot)}
 						>
@@ -170,12 +169,7 @@
 						class="rounded-xl border-2 border-300 bg-100 px-3 py-2 text-sm"
 					/>
 
-					<button
-						class="rounded-xl border-2 border-primary-400 bg-primary-100 px-4 py-2 text-sm font-medium transition-all active:scale-95"
-						onclick={applyCustom}
-					>
-						Set
-					</button>
+					<Button onclick={applyCustom} size="sm">Set</Button>
 
 					<button class="text-sm opacity-50 hover:opacity-80" onclick={() => (showCustom = false)}>
 						Back
