@@ -22,6 +22,7 @@ export type Order = {
 	tableNumber: number | null;
 	createdTime: number;
 	paymentStatus: OrderPaymentStatus;
+	totalPrice: number;
 	pickupTime: number;
 	items: OrderItem[];
 };
@@ -51,6 +52,7 @@ let i: Order = {
 	id: 'edc17bf3-f884-4009-98f2-4b205227a45d',
 	tableNumber: null,
 	createdTime: 1779393758,
+	totalPrice: 50,
 	pickupTime: 1779396153,
 	paymentStatus: 'NotPaid',
 	items: [
