@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { duplicateGroupedIds } from '$lib/api/types/order';
 	import TablePicker from '$lib/components/Basket/TablePicker.svelte';
 	import TimePicker from '$lib/components/Basket/TimePicker.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import AmountController from '$lib/components/Misc/AmountController.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { basket, getItemTotal, type LoadedBasketItem } from '$lib/stores/basket.svelte';
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
 	import { tableNumberStore } from '$lib/stores/tableNumber.svelte';
@@ -111,11 +113,14 @@
 
 	function buildOrderPayload() {
 		return {
-			items: basket.items.map((item) => ({
-				productId: item.productId,
-				quantity: item.quantity,
-				choices: item.choices.map((c) => c.id)
-			})),
+			items: basket.items.map((item) => {
+				let formattedChoices = duplicateGroupedIds(item.choices);
+				return {
+					productId: item.productId,
+					quantity: item.quantity,
+					choices: formattedChoices
+				};
+			}),
 			pickupTime: scheduledTime ? Math.floor(scheduledTime.getTime() / 1000) : null,
 			tableNumber: tableNumber ?? null
 		};
@@ -247,7 +252,9 @@
 
 	<div class="rounded-3xl bg-100 p-2 shadow-md">
 		{#if basket.loading}
-			<p class="py-5 text-center text-lg opacity-60">Loading…</p>
+			<div class="flex flex-col items-center gap-4 py-8 text-center">
+				<Spinner size="lg" />
+			</div>
 		{:else if basket.error}
 			<p class="py-5 text-center text-lg opacity-60">Failed to load basket. Please try again.</p>
 		{:else if basket.items.length === 0}

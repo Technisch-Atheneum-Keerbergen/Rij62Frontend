@@ -19,6 +19,7 @@
 	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
 	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
 	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -170,9 +171,7 @@
 				</button>
 			</div>
 
-			{#await rootCategoriesPromise}
-				<span class="text-xs opacity-50">Loading categories...</span>
-			{:then rootCategories}
+			{#await rootCategoriesPromise then rootCategories}
 				{#each rootCategories as rootCategory}
 					<FilterItem
 						group="rootCategory"
@@ -184,6 +183,8 @@
 						{rootCategory}
 					</FilterItem>
 				{/each}
+			{:catch error}
+				<p class="text-red-500">Failed to load root categories: {error}</p>
 			{/await}
 		</div>
 	</div>
@@ -191,22 +192,33 @@
 	<!-- Sub-categories OR products -->
 	<div class="z-0 mt-14">
 		{#if selectedCategoryId === null}
-			{#if visibleCategories.length === 0}
-				<p class="text-sm opacity-50">No subcategories found.</p>
-			{:else}
-				<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
-					{#each visibleCategories as category (category.id)}
-						<NavCard
-							title={category.name[currentLanguage]}
-							imageSrc={category.imgUrl}
-							onclick={() => selectCategory(category.id)}
-						/>
-					{/each}
+			{#await categoriesPromise}
+				<div class="flex flex-col items-center gap-4 text-center">
+					<Spinner size="lg" />
 				</div>
-			{/if}
+			{:then}
+				{#if visibleCategories.length === 0}
+					<p class="text-sm opacity-50">No subcategories found.</p>
+				{:else}
+					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
+						{#each visibleCategories as category (category.id)}
+							<NavCard
+								title={category.name[currentLanguage]}
+								imageSrc={category.imgUrl}
+								onclick={() => selectCategory(category.id)}
+							/>
+						{/each}
+					</div>
+				{/if}
+			{:catch error}
+				<p class="text-red-500">Failed to load categories: {error}</p>
+			{/await}
 		{:else}
 			{#await productsPromise}
-				<p class="opacity-70">Loading products...</p>
+				<div class="flex flex-col items-center gap-4 text-center">
+					<Spinner size="lg" />
+					<p class="text-surface-500 text-sm">Loading products...</p>
+				</div>
 			{:then}
 				{#if filteredProducts.length > 0}
 					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">

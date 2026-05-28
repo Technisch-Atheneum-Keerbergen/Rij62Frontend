@@ -9,49 +9,46 @@
 	}: {
 		items: OrderItem[];
 		preparedCounts?: Record<number, number>;
-		onitemdelta?: (itemId: number, quantity: number, delta: 1 | -1) => void;
+		onitemdelta?: (itemId: number, delta: 1 | -1) => void;
 	} = $props();
 
 	const isFood = $derived((items[0]?.product.rootCategory ?? 'Food') !== 'Drinks');
 
-	const allReady = $derived(items.every((i) => i.status === 'Ready' || i.status === 'PickedUp'));
-	const anyInProgress = $derived(items.some((i) => i.status === 'InProgress'));
+	const liveItems = $derived(items.filter((i) => i.status !== 'PickedUp'));
 
+	const allReady = $derived(
+		liveItems.length > 0 &&
+			liveItems.every((i) => i.status === 'Ready' || (preparedCounts[i.id] ?? 0) >= 1)
+	);
+	const anyInProgress = $derived(
+		liveItems.some((i) => i.status === 'InProgress' || (preparedCounts[i.id] ?? 0) > 0)
+	);
 	const anyPickedUp = $derived(items.some((i) => i.status === 'PickedUp'));
 
 	const ACTION = {
 		ready: {
-			// svelte-ignore state_referenced_locally
 			label: isFood ? '🍽️ Food ready' : '🥤 Drinks ready',
-			// svelte-ignore state_referenced_locally
 			style:
 				'rounded-2xl bg-green-400/15 px-3 py-2 text-sm font-semibold text-green-500 active:bg-green-400/25 dark:bg-green-500/20 dark:text-green-300'
 		},
 		undo: {
-			// svelte-ignore state_referenced_locally
 			label: '↩ Undo ready',
 			style: 'text-main/30 hover:text-main/60'
 		}
 	};
 
 	function markReady() {
-		for (const item of items) {
-			if (item.status !== 'Ready' && item.status !== 'PickedUp') {
-				const remaining = item.quantity - (preparedCounts[item.id] ?? 0);
-				for (let i = 0; i < remaining; i++) {
-					onitemdelta?.(item.id, item.quantity, 1);
-				}
+		for (const item of liveItems) {
+			if (item.status !== 'Ready' && (preparedCounts[item.id] ?? 0) < 1) {
+				onitemdelta?.(item.id, 1);
 			}
 		}
 	}
 
 	function undoReady() {
-		for (const item of items) {
-			if (item.status === 'Ready') {
-				const prepared = preparedCounts[item.id] ?? item.quantity;
-				for (let i = 0; i < prepared; i++) {
-					onitemdelta?.(item.id, item.quantity, -1);
-				}
+		for (const item of liveItems) {
+			if (item.status === 'Ready' || (preparedCounts[item.id] ?? 0) >= 1) {
+				onitemdelta?.(item.id, -1);
 			}
 		}
 	}

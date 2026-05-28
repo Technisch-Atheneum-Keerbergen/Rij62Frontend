@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { apiFetch } from '$lib/api/client';
+	import { apiCall, apiFetch, apiFetchJson } from '$lib/api/client';
 	import type { Order, OrderId } from '$lib/api/types/order';
 	import SvgCheckMark from '$lib/components/SVG/SvgCheckMark.svelte';
 	import SvgCard from '$lib/components/SVG/SvgCard.svelte';
 	import Button from '$lib/components/Button.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import SvgXmark from '$lib/components/SVG/SvgXmark.svelte';
 
 	const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL as string;
 
@@ -44,17 +46,19 @@
 		errorMessage = '';
 		try {
 			const redirectUrl = `${FRONTEND_BASE_URL}/orders?paidOrderId=${orderId}`;
-			const result = await apiFetch(`/payment/pay/${orderId}?bypassPayment=true`, {
+			const result = await apiFetchJson(`/payment/pay/${orderId}?bypassPayment=true`, {
 				method: 'POST',
 				body: JSON.stringify({ redirectUrl })
 			});
 			if (result && (result as any).redirectUrl) {
 				window.location.href = (result as any).redirectUrl;
 			} else {
+				console.log(result);
 				errorMessage = 'Could not initiate payment. Please try again.';
 			}
-		} catch {
-			errorMessage = 'Something went wrong. Please try again.';
+		} catch (e: any) {
+			console.log(e);
+			errorMessage = e;
 		} finally {
 			payLoading = false;
 		}
@@ -67,9 +71,7 @@
 	<div class="w-full max-w-sm rounded-2xl bg-100 p-8 shadow-sm">
 		{#if state === 'loading'}
 			<div class="flex flex-col items-center gap-4 text-center">
-				<div
-					class="border-surface-300 h-10 w-10 animate-spin rounded-full border-4 border-t-primary-500"
-				></div>
+				<Spinner size="lg" />
 				<p class="text-surface-500 text-sm">Loading payment status…</p>
 			</div>
 		{:else if state === 'error'}
@@ -96,19 +98,24 @@
 					Go to orders
 				</a>
 			</div>
-		{:else if state === 'NotPaid'}
+		{:else if state == 'NotPaid'}
 			<div class="flex flex-col items-center gap-3 text-center">
-				<div
-					class="bg-surface-200 stroke-main stroke-main flex h-16 w-16 items-center justify-center rounded-full"
-				>
-					<SvgCard />
-				</div>
-
-				{order?.totalPrice}
 				<h1 class="text-xl font-bold">Continue to payment</h1>
-				<p class="text-surface-500 text-sm">
-					Your order has not been paid yet. Proceed to pay via Bancontact.
+				<p class="text-sm opacity-80">
+					Your order has not been paid yet. <br /> Proceed to pay via Bancontact.
 				</p>
+				<div class="bg-surface-200 flex h-16 items-center justify-center gap-1">
+					<span
+						class="rounded-full bg-primary-500 stroke-primary-500 p-2 px-4 text-xl font-bold text-light dark:bg-primary-500/50"
+					>
+						€{order?.totalPrice.toFixed(2)}
+					</span>
+					<span class="rounded-full bg-300 stroke-primary-500 p-2 px-4 text-xl font-semibold">
+						{order?.items.length} item{order?.items.length == 1 ? '' : 's'}
+					</span>
+				</div>
+				<p class=""></p>
+
 				{#if errorMessage}
 					<p class="text-error-500 text-sm">{errorMessage}</p>
 				{/if}
@@ -116,9 +123,7 @@
 				<Button onclick={initiatePayment} disabled={payLoading} size="md" class="w-full">
 					{#if payLoading}
 						<span class="inline-flex items-center gap-2">
-							<span
-								class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
-							></span>
+							<Spinner size="sm" />
 							Processing…
 						</span>
 					{:else}
@@ -129,41 +134,25 @@
 		{:else if state === 'Failed'}
 			<div class="flex flex-col items-center gap-3 text-center">
 				<div
-					class="bg-error-50 ring-error-200 flex h-16 w-16 items-center justify-center rounded-full ring-2"
+					class="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 stroke-red-500 p-2"
 				>
-					<svg
-						class="text-error-500 h-8 w-8"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.75"
-					>
-						<circle cx="12" cy="12" r="10" />
-						<line x1="15" y1="9" x2="9" y2="15" />
-						<line x1="9" y1="9" x2="15" y2="15" />
-					</svg>
+					<SvgXmark />
 				</div>
 				<h1 class="text-xl font-bold">Payment failed</h1>
-				<p class="text-surface-500 text-sm">
-					Something went wrong during payment. You can try again below.
-				</p>
+				<p class="text-surface-500 text-sm">Something went wrong during payment.</p>
 				{#if errorMessage}
 					<p class="text-error-500 text-sm">{errorMessage}</p>
 				{/if}
-				<button
-					class="bg-error-500 text-main mt-2 w-full rounded-xl py-2.5 text-sm font-semibold disabled:opacity-60"
-					on:click={initiatePayment}
-					disabled={payLoading}
-				>
+				<Button onclick={initiatePayment} disabled={payLoading} size="md" class="w-full">
 					{#if payLoading}
 						<span class="inline-flex items-center gap-2">
-							<span class="h-4 w-4 animate-spin rounded-full border-2"></span>
+							<Spinner size="sm" />
 							Processing…
 						</span>
 					{:else}
 						Try again
 					{/if}
-				</button>
+				</Button>
 			</div>
 		{:else if state === 'Success'}
 			<div class="flex flex-col items-center gap-3 text-center">
@@ -174,7 +163,7 @@
 				</div>
 				<h1 class="text-xl font-bold">Payment successful</h1>
 				<p class="text-surface-500 text-sm">
-					Your order has been paid. Track its progress on the orders page.
+					Your order has been paid. <br /> Track its progress on the orders page.
 				</p>
 
 				<Button variant="primary" class="w-full" onclick={() => (window.location.href = `/orders`)}

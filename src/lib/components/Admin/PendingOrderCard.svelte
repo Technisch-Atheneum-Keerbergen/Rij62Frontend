@@ -56,7 +56,7 @@
 		green: 'text-green-500'
 	};
 
-	const totalItems = $derived(order.items.reduce((sum, item) => sum + item.quantity, 0));
+	const totalItems = $derived(order.items.length);
 	const pickupUnix = $derived(order.pickupTime ?? order.createdTime);
 	const urgency = $derived(urgencyFor(pickupUnix, now));
 	const countdown = $derived(order.pickupTime ? formatCountdown(pickupUnix, now) : null);
@@ -110,7 +110,6 @@
 			<div
 				class="flex items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-3 py-1.5"
 			>
-				<span class="text-main/50 shrink-0 text-xs font-bold tabular-nums">{item.quantity}</span>
 				<div class="min-w-0 flex-1">
 					<p class="text-main truncate text-xs font-semibold">
 						{item.product.title[currentLanguage]}

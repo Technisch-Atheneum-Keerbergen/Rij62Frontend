@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
-	import type { Order, OrderStatus } from '$lib/api/types/order';
+	import type { Order, OrderItem, OrderStatus } from '$lib/api/types/order';
 	import type { UrgencyLevel } from '$lib/api/types/dish';
 	import OrderItemRow from './OrderItemRow.svelte';
 	import OrderFooterAction from './OrderFooterAction.svelte';
@@ -18,7 +18,7 @@
 	}: {
 		order: Order;
 		preparedCounts?: Record<number, number>;
-		onitemdelta?: (itemId: number, quantity: number, delta: 1 | -1) => void;
+		onitemdelta?: (itemId: number, delta: 1 | -1) => void;
 		onprimaryaction?: (nextStatus: OrderStatus) => void;
 		onclick?: () => void;
 		activeCategory?: 'all' | 'Food' | 'Drinks';
@@ -32,7 +32,6 @@
 	}
 
 	// --- Urgency ---
-
 	function urgencyFor(pickupUnix: number, nowMs: number): UrgencyLevel {
 		const diffMin = (pickupUnix * 1000 - nowMs) / 60_000;
 		if (diffMin <= 5) return 'red';
@@ -47,13 +46,11 @@
 		yellow: 'ring-2 ring-yellow-400/60',
 		green: 'ring-2 ring-green-400/60'
 	};
-
 	const urgencyBg: Record<UrgencyLevel, string> = {
 		red: 'bg-red-200/20 dark:bg-red-500/5',
 		yellow: 'bg-yellow-200/20 dark:bg-yellow-500/5',
 		green: 'bg-green-200/20 dark:bg-green-500/5'
 	};
-
 	const urgencyDot: Record<UrgencyLevel, string> = {
 		red: 'bg-red-500 animate-pulse',
 		yellow: 'bg-yellow-400',
@@ -61,14 +58,31 @@
 	};
 
 	// --- Totals ---
+	const totalItems = $derived(order.items.length);
+	const totalPrice = $derived(order.totalPrice);
 
-	const totalItems = $derived(order.items.reduce((sum, item) => sum + item.quantity, 0));
-	const totalPrice = $derived(
-		order.items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-	);
+	// --- Item grouping ---
+	// Key: product title + sorted choice titles (same logic as itemKey in the page)
+	function groupKey(item: OrderItem): string {
+		const base = item.product.title[currentLanguage];
+		const extras = (item.choices ?? [])
+			.map((c) => c.product.title[currentLanguage])
+			.sort()
+			.join('+');
+		return extras ? `${base}||${extras}` : base;
+	}
+
+	function groupItems(items: OrderItem[]): OrderItem[][] {
+		const map = new Map<string, OrderItem[]>();
+		for (const item of items) {
+			const k = groupKey(item);
+			if (!map.has(k)) map.set(k, []);
+			map.get(k)!.push(item);
+		}
+		return [...map.values()];
+	}
 
 	// --- Item state ---
-
 	const liveItems = $derived(order.items.filter((i) => i.status !== 'PickedUp'));
 
 	const allPending = $derived(
@@ -81,19 +95,19 @@
 	const allPickedUp = $derived(order.items.every((i) => i.status === 'PickedUp'));
 
 	// --- Category grouping ---
-
 	const foodItems = $derived(
 		order.items.filter((i) => (i.product.rootCategory ?? 'Food') !== 'Drinks')
 	);
 	const drinkItems = $derived(order.items.filter((i) => i.product.rootCategory === 'Drinks'));
 	const hasBoth = $derived(foodItems.length > 0 && drinkItems.length > 0);
 
+	const foodGroups = $derived(groupItems(foodItems));
+	const drinkGroups = $derived(groupItems(drinkItems));
+
 	const hiddenItemCount = $derived(
 		activeCategory === 'all'
 			? 0
-			: order.items
-					.filter((i) => (i.product.rootCategory ?? 'Food') !== activeCategory)
-					.reduce((sum, i) => sum + i.quantity, 0)
+			: order.items.filter((i) => (i.product.rootCategory ?? 'Food') !== activeCategory).length
 	);
 	const hiddenCategory = $derived(activeCategory === 'Food' ? 'Drinks' : 'Food');
 </script>
@@ -119,7 +133,6 @@
 				urgency
 			]}"
 		></span>
-
 		<div class="flex flex-row items-center justify-between pr-5">
 			<div class="flex flex-col">
 				<span class="text-main/50 text-xs font-semibold">
@@ -149,11 +162,11 @@
 					<div class="h-px flex-1 bg-orange-400/20"></div>
 				</div>
 			{/if}
-			{#each foodItems as item (item.id)}
-				<OrderItemRow {item} prepared={preparedCounts[item.id] ?? 0} {onitemdelta} />
+			{#each foodGroups as group (group[0].id)}
+				<OrderItemRow items={group} {preparedCounts} {onitemdelta} />
 			{/each}
 			{#if hasBoth}
-				<CategoryReadyButton items={foodItems} {onitemdelta} />
+				<CategoryReadyButton items={foodItems} {preparedCounts} {onitemdelta} />
 			{/if}
 		{/if}
 
@@ -166,15 +179,16 @@
 					<div class="h-px flex-1 bg-blue-400/20"></div>
 				</div>
 			{/if}
-			{#each drinkItems as item (item.id)}
-				<OrderItemRow {item} prepared={preparedCounts[item.id] ?? 0} {onitemdelta} />
+			{#each drinkGroups as group (group[0].id)}
+				<OrderItemRow items={group} {preparedCounts} {onitemdelta} />
 			{/each}
 			{#if hasBoth}
-				<CategoryReadyButton items={drinkItems} {onitemdelta} />
+				<CategoryReadyButton items={drinkItems} {preparedCounts} {onitemdelta} />
 			{/if}
 		{/if}
+
 		{#if !hasBoth}
-			<CategoryReadyButton items={order.items} {onitemdelta} />
+			<CategoryReadyButton items={order.items} {preparedCounts} {onitemdelta} />
 		{/if}
 	</div>
 
@@ -183,12 +197,10 @@
 		<div class="flex items-center gap-1.5 px-2 py-1">
 			<span class="text-main/30 text-xs">{hiddenCategory === 'Drinks' ? '🥤' : '🍽️'}</span>
 			<span class="text-main/35 text-xs font-medium">
-				+{hiddenItemCount}
-				item{hiddenItemCount !== 1 ? 's' : ''}
+				+{hiddenItemCount} item{hiddenItemCount !== 1 ? 's' : ''}
 			</span>
 		</div>
 	{/if}
 
-	<!-- Footer -->
 	<OrderFooterAction {allPending} {allInProgress} {allReady} {allPickedUp} {onprimaryaction} />
 </div>
