@@ -18,7 +18,7 @@
 		...restProps
 	}: {
 		title?: string;
-		imageSrc?: string;
+		imageSrc: string | null;
 		alt?: string;
 		class?: string;
 		size?: 'sm' | 'md' | 'lg';

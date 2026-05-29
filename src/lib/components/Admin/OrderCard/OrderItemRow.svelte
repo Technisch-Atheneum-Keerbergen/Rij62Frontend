@@ -3,63 +3,82 @@
 	import StatusBadge from '$lib/components/Badges/StatusBadge.svelte';
 
 	let {
-		item,
-		prepared = 0,
+		items,
+		preparedCounts = {},
 		onitemdelta
 	}: {
-		item: OrderItem;
-		prepared?: number;
-		isDrink?: boolean;
-		onitemdelta?: (itemId: number, quantity: number, delta: 1 | -1) => void;
+		items: OrderItem[]; // all identical items grouped together
+		preparedCounts?: Record<number, number>;
+		onitemdelta?: (itemId: number, delta: 1 | -1) => void;
 	} = $props();
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
+	// Representative item for display
+	const item = $derived(items[0]);
+	const quantity = $derived(items.length);
+
+	// Count how many in this group are "prepared" (status Ready/PickedUp or manually ticked)
+	const prepared = $derived(
+		items.filter((i) => i.status === 'PickedUp' || (preparedCounts[i.id] ?? 0) >= 1).length
+	);
+
+	const allPickedUp = $derived(items.every((i) => i.status === 'PickedUp'));
+
+	const effectiveStatus = $derived((): OrderStatus => {
+		if (allPickedUp) return 'PickedUp';
+		if (prepared >= quantity) return 'Ready';
+		if (prepared > 0) return 'InProgress';
+		// fall back to the actual status of the first non-pickedup item
+		return items.find((i) => i.status !== 'PickedUp')?.status ?? 'Pending';
+	});
+
+	const pct = $derived(quantity > 0 ? (prepared / quantity) * 100 : 0);
+
 	const progressColor: Record<OrderStatus, string> = {
-		Pending: 'bg-amber-400/30',
+		Pending: 'bg-yellow-400/30',
 		InProgress: 'bg-primary-400/40',
 		Ready: 'bg-gradient-to-r from-green-400/15 to-green-400/25',
 		PickedUp: 'bg-400/20'
 	};
 
 	const rowColor: Record<OrderStatus, string> = {
-		Pending: 'border-amber-400/40 shadow-[inset_0_0_0_1px] shadow-amber-400/20 bg-amber-400/5',
+		Pending: 'border-yellow-400/40 shadow-[inset_0_0_0_1px] shadow-yellow-400/20 bg-yellow-400/5',
 		InProgress:
 			'border-primary-400/40 shadow-[inset_0_0_0_1px] shadow-primary-400/20 bg-primary-400/5',
-		Ready:
-			'border-green-400/40 shadow-[inset_0_0_0_1px] shadow-green-400/20 bg-[linear-gradient(90deg, green-400/5, green-400/10)]',
+		Ready: 'border-green-400/40 shadow-[inset_0_0_0_1px] shadow-green-400/20 bg-green-400/5',
 		PickedUp: 'border-400/20 bg-400/5 opacity-40'
 	};
 
-	const status = $derived((): OrderStatus => {
-		if (item.status === 'PickedUp') return 'PickedUp';
-		if (prepared >= item.quantity) return 'Ready';
-		if (prepared > 0) return 'InProgress';
-		return item.status;
-	});
-
-	const pct = $derived(item.quantity > 0 ? (prepared / item.quantity) * 100 : 0);
-	const isPickedUp = $derived(item.status === 'PickedUp');
-
 	function handleTap(e: MouseEvent) {
 		e.stopPropagation();
-		if (!onitemdelta || isPickedUp) return;
-		const delta: 1 | -1 = prepared >= item.quantity ? -1 : 1;
-		onitemdelta(item.id, item.quantity, delta);
+		if (!onitemdelta || allPickedUp) return;
+
+		if (prepared >= quantity) {
+			// All ready — undo ALL prepared items at once
+			for (const i of items) {
+				if (i.status !== 'PickedUp' && (preparedCounts[i.id] ?? 0) >= 1) {
+					onitemdelta(i.id, -1);
+				}
+			}
+		} else {
+			// Advance: find first unprepared non-pickedup item
+			const target = items.find((i) => i.status !== 'PickedUp' && (preparedCounts[i.id] ?? 0) < 1);
+			if (target) onitemdelta(target.id, 1);
+		}
 	}
 </script>
 
 <button
 	onclick={handleTap}
-	disabled={isPickedUp || !onitemdelta}
+	disabled={allPickedUp || !onitemdelta}
 	class="relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-2xl border px-3 py-1.5
-    transition-all {status() != 'Pending'
-		? 'active:scale-95'
-		: ''}  disabled:cursor-default {rowColor[status()]}"
+		transition-all {effectiveStatus() !== 'Pending' ? 'active:scale-95' : ''}
+		disabled:cursor-default {rowColor[effectiveStatus()]}"
 >
 	<div
 		class="pointer-events-none absolute inset-0 origin-left rounded-2xl transition-all duration-300 {progressColor[
-			status()
+			effectiveStatus()
 		]}"
 		style="width: {pct}%"
 	></div>
@@ -73,46 +92,30 @@
 				item.choices.reduce(
 					(acc, choice) => {
 						const id = choice.product.productId;
-
-						if (!acc[id]) {
-							acc[id] = {
-								product: choice.product,
-								quantity: 1
-							};
-						} else {
-							acc[id].quantity++;
-						}
-
+						if (!acc[id]) acc[id] = { product: choice.product, count: 1 };
+						else acc[id].count++;
 						return acc;
 					},
-					{} as Record<
-						number,
-						{
-							product: (typeof item.choices)[number]['product'];
-							quantity: number;
-						}
-					>
+					{} as Record<number, { product: (typeof item.choices)[number]['product']; count: number }>
 				)
 			)}
 			<p class="text-main/40 text-xs">
 				{#each groupedChoices as choice, i}
 					<span>
-						{choice.quantity > 1
-							? `${choice.product.title[currentLanguage]} x${choice.quantity}`
+						{choice.count > 1
+							? `${choice.product.title[currentLanguage]} x${choice.count}`
 							: choice.product.title[currentLanguage]}
 					</span>
-					{#if i < groupedChoices.length - 1}
-						<span class="-ml-0.5">,&nbsp;</span>
-					{/if}
+					{#if i < groupedChoices.length - 1}<span class="-ml-0.5">,&nbsp;</span>{/if}
 				{/each}
 			</p>
 		{/if}
 	</div>
 
 	<div class="relative flex shrink-0 items-center gap-1.5">
-		{#if item.quantity > 1}
-			<span class="text-main/40 text-xs tabular-nums">{prepared}/{item.quantity}</span>
+		{#if quantity > 1}
+			<span class="text-main/40 text-xs tabular-nums">{prepared}/{quantity}</span>
 		{/if}
-		<StatusBadge status={status()} />
+		<StatusBadge status={effectiveStatus()} />
 	</div>
 </button>

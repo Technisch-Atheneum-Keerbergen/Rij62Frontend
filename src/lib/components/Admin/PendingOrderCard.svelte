@@ -41,7 +41,7 @@
 	const urgencyRing: Record<UrgencyLevel, string> = {
 		red: 'ring-2 ring-red-400/60',
 		yellow: 'ring-2 ring-yellow-400/60',
-		green: 'ring-2 ring-amber-400/40'
+		green: 'ring-2 ring-green-400/40'
 	};
 
 	const urgencyDot: Record<UrgencyLevel, string> = {
@@ -56,7 +56,7 @@
 		green: 'text-green-500'
 	};
 
-	const totalItems = $derived(order.items.reduce((sum, item) => sum + item.quantity, 0));
+	const totalItems = $derived(order.items.length);
 	const pickupUnix = $derived(order.pickupTime ?? order.createdTime);
 	const urgency = $derived(urgencyFor(pickupUnix, now));
 	const countdown = $derived(order.pickupTime ? formatCountdown(pickupUnix, now) : null);
@@ -86,7 +86,7 @@
 					</span>
 				</div>
 			{:else}
-				<span class="h-2 w-2 animate-pulse rounded-full bg-amber-400"></span>
+				<span class="h-2 w-2 animate-pulse rounded-full bg-yellow-400"></span>
 			{/if}
 		</div>
 		<div class="flex items-center justify-between gap-2">
@@ -108,9 +108,8 @@
 	<div class="mx-1 mt-0.5 flex flex-col gap-1">
 		{#each order.items as item (item.id)}
 			<div
-				class="flex items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-3 py-1.5"
+				class="flex items-center gap-2 rounded-2xl border border-yellow-400/20 bg-yellow-400/5 px-3 py-1.5"
 			>
-				<span class="text-main/50 shrink-0 text-xs font-bold tabular-nums">{item.quantity}</span>
 				<div class="min-w-0 flex-1">
 					<p class="text-main truncate text-xs font-semibold">
 						{item.product.title[currentLanguage]}
@@ -129,8 +128,8 @@
 	<div class="m-1">
 		<button
 			onclick={onAccept}
-			class="w-full rounded-2xl bg-amber-400/15 px-3 py-2 text-sm font-semibold text-amber-500
-				transition-all active:scale-[0.97] active:bg-amber-400/25 dark:bg-amber-500/20 dark:text-amber-300"
+			class="w-full rounded-2xl bg-yellow-400/15 px-3 py-2 text-sm font-semibold text-yellow-500
+				transition-all active:scale-[0.97] active:bg-yellow-400/25 dark:bg-yellow-500/20 dark:text-yellow-300"
 		>
 			Accept
 		</button>

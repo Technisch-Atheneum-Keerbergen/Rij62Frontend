@@ -8,6 +8,7 @@
 	import ChefCard from '$lib/components/Admin/ChefCard.svelte';
 	import ReadyChefCard from '$lib/components/Admin/ReadyChefCard.svelte';
 	import PendingOrderCard from '$lib/components/Admin/PendingOrderCard.svelte';
+	import { groupDuplicateOrderItemChoices } from '$lib/api/types/order';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
@@ -22,7 +23,7 @@
 		for (const order of orders) {
 			for (const item of order.items) {
 				if (item.status === 'Ready' || item.status === 'PickedUp') {
-					preparedCounts[item.id] = item.quantity;
+					preparedCounts[item.id] = 1;
 				}
 			}
 		}
@@ -30,10 +31,6 @@
 
 	let ordersPromise = $state(loadOrders());
 	let preparedCounts = $state<Record<number, number>>({});
-
-	function getPrepared(itemId: number): number {
-		return preparedCounts[itemId] ?? 0;
-	}
 
 	let now = $state(Date.now());
 	$effect(() => {
@@ -50,13 +47,26 @@
 
 	function itemKey(item: {
 		product: { title: Record<string, string> };
-		choices?: { product: { title: Record<string, string> } }[];
+		choices?: { product: { productId: number; title: Record<string, string> } }[];
 	}): string {
 		const base = item.product.title[currentLanguage];
-		const extras = (item.choices ?? [])
-			.map((c) => c.product.title[currentLanguage])
+
+		const groupedChoices = groupDuplicateOrderItemChoices(item.choices ?? []);
+
+		const extras = groupedChoices
+			.map((choice) => {
+				const original = (item.choices ?? []).find((c) => c.product.productId === choice.id);
+
+				if (!original) return '';
+
+				const title = original.product.title[currentLanguage];
+
+				return choice.quantity > 1 ? `${title}x${choice.quantity}` : title;
+			})
+			.filter(Boolean)
 			.sort()
 			.join('+');
+
 		return extras ? `${base}||${extras}` : base;
 	}
 
@@ -77,8 +87,19 @@
 				const dKey = itemKey(item);
 				const bucketKey = `${dKey}||${urgency}`;
 				const title = item.product.title[currentLanguage];
-				const choicesLabel = (item.choices ?? [])
-					.map((c) => c.product.title[currentLanguage])
+				const groupedChoices = groupDuplicateOrderItemChoices(item.choices ?? []);
+
+				const choicesLabel = groupedChoices
+					.map((choice) => {
+						const original = (item.choices ?? []).find((c) => c.product.productId === choice.id);
+
+						if (!original) return '';
+
+						const title = original.product.title[currentLanguage];
+
+						return choice.quantity > 1 ? `${title} x${choice.quantity}` : title;
+					})
+					.filter(Boolean)
 					.join(', ');
 				const rootCategory: string = (item.product as any).rootCategory ?? 'Food';
 
@@ -99,8 +120,8 @@
 				}
 
 				const dish = map.get(bucketKey)!;
-				dish.totalQuantity += item.quantity;
-				dish.prepared += getPrepared(item.id);
+				dish.totalQuantity += 1;
+				dish.prepared += preparedCounts[item.id] ?? 0;
 				dish.sourceOrders.push({ label: timeLabel, pickupTime: pickupUnix });
 
 				if (pickupUnix < dish.earliestPickup) {
@@ -132,34 +153,29 @@
 		});
 	}
 
-	async function applyPreparedDelta(
-		orderId: string,
-		itemId: number,
-		quantity: number,
-		delta: 1 | -1
-	) {
-		const current = getPrepared(itemId);
-		const next =
-			current >= quantity && delta === -1 ? 0 : Math.max(0, Math.min(quantity, current + delta));
+	async function applyPreparedDelta(orderId: string, itemId: number, delta: 1 | -1) {
+		const order = orders.find((o) => o.id === orderId);
+		const item = order?.items.find((i) => i.id === itemId);
+		if (!item || item.status === 'PickedUp') return;
+
+		const current = preparedCounts[itemId] ?? 0;
+		const next = delta === 1 ? 1 : 0;
 		if (next === current) return;
 
 		preparedCounts[itemId] = next;
-		const nextStatus: OrderStatus = next >= quantity ? 'Ready' : 'InProgress';
+		const nextStatus: OrderStatus = next >= 1 ? 'Ready' : 'InProgress';
 
 		try {
 			await apiFetch(`/order/${orderId}/status/${itemId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(nextStatus)
+				body: JSON.stringify({ status: nextStatus })
 			});
-			orders = orders.map((order) => {
-				if (order.id !== orderId) return order;
+			orders = orders.map((o) => {
+				if (o.id !== orderId) return o;
 				return {
-					...order,
-					items: order.items.map((item) => {
-						if (item.id !== itemId) return item;
-						return { ...item, status: nextStatus };
-					})
+					...o,
+					items: o.items.map((i) => (i.id !== itemId ? i : { ...i, status: nextStatus }))
 				};
 			});
 		} catch {
@@ -176,7 +192,7 @@
 				apiFetch(`/order/${orderId}/status/${item.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(nextStatus)
+					body: JSON.stringify({ status: nextStatus })
 				}).catch(() => {})
 			)
 		);
@@ -187,11 +203,7 @@
 		});
 
 		for (const item of order.items) {
-			if (nextStatus === 'Pending' || nextStatus === 'InProgress') {
-				preparedCounts[item.id] = 0;
-			} else if (nextStatus === 'Ready' || nextStatus === 'PickedUp') {
-				preparedCounts[item.id] = item.quantity;
-			}
+			preparedCounts[item.id] = nextStatus === 'Ready' || nextStatus === 'PickedUp' ? 1 : 0;
 		}
 	}
 
@@ -199,19 +211,13 @@
 		const candidates = itemsForKey(dishKey);
 		const target =
 			delta === 1
-				? candidates.find((c) => getPrepared(c.item.id) < c.item.quantity)
-				: [...candidates].reverse().find((c) => getPrepared(c.item.id) > 0);
-		if (target)
-			await applyPreparedDelta(target.orderId, target.item.id, target.item.quantity, delta);
+				? candidates.find((c) => (preparedCounts[c.item.id] ?? 0) < 1)
+				: [...candidates].reverse().find((c) => (preparedCounts[c.item.id] ?? 0) >= 1);
+		if (target) await applyPreparedDelta(target.orderId, target.item.id, delta);
 	}
 
-	async function handleOrderItemDelta(
-		orderId: string,
-		itemId: number,
-		quantity: number,
-		delta: 1 | -1
-	) {
-		await applyPreparedDelta(orderId, itemId, quantity, delta);
+	async function handleOrderItemDelta(orderId: string, itemId: number, delta: 1 | -1) {
+		await applyPreparedDelta(orderId, itemId, delta);
 	}
 
 	async function handleAcceptOrder(orderId: string) {
@@ -223,7 +229,7 @@
 				apiFetch(`/order/${orderId}/status/${item.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify('InProgress')
+					body: JSON.stringify({ status: 'InProgress' })
 				}).catch(() => {})
 			)
 		);
@@ -322,13 +328,7 @@
 	{#await ordersPromise}
 		<p class="text-main/40 text-sm">Loading orders…</p>
 	{:then}
-		<!--
-			Outer flex column:
-			  [top: view columns, flex-1, overflow hidden]
-			  [bottom: pending strip, shrink-0, always visible]
-		-->
 		<div class="flex min-h-0 flex-1 flex-col gap-3">
-			<!-- Main content: order view + chef view side by side -->
 			<div
 				class="grid min-h-0 flex-1 gap-4 transition-all"
 				class:grid-cols-2={activeView === 'both'}
@@ -381,8 +381,7 @@
 										activeCategory={orderCategory}
 										onitemdelta={isPending
 											? undefined
-											: (itemId, quantity, delta) =>
-													handleOrderItemDelta(order.id, itemId, quantity, delta)}
+											: (itemId, delta) => handleOrderItemDelta(order.id, itemId, delta)}
 										onprimaryaction={(nextStatus) => handleOrderPrimaryAction(order.id, nextStatus)}
 									/>
 								{/each}
@@ -402,7 +401,6 @@
 						</h2>
 
 						<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-							<!-- Ready: horizontal scroll strip, rarely touched -->
 							{#if readyDishes.length > 0}
 								<div class="flex shrink-0 flex-col gap-1.5" transition:slide={{ duration: 150 }}>
 									<div class="flex items-center gap-2 px-1">
@@ -454,20 +452,20 @@
 							{/if}
 						</div>
 
-						<!-- PENDING STRIP — always visible, pinned to bottom -->
+						<!-- PENDING STRIP -->
 						{#if pendingOrders.length > 0}
 							<div class="shrink-0" transition:slide={{ duration: 200 }}>
 								<div class="mb-1 flex items-center gap-2 px-1">
-									<span class="h-2 w-2 animate-pulse rounded-full bg-amber-400"></span>
-									<span class="text-sm font-semibold tracking-widest text-amber-500/80 uppercase">
+									<span class="h-2 w-2 animate-pulse rounded-full bg-yellow-400"></span>
+									<span class="text-sm font-semibold tracking-widest text-yellow-500/80 uppercase">
 										Pending
 									</span>
 									<span
-										class="flex h-4 w-4 items-center justify-center rounded-full bg-amber-400/20 text-[10px] font-bold text-amber-500"
+										class="flex h-4 w-4 items-center justify-center rounded-full bg-yellow-400/20 text-[10px] font-bold text-yellow-500"
 									>
 										{pendingOrders.length}
 									</span>
-									<div class="h-px flex-1 bg-amber-400/20"></div>
+									<div class="h-px flex-1 bg-yellow-400/20"></div>
 								</div>
 								<div class="flex flex-row gap-3 overflow-x-auto p-2">
 									{#each pendingOrders as order (order.id)}

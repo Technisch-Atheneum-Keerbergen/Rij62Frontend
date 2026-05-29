@@ -2,6 +2,7 @@ import type { UUID } from 'crypto';
 import type { MultiLangString } from './multilangstring';
 import type { ProductId } from './product';
 import type { RootCategory } from './rootCategory';
+import type { BasketChoice } from '$lib/stores/basket.svelte';
 
 export interface CreateOrder {
 	pickupTime: number;
@@ -22,6 +23,7 @@ export type Order = {
 	tableNumber: number | null;
 	createdTime: number;
 	paymentStatus: OrderPaymentStatus;
+	totalPrice: number;
 	pickupTime: number;
 	items: OrderItem[];
 };
@@ -30,7 +32,6 @@ export type OrderItem = {
 	id: number;
 	product: OrderProduct;
 	status: OrderStatus;
-	quantity: number;
 	choices: { product: OrderProduct }[];
 };
 
@@ -47,10 +48,44 @@ export type OrderProduct = {
 export type OrderStatus = `Pending` | `InProgress` | `Ready` | `PickedUp`;
 export type OrderPaymentStatus = 'NotPaid';
 
+export function groupDuplicateIds(ids: number[]): BasketChoice[] {
+	const map = new Map<number, number>();
+
+	for (const id of ids) {
+		map.set(id, (map.get(id) ?? 0) + 1);
+	}
+	return Array.from(map.entries()).map(([id, quantity]) => ({
+		id,
+		quantity
+	}));
+}
+
+export function groupDuplicateOrderItemChoices(
+	orderProducts: { product: { productId: number } }[]
+): BasketChoice[] {
+	const map = new Map<number, number>();
+
+	for (const item of orderProducts) {
+		const id = item.product.productId;
+
+		map.set(id, (map.get(id) ?? 0) + 1);
+	}
+
+	return Array.from(map.entries()).map(([id, quantity]) => ({
+		id,
+		quantity
+	}));
+}
+
+export function duplicateGroupedIds(items: BasketChoice[]): number[] {
+	return items.flatMap((item) => Array.from({ length: item.quantity }, () => item.id));
+}
+
 let i: Order = {
 	id: 'edc17bf3-f884-4009-98f2-4b205227a45d',
 	tableNumber: null,
 	createdTime: 1779393758,
+	totalPrice: 50,
 	pickupTime: 1779396153,
 	paymentStatus: 'NotPaid',
 	items: [
@@ -72,7 +107,7 @@ let i: Order = {
 				rootCategory: 'Food'
 			},
 			status: 'Pending',
-			quantity: 1,
+
 			choices: [
 				{
 					product: {
@@ -111,7 +146,7 @@ let i: Order = {
 				rootCategory: 'Food'
 			},
 			status: 'Pending',
-			quantity: 1,
+
 			choices: []
 		},
 		{
@@ -132,7 +167,7 @@ let i: Order = {
 				rootCategory: 'Food'
 			},
 			status: 'Pending',
-			quantity: 2,
+
 			choices: []
 		},
 		{
@@ -153,7 +188,7 @@ let i: Order = {
 				rootCategory: 'Drinks'
 			},
 			status: 'Pending',
-			quantity: 1,
+
 			choices: []
 		},
 		{
@@ -174,7 +209,7 @@ let i: Order = {
 				rootCategory: 'Drinks'
 			},
 			status: 'Pending',
-			quantity: 1,
+
 			choices: []
 		},
 		{
@@ -195,7 +230,7 @@ let i: Order = {
 				rootCategory: 'Drinks'
 			},
 			status: 'Pending',
-			quantity: 2,
+
 			choices: []
 		}
 	]

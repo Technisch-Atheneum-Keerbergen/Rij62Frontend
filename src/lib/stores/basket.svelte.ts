@@ -86,16 +86,43 @@ export function basketCount() {
 
 const productCache = new Map<ProductId, Promise<Product>>();
 
+function createMissingProduct(productId: ProductId): Product {
+	return {
+		id: productId,
+		title: {
+			English: 'Unavailable',
+			Dutch: 'Niet beschikbaar'
+		},
+		price: 0,
+		stock: 0,
+		isAvailable: false,
+		enabledByPreset: false,
+		description: {
+			English: '',
+			Dutch: ''
+		},
+		btw: 0,
+		imgURL: '',
+		categoryId: 0,
+		steps: []
+	};
+}
+
 function fetchProduct(productId: ProductId): Promise<Product> {
 	if (!productCache.has(productId)) {
 		productCache.set(
 			productId,
-			apiFetch('/product/' + productId).catch((err) => {
+			apiFetch('/product/' + productId).catch((err: Error) => {
+				if (err?.message === 'Not Found') {
+					return createMissingProduct(productId);
+				}
+
 				productCache.delete(productId);
 				throw err;
 			})
 		);
 	}
+
 	return productCache.get(productId)!;
 }
 

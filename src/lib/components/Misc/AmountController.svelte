@@ -7,6 +7,7 @@
 		disabled = false,
 		disableIncrease = false,
 		currentAmount = 0,
+		max = Infinity,
 		decrease = () => {},
 		increase = () => {},
 		remove = () => {},
@@ -16,12 +17,13 @@
 		increase: (value?: any) => void;
 		remove?: (value?: any) => void;
 		currentAmount: number;
+		max?: number;
 		disabled?: boolean;
 		disableIncrease?: boolean;
 		id?: any;
 	} = $props();
 
-	let increaseDisabled = $derived(disabled || disableIncrease);
+	let increaseDisabled = $derived(disabled || disableIncrease || currentAmount >= max);
 
 	function handleDecrease() {
 		if (disabled) return;
