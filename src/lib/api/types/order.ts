@@ -47,7 +47,7 @@ export type OrderProduct = {
 };
 
 export type OrderStatus = `Pending` | `InProgress` | `Ready` | `PickedUp`;
-export type OrderPaymentStatus = 'NotPaid';
+export type OrderPaymentStatus = 'NotPaid' | 'Success' | 'Failed';
 
 export function groupDuplicateIds(ids: number[]): BasketChoice[] {
 	const map = new Map<number, number>();

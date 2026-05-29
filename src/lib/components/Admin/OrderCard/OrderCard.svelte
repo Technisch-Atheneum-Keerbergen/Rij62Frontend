@@ -13,6 +13,7 @@
 		onprimaryaction,
 		onclick,
 		activeCategory = 'all',
+		leaving = false,
 		class: className = '',
 		...restProps
 	}: {
@@ -22,6 +23,7 @@
 		onprimaryaction?: (nextStatus: OrderStatus) => void;
 		onclick?: () => void;
 		activeCategory?: 'all' | 'Food' | 'Drinks';
+		leaving?: boolean;
 		class?: string;
 	} = $props();
 
@@ -119,9 +121,12 @@
 	tabindex="0"
 	{onclick}
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onclick?.()}
-	class="flex h-fit w-full min-w-80 cursor-pointer flex-col gap-2 overflow-hidden rounded-3xl border-300 bg-100 p-2 shadow-sm transition-all {urgencyRing[
+	class="flex h-fit w-full min-w-80 flex-col gap-2 overflow-hidden rounded-3xl border-300 bg-100 p-2 shadow-sm transition-all {urgencyRing[
 		urgency
 	]} {className}"
+	class:opacity-20={leaving}
+	class:scale-95={leaving}
+	style="transition: opacity 4.8s ease-in, transform 4.8s ease-in-out, scale 4.8s ease-in-out;"
 >
 	<!-- Header -->
 	<div
@@ -140,7 +145,7 @@
 						urgency
 					]} {urgencyRing[urgency]}"
 				>
-					{order.orderNumber}
+					#{order.orderNumber}
 				</span>
 				<span class="text-main text-sm font-bold">
 					€{totalPrice.toFixed(2)} &middot; {totalItems} item{totalItems !== 1 ? 's' : ''}

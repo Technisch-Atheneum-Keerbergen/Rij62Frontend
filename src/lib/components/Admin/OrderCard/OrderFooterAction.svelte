@@ -65,7 +65,7 @@
 				e.stopPropagation();
 				onprimaryaction?.(active.nextStatus);
 			}}
-			class="w-full transition-all active:scale-[0.97] {active.style}"
+			class="w-full cursor-pointer transition-all active:scale-[0.97] {active.style}"
 		>
 			{active.label}
 		</button>

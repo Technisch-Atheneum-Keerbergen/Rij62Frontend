@@ -30,11 +30,11 @@
 		ready: {
 			label: isFood ? 'Food ready' : 'Drinks ready',
 			style:
-				'rounded-2xl bg-green-400/15 px-3 py-2 text-sm font-semibold text-green-500 active:bg-green-400/25 dark:bg-green-500/20 dark:text-green-300'
+				'cursor-pointer rounded-2xl bg-green-400/15 px-3 py-2 text-sm font-semibold text-green-500 active:bg-green-400/25 dark:bg-green-500/20 dark:text-green-300'
 		},
 		undo: {
 			label: '↩ Undo ready',
-			style: 'text-main/30 hover:text-main/60'
+			style: 'cursor-pointer'
 		}
 	});
 
@@ -56,7 +56,7 @@
 </script>
 
 {#if (anyInProgress || allReady) && !anyPickedUp}
-	<div transition:slide={{ duration: 150 }} class="">
+	<div transition:slide={{ duration: 150 }} class="cursor-pointer">
 		{#if allReady}
 			<button
 				onclick={(e) => {

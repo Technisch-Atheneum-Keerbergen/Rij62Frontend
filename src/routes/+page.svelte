@@ -8,6 +8,7 @@
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 
+	import { pushState } from '$app/navigation';
 	import { basket, basketCount } from '$lib/stores/basket.svelte';
 	import { createStepStates } from '$lib/stores/stepState.svelte';
 	import { mockProducts } from './mockProducts.ts';
@@ -105,7 +106,7 @@
 	/* ---------------- HISTORY (back gesture) ---------------- */
 
 	function pushCategoryState(id: number) {
-		history.pushState({ categoryId: id }, '');
+		pushState('', { categoryId: id });
 	}
 
 	function handlePopState(e: PopStateEvent) {

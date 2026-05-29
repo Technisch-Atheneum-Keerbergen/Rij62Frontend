@@ -40,7 +40,7 @@
 	<nav class="w-full max-w-2xl rounded-3xl bg-200/60 px-4 py-2 shadow-md backdrop-blur-md">
 		<div class="flex w-full items-center justify-between">
 			<a href="/" class="text-xl font-medium text-primary-500 dark:text-primary-300"
-				>Rij<span class="font-bold text-secondary-500 dark:text-secondary-300">62</span></a
+				>Rij<span class="font-bold text-yellow-500 dark:text-yellow-300">62</span></a
 			>
 			<div class=" hidden items-center gap-6 md:flex">
 				<div class="flex flex-row gap-6">

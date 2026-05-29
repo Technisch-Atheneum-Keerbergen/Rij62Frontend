@@ -139,7 +139,7 @@
 			</div>
 		{:else if state === 'Failed'}
 			<div class="flex flex-col gap-0">
-				<!-- Glow header -->
+				<!-- Header -->
 				<div class="flex flex-col items-center gap-3 px-6 pt-6 pb-4 text-center">
 					<div
 						class="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/15 stroke-red-500 p-2"
@@ -147,7 +147,9 @@
 						<SvgXmark />
 					</div>
 					<h1 class="text-main text-xl font-semibold">Payment failed</h1>
-					<p class="text-main/40 text-sm">Something went wrong during payment.</p>
+					<p class="text-main/40 text-sm">
+						Something went wrong during payment. <br /> Your order has not been placed yet.
+					</p>
 				</div>
 
 				<div class="mx-4 h-px bg-300"></div>
@@ -160,7 +162,7 @@
 						{#if payLoading}
 							<span class="inline-flex items-center gap-2"><Spinner size="sm" />Processing…</span>
 						{:else}
-							Try again
+							Try payment again
 						{/if}
 					</Button>
 				</div>

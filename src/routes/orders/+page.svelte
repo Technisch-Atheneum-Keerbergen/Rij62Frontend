@@ -146,7 +146,7 @@
 							<span
 								class="h-7 w-fit min-w-7 rounded-full border border-300 bg-200 px-1.5 text-center text-lg font-semibold"
 							>
-								{order.orderNumber}
+								#{order.orderNumber}
 							</span>
 						</div>
 					</div>
