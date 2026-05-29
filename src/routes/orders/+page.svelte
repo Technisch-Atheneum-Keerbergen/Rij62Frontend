@@ -100,7 +100,7 @@
 	}
 </script>
 
-<section class="mx-auto max-w-2xl px-1 py-3">
+<section class="mx-auto max-w-2xl px-1 py-2">
 	{#await updatePendingOrders()}
 		<div class="flex flex-col items-center gap-4 text-center">
 			<Spinner size="lg" />
@@ -123,11 +123,11 @@
 				{@const paymentStatus = (order.paymentStatus ?? 'NotPaid') as PaymentStatus}
 
 				<div
-					class="overflow-hidden rounded-3xl border-300 bg-100 shadow-sm transition-shadow
+					class="flex flex-col gap-3 overflow-hidden rounded-3xl border-300 bg-100 p-3 shadow-sm transition-shadow
             {paymentGlow[paymentStatus]}"
 				>
 					<!-- Order header -->
-					<div class="flex items-center justify-between gap-3 px-4 py-3">
+					<div class="flex items-center justify-between gap-3 px-1">
 						<div class="flex flex-col gap-0.5">
 							{#if order.pickupTime}
 								<div class="flex items-center gap-1.5">
@@ -142,7 +142,6 @@
 						</div>
 
 						<div class="flex flex-row items-center gap-1.5">
-							Order:
 							<span
 								class="h-7 w-fit min-w-7 rounded-full border border-300 bg-200 px-1.5 text-center text-lg font-semibold"
 							>
@@ -155,8 +154,8 @@
 					{#if paymentStatus !== 'Success'}
 						<button
 							onclick={() => goto(`/orders/${order.id}`)}
-							class="mx-3 mb-3 flex w-[calc(100%-1.5rem)] items-center justify-between
-                   rounded-2xl px-4 py-2.5 font-semibold transition-all active:scale-[0.98]
+							class="flex w-full cursor-pointer items-center justify-between
+                   rounded-2xl py-2 pr-1 pl-3 font-semibold transition-all active:scale-[0.98]
                    {paymentBannerStyle[paymentStatus]}"
 						>
 							<span>
@@ -172,10 +171,10 @@
 					{/if}
 
 					<!-- Divider -->
-					<div class="mx-4 h-px bg-300"></div>
+					<div class="mx-1 h-px bg-300"></div>
 
 					<!-- Items ... (unchanged) -->
-					<ul class="flex flex-col gap-2 p-3">
+					<ul class="flex flex-col gap-2">
 						{#each groups as group}
 							{@const representative = group[0]}
 							{@const count = group.length}

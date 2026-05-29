@@ -218,7 +218,7 @@
 
 			if (data.orderId) {
 				pendingOrderStore.add(data.orderId);
-				// basket.clear()
+				basket.clear();
 				tableNumberStore.set(null);
 				window.location.href = `/orders/${data.orderId}`;
 			} else {
@@ -231,7 +231,6 @@
 		}
 	}
 
-	// ─── Can place ──────────────────────────────────────────────────────────────
 	let canPlace = $derived(
 		basket.items.length > 0 &&
 			!basket.loading &&
@@ -241,7 +240,7 @@
 	);
 </script>
 
-<section class="mx-auto max-w-2xl px-1 py-3">
+<section class="mx-auto max-w-2xl px-1 py-2">
 	<!-- Time picker header -->
 	<div class="mb-4 flex flex-row items-center justify-center gap-2">
 		<h2 class="text-main text-lg font-semibold">Time:</h2>

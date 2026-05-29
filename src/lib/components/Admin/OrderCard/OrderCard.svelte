@@ -141,7 +141,7 @@
 		<div class="flex flex-row items-center justify-between pr-5">
 			<div class="flex flex-row items-center gap-2">
 				<span
-					class="h-7 w-fit min-w-7 rounded-full px-1.5 text-center text-lg font-semibold {urgencyBg[
+					class="h-6 w-fit min-w-6 rounded-full px-1.5 text-center font-semibold {urgencyBg[
 						urgency
 					]} {urgencyRing[urgency]}"
 				>

@@ -3,10 +3,8 @@
 	import type { Category } from '$lib/api/types/category';
 	import { productIsAvailable, type Product } from '$lib/api/types/product';
 	import { apiFetch } from '$lib/api/client';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, tick } from 'svelte';
 	import { browser } from '$app/environment';
-	import { cubicInOut } from 'svelte/easing';
-	import { fade, fly } from 'svelte/transition';
 
 	import { pushState } from '$app/navigation';
 	import { basket, basketCount } from '$lib/stores/basket.svelte';
@@ -18,10 +16,10 @@
 	import NavCard from '$lib/components/Cards/NavCard.svelte';
 	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
 	import StepGroup from '$lib/components/Misc/StepGroup.svelte';
-	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
 	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
 	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
+	import { Drawer } from 'vaul-svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -80,12 +78,12 @@
 	let selectedCategoryId = $state<number | null>(null);
 
 	let selectedProduct = $state<Product | null>(null);
-	let isSheetOpen = $state(false);
+	// isDrawerOpen is the single source of truth — bound to Drawer.Root
+	let isDrawerOpen = $state(false);
 	let itemIsInBasket = $state(false);
 
 	let stepStates = $state<ReturnType<typeof createStepStates>>([]);
 
-	// Track whether data is still loading (for the initial spinner only)
 	let categoriesLoading = $state(true);
 	let productsLoading = $state(true);
 
@@ -143,18 +141,25 @@
 		}
 	}
 
+	// Sync: allProducts is already resolved by the time the user can tap a card.
+	// Setting selectedProduct BEFORE the drawer opens means the content is ready
+	// on the first render frame, so vaul's enter animation plays correctly.
 	async function openProduct(id: number) {
-		const products = await productsPromise;
-		selectedProduct = products.find((p) => p.id === id) ?? null;
+		selectedProduct = allProducts.find((p) => p.id === id) ?? null;
 		stepStates = createStepStates(selectedProduct?.steps ?? []);
-		isSheetOpen = true;
 		itemIsInBasket = false;
+
+		// Await tick() forces Svelte to update the DOM with the new selectedProduct data right now.
+		await tick();
+
+		// Now the DOM has content, and Vaul can correctly calculate the height for the slide animation!
+		isDrawerOpen = true;
 	}
 
 	function addToBasket() {
 		if (!selectedProduct) return;
 
-		const choices = stepStates.flatMap((stepState, i) =>
+		const choices = stepStates.flatMap((stepState) =>
 			stepState.options
 				.filter((o) => o.selected)
 				.map((o) => ({
@@ -165,6 +170,9 @@
 
 		basket.add(selectedProduct, choices);
 		itemIsInBasket = true;
+		setTimeout(() => {
+			document.getElementById('drawerCloser')?.click();
+		}, 250);
 	}
 
 	/* ---------------- LIFECYCLE ---------------- */
@@ -207,7 +215,6 @@
 				<button
 					class="flex aspect-square h-9 cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-300 bg-200 stroke-current p-1 shadow-lg hover:opacity-100 active:scale-95"
 					onclick={goBackToCategories}
-					transition:fade={{ duration: 200 }}
 				>
 					<SvgChevronLeft />
 				</button>
@@ -232,7 +239,6 @@
 	</div>
 
 	<!-- Sub-categories OR products -->
-
 	<div class="z-0 mt-14">
 		{#if selectedCategoryId === null}
 			{#if categoriesLoading}
@@ -261,11 +267,11 @@
 			<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
 				{#each filteredProducts as product (product.id)}
 					<Card
+						onclick={() => openProduct(product.id)}
 						title={product.title[currentLanguage]}
 						imageSrc={product.imgURL}
 						price={product.price}
 						disabled={!product.isAvailable || !product.enabledByPreset}
-						onclick={() => openProduct(product.id)}
 					/>
 				{/each}
 			</div>
@@ -275,62 +281,50 @@
 	</div>
 </section>
 
-<!-- ---------------- SHEET ---------------- -->
+<!-- ---------------- DRAWER ---------------- -->
+{#if isDrawerOpen}
+	<Drawer.Root bind:open={isDrawerOpen}>
+		<Drawer.Portal>
+			<Drawer.Overlay class="fixed inset-0 z-40 bg-black/40" />
+			<Drawer.Content
+				class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 pt-2 shadow-xl"
+			>
+				<div class="mx-auto mb-2 h-1 w-18 shrink-0 rounded-full bg-500"></div>
+				{#if selectedProduct}
+					<img
+						src={selectedProduct.imgURL}
+						alt={selectedProduct.title[currentLanguage]}
+						class="mb-3 h-40 w-full flex-none rounded-2xl object-cover"
+					/>
+					<div class="flex flex-1 flex-col overflow-y-auto">
+						{#each selectedProduct.steps as step, i}
+							<h1 class="mt-1 mb-0 ml-1">{step.title[currentLanguage]}</h1>
+							<StepGroup {step} state={stepStates[i]} language={currentLanguage} />
+						{/each}
+					</div>
 
-{#if isSheetOpen && selectedProduct}
-	<div class="fixed inset-0 z-50 flex items-end justify-center">
-		<div
-			role="button"
-			tabindex="0"
-			class="absolute inset-0 bg-darken"
-			transition:fade={{ duration: 100 }}
-			onclick={() => (isSheetOpen = false)}
-			onkeydown={(e) => e.key === 'Escape' && (isSheetOpen = false)}
-		></div>
+					<div class="flex-none">
+						<div class="ml-1">
+							<h2 class="text-lg font-semibold">
+								{selectedProduct.title[currentLanguage]}
+							</h2>
+							<p class="text-muted mb-2">€{selectedProduct.price.toFixed(2)}</p>
+							<p class="text-muted mb-4">{selectedProduct.description[currentLanguage]}</p>
+						</div>
 
-		<div
-			class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 shadow-xl"
-			transition:fly={{ y: 200, duration: 150, easing: cubicInOut }}
-		>
-			<img
-				src={selectedProduct.imgURL}
-				alt={selectedProduct.title[currentLanguage]}
-				class="mb-3 h-40 w-full flex-none rounded-2xl object-cover"
-			/>
-			<div class="flex flex-1 flex-col overflow-y-auto">
-				{#each selectedProduct.steps as step, i}
-					<h1 class="mt-1 mb-0 ml-1">{step.title[currentLanguage]}</h1>
-					<StepGroup {step} state={stepStates[i]} language={currentLanguage} />
-				{/each}
-			</div>
-
-			<div class="flex-none">
-				<div class="ml-1">
-					<h2 class="text-lg font-semibold">
-						{selectedProduct.title[currentLanguage]}
-					</h2>
-					<p class="text-muted mb-2">€{selectedProduct.price.toFixed(2)}</p>
-					<p class="text-muted mb-4">{selectedProduct.description[currentLanguage]}</p>
-				</div>
-
-				{#if !itemIsInBasket}
-					<Button class="w-full" size="lg" onclick={addToBasket}>Add to basket</Button>
-				{:else}
-					<div class="flex flex-row gap-2">
-						<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
-						<Button
-							class="relative h-10 w-16 stroke-secondary-900"
-							size="lg"
-							onclick={() => (window.location.href = '/basket')}
-							variant="secondary"
-						>
-							<p class="absolute top-1 left-3 aspect-square h-7"><SvgBasket /></p>
-						</Button>
+						{#if !itemIsInBasket}
+							<Button class="w-full" size="lg" onclick={addToBasket}>Add to basket</Button>
+						{:else}
+							<div class="flex flex-row gap-2">
+								<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
+							</div>
+						{/if}
+						<Drawer.Close class="hidden" id="drawerCloser"></Drawer.Close>
 					</div>
 				{/if}
-			</div>
-		</div>
-	</div>
+			</Drawer.Content>
+		</Drawer.Portal>
+	</Drawer.Root>
 {/if}
 
 <!-- ---------------- BASKET BAR ---------------- -->

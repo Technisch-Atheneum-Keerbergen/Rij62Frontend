@@ -54,7 +54,7 @@
 			else handleDecrease();
 		}}
 	>
-		<div class="stroke-main aspect-square h-6 w-6">
+		<div class="stroke-main aspect-square h-8 w-8">
 			{#if currentAmount == 1 || disableIncrease}
 				<span class="stroke-red-400">
 					<SvgBin />
@@ -65,7 +65,7 @@
 		</div>
 	</button>
 
-	<span class="rounded-md bg-100 px-2">{currentAmount}</span>
+	<span class="rounded-md bg-100 px-2 text-lg">{currentAmount}</span>
 
 	<button
 		class="rounded-md transition-all"
@@ -80,7 +80,7 @@
 			handleIncrease();
 		}}
 	>
-		<div class="stroke-main aspect-square h-6 w-6">
+		<div class="stroke-main aspect-square h-8 w-8">
 			<SvgPlus />
 		</div>
 	</button>
