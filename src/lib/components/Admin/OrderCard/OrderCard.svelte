@@ -42,9 +42,9 @@
 	const urgency = $derived(order.pickupTime ? urgencyFor(order.pickupTime, Date.now()) : 'green');
 
 	const urgencyRing: Record<UrgencyLevel, string> = {
-		red: 'ring-2 ring-red-400/60',
-		yellow: 'ring-2 ring-yellow-400/60',
-		green: 'ring-2 ring-green-400/60'
+		red: 'ring-1 ring-red-400/60',
+		yellow: 'ring-1 ring-yellow-400/60',
+		green: 'ring-1 ring-green-400/60'
 	};
 	const urgencyBg: Record<UrgencyLevel, string> = {
 		red: 'bg-red-200/20 dark:bg-red-500/5',
@@ -156,10 +156,10 @@
 		{#if foodItems.length > 0 && (activeCategory === 'all' || activeCategory === 'Food')}
 			{#if hasBoth && activeCategory === 'all'}
 				<div class="flex items-center gap-1.5 px-1">
-					<span class="text-[10px] font-semibold tracking-wide text-orange-500/80 uppercase"
-						>🍽️ Food</span
+					<span class="text-[10px] font-semibold tracking-wide text-yellow-500/80 uppercase"
+						>Food</span
 					>
-					<div class="h-px flex-1 bg-orange-400/20"></div>
+					<div class="h-px flex-1 bg-yellow-400/20"></div>
 				</div>
 			{/if}
 			{#each foodGroups as group (group[0].id)}
@@ -173,10 +173,10 @@
 		{#if drinkItems.length > 0 && (activeCategory === 'all' || activeCategory === 'Drinks')}
 			{#if hasBoth && activeCategory === 'all'}
 				<div class="flex items-center gap-1.5 px-1">
-					<span class="text-[10px] font-semibold tracking-wide text-blue-500/80 uppercase"
-						>🥤 Drinks</span
+					<span class="text-[10px] font-semibold tracking-wide text-primary-500/80 uppercase"
+						>Drinks</span
 					>
-					<div class="h-px flex-1 bg-blue-400/20"></div>
+					<div class="h-px flex-1 bg-primary-400/20"></div>
 				</div>
 			{/if}
 			{#each drinkGroups as group (group[0].id)}

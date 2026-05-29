@@ -98,7 +98,7 @@
 	});
 </script>
 
-<div bind:this={wrapper} class="relative mb-4 flex flex-col items-center">
+<div bind:this={wrapper} class="relative flex flex-col items-center">
 	<button
 		class="flex items-center gap-1 rounded-full border-2 border-300 bg-200 px-4 py-1.5 text-sm font-medium shadow-sm transition-all hover:border-primary-400 active:scale-95"
 		onclick={(e) => {

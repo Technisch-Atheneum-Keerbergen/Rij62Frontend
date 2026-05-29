@@ -20,8 +20,8 @@
 		ghost: 'border-500 bg-300'
 	};
 	const sizeStyle: Record<Size, string> = {
-		sm: 'rounded-xl',
-		md: 'text-lg rounded-xl px-2.5',
+		sm: 'rounded-xl py-1',
+		md: 'text-lg rounded-xl px-2.5 py-1',
 		lg: 'text-xl rounded-2xl px-3 py-1'
 	};
 	const styles = $derived(

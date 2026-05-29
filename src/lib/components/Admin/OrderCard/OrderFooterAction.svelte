@@ -27,7 +27,7 @@
 			label: 'Accept order',
 			nextStatus: 'InProgress',
 			style:
-				'rounded-2xl bg-amber-400/15 px-3 py-2 text-sm font-semibold text-amber-500 active:bg-amber-400/25 dark:bg-amber-500/20 dark:text-amber-300'
+				'rounded-2xl bg-yellow-400/15 px-3 py-2 text-sm font-semibold text-yellow-500 active:bg-yellow-400/25 dark:bg-yellow-500/20 dark:text-yellow-300'
 		},
 		InProgress: {
 			label: '↩ Reset to pending',

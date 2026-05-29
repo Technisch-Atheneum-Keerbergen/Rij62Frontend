@@ -59,7 +59,7 @@
 		InvalidTableNumber: "This table doesn't exist — check your table number.",
 		QuantityRange: 'Quantity must be between 1 and 50.',
 		InvalidProduct: 'This item is no longer in the menu.',
-		ProductInactiveOrDisabled: 'This item is unavailable.',
+		ProductInactiveOrDisabled: 'Item unavailable',
 		PastPickupTime: 'Your scheduled time has passed — please update it.',
 		PickupTimeTooFar: "You can't schedule more than 7 days ahead.",
 		EmptyOrder: 'Your basket is empty.'
@@ -241,81 +241,77 @@
 	);
 </script>
 
-<section class="mx-auto max-w-2xl">
-	<div class="flex flex-row items-center justify-center gap-2">
-		<!--
-		<TablePicker bind:tableNumber />
-		-->
-		<h2 class="mb-4 text-center text-lg font-semibold">Time:</h2>
+<section class="mx-auto max-w-2xl px-1 py-3">
+	<!-- Time picker header -->
+	<div class="mb-4 flex flex-row items-center justify-center gap-2">
+		<h2 class="text-main text-lg font-semibold">Time:</h2>
 		<TimePicker bind:scheduledTime />
 	</div>
 
-	<div class="rounded-3xl bg-100 p-2 shadow-md">
+	<div class="overflow-hidden rounded-3xl border border-200 bg-100 shadow-sm">
 		{#if basket.loading}
-			<div class="flex flex-col items-center gap-4 py-8 text-center">
+			<div class="flex flex-col items-center gap-4 py-10 text-center">
 				<Spinner size="lg" />
+				<p class="text-main/40 text-sm">Loading basket…</p>
 			</div>
 		{:else if basket.error}
-			<p class="py-5 text-center text-lg opacity-60">Failed to load basket. Please try again.</p>
+			<p class="text-main/40 py-10 text-center text-lg">Failed to load basket. Please try again.</p>
 		{:else if basket.items.length === 0}
-			<p class="py-5 text-center text-lg opacity-60">Your basket is empty.</p>
+			<p class="text-main/40 py-10 text-center text-lg">Your basket is empty.</p>
 		{:else}
-			<ul class="space-y-3">
+			<ul class="flex flex-col gap-2 p-3">
 				{#each loadedItems as item, i (item.product.id + JSON.stringify(item.choices.map((c) => c.product.id)))}
 					{@const displayError = getDisplayError(i)}
 					{@const hasError = hasItemError(i)}
 
 					<li
-						class="flex items-center justify-between rounded-2xl border-2 bg-200 p-2 shadow-sm transition-all"
+						class="flex items-center gap-3 rounded-2xl border bg-200 p-2 shadow-xs transition-all"
 						class:border-300={!hasError}
-						class:border-red-300={hasError}
+						class:border-red-400={hasError}
 					>
-						<div class="flex items-center gap-3">
-							<img
-								src={item.product.imgURL}
-								alt={item.product.title[currentLanguage]}
-								class="h-12 w-12 rounded-lg object-cover"
-							/>
+						<img
+							src={item.product.imgURL}
+							alt={item.product.title[currentLanguage]}
+							class="h-12 w-12 shrink-0 rounded-xl object-cover"
+						/>
 
-							<div>
-								<div class="flex flex-col items-start">
-									<p class="font-medium" class:line-through={isProductUnavailable(i)}>
-										{item.product.title[currentLanguage]}
-									</p>
+						<div class="min-w-0 flex-1">
+							<p
+								class="text-main truncate font-medium"
+								class:line-through={isProductUnavailable(i)}
+							>
+								{item.product.title[currentLanguage]}
+							</p>
 
-									{#if displayError}
-										<span
-											class="rounded-full bg-red-100 px-1 py-0.5 text-xs font-medium text-red-500"
-										>
-											{displayError}
-										</span>
-									{/if}
-								</div>
-
-								{#if item.choices.length > 0}
-									<p class="text-muted text-xs opacity-80">
-										{#each item.choices as choice, choiceIndex}
-											{@const choiceErrors = getChoiceErrors(i, choice.product.id)}
-											<span
-												class:line-through={choiceErrors.length > 0}
-												class:text-red-400={choiceErrors.length > 0}
-											>
-												{choice.quantity > 1
-													? `${choice.product.title[currentLanguage]} x${choice.quantity}`
-													: choice.product.title[currentLanguage]}
-											</span>
-
-											{#if choiceIndex < item.choices.length - 1}
-												<span class="-ml-0.5">,&nbsp;</span>
-											{/if}
-										{/each}
-									</p>
+							<div class="mt-0.5 flex items-center gap-2">
+								{#if displayError}
+									<span
+										class="rounded-full bg-red-400/10 px-2 py-0.5 text-xs font-medium text-nowrap text-red-500 dark:bg-red-500/80 dark:text-light"
+									>
+										{displayError}
+									</span>
 								{/if}
-
-								<p class="text-muted text-sm">
-									€{getItemTotal(item).toFixed(2)}
-								</p>
 							</div>
+
+							{#if item.choices.length > 0}
+								<p class="text-main/40 text-xs">
+									{#each item.choices as choice, choiceIndex}
+										{@const choiceErrors = getChoiceErrors(i, choice.product.id)}
+										<span
+											class:line-through={choiceErrors.length > 0}
+											class:text-red-400={choiceErrors.length > 0}
+										>
+											{choice.quantity > 1
+												? `${choice.quantity}x ${choice.product.title[currentLanguage]}`
+												: choice.product.title[currentLanguage]}
+										</span>
+										{#if choiceIndex < item.choices.length - 1}<span class="-ml-0.5">,&nbsp;</span
+											>{/if}
+									{/each}
+								</p>
+							{/if}
+
+							<span class="text-main/60 text-sm">€{getItemTotal(item).toFixed(2)}</span>
 						</div>
 
 						<AmountController
@@ -332,46 +328,37 @@
 				{/each}
 			</ul>
 
-			<hr class="mt-6 mb-3 border-300" />
+			<!-- Divider -->
+			<div class="mx-4 h-px bg-300"></div>
 
-			{#if getOrderErrors().length > 0}
-				<div class="mb-2 space-y-1">
+			<!-- Order-level errors -->
+			{#if getOrderErrors().length > 0 || placeError}
+				<div class="space-y-1 px-4 pt-3">
 					{#each getOrderErrors() as error}
 						<p class="text-center text-sm text-red-400">
 							{errorMessages[error.type] ?? error.type}
 						</p>
 					{/each}
+					{#if placeError}
+						<p class="text-center text-sm text-red-400">{placeError}</p>
+					{/if}
 				</div>
 			{/if}
 
-			{#if placeError}
-				<p class="mb-2 text-center text-sm text-red-400">
-					{placeError}
-				</p>
-			{/if}
-
-			<div class="flex items-center justify-between p-2 font-semibold">
-				<span class="text-muted">Total:</span>
-
-				<span class="text-xl">
-					€{basketTotal(loadedItems).toFixed(2)}
-				</span>
+			<!-- Total row -->
+			<div class="flex items-center justify-between px-5 py-4">
+				<span class="text-main/40 font-semibold">Total</span>
+				<span class="text-main text-xl font-semibold">€{basketTotal(loadedItems).toFixed(2)}</span>
 			</div>
 		{/if}
 	</div>
 
-	<div class="mt-5 flex w-full items-stretch justify-stretch space-x-1.5">
+	<!-- Actions -->
+	<div class="mt-4 flex w-full items-stretch gap-1.5">
 		<Button class="flex-1" variant="ghost" size="sm" onclick={() => (window.location.href = '/')}>
 			Continue shopping
 		</Button>
-
-		<Button
-			class="flex-1 py-1.5"
-			size="sm"
-			variant="primary"
-			disabled={!canPlace}
-			onclick={placeOrder}
-		>
+		<Button class="flex-1" size="sm" variant="primary" disabled={!canPlace} onclick={placeOrder}>
 			{#if placing}
 				Placing order…
 			{:else if validating}

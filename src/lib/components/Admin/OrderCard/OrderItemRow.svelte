@@ -36,14 +36,14 @@
 	const pct = $derived(quantity > 0 ? (prepared / quantity) * 100 : 0);
 
 	const progressColor: Record<OrderStatus, string> = {
-		Pending: 'bg-amber-400/30',
+		Pending: 'bg-yellow-400/30',
 		InProgress: 'bg-primary-400/40',
 		Ready: 'bg-gradient-to-r from-green-400/15 to-green-400/25',
 		PickedUp: 'bg-400/20'
 	};
 
 	const rowColor: Record<OrderStatus, string> = {
-		Pending: 'border-amber-400/40 shadow-[inset_0_0_0_1px] shadow-amber-400/20 bg-amber-400/5',
+		Pending: 'border-yellow-400/40 shadow-[inset_0_0_0_1px] shadow-yellow-400/20 bg-yellow-400/5',
 		InProgress:
 			'border-primary-400/40 shadow-[inset_0_0_0_1px] shadow-primary-400/20 bg-primary-400/5',
 		Ready: 'border-green-400/40 shadow-[inset_0_0_0_1px] shadow-green-400/20 bg-green-400/5',

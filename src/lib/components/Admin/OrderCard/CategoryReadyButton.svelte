@@ -25,9 +25,10 @@
 	);
 	const anyPickedUp = $derived(items.some((i) => i.status === 'PickedUp'));
 
-	const ACTION = {
+	// FIX: Wrapped in $derived so it re-evaluates whenever `isFood` changes
+	const ACTION = $derived({
 		ready: {
-			label: isFood ? '🍽️ Food ready' : '🥤 Drinks ready',
+			label: isFood ? 'Food ready' : 'Drinks ready',
 			style:
 				'rounded-2xl bg-green-400/15 px-3 py-2 text-sm font-semibold text-green-500 active:bg-green-400/25 dark:bg-green-500/20 dark:text-green-300'
 		},
@@ -35,7 +36,7 @@
 			label: '↩ Undo ready',
 			style: 'text-main/30 hover:text-main/60'
 		}
-	};
+	});
 
 	function markReady() {
 		for (const item of liveItems) {
@@ -55,7 +56,7 @@
 </script>
 
 {#if (anyInProgress || allReady) && !anyPickedUp}
-	<div transition:slide={{ duration: 150 }} class="px-1">
+	<div transition:slide={{ duration: 150 }} class="">
 		{#if allReady}
 			<button
 				onclick={(e) => {

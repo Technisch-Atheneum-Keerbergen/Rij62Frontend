@@ -6,6 +6,7 @@
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
 	import { groupDuplicateOrderItemChoices } from '$lib/api/types/order';
+	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
@@ -71,15 +72,22 @@
 	}
 
 	const paymentLabel: Record<PaymentStatus, string> = {
-		NotPaid: 'Not paid',
-		Success: 'Paid',
-		Failed: 'Payment failed'
+		NotPaid: 'Pay now',
+		Success: '', // unused
+		Failed: 'Retry payment'
 	};
 
-	const paymentStyle: Record<PaymentStatus, string> = {
-		NotPaid: 'bg-amber-400/15 text-amber-500 dark:bg-amber-500/20 dark:text-amber-300',
-		Success: 'bg-green-400/15 text-green-600 dark:bg-green-500/20 dark:text-green-300',
-		Failed: 'bg-red-400/15 text-red-500 dark:bg-red-500/20 dark:text-red-300'
+	const paymentGlow: Record<PaymentStatus, string> = {
+		NotPaid: 'border-2 border-yellow-400/60 shadow-[0_0_18px_2px_rgba(250,204,21,0.25)]',
+		Success: '',
+		Failed: 'border-2 border-red-400/60 shadow-[0_0_18px_2px_rgba(248,113,113,0.25)]'
+	};
+
+	const paymentBannerStyle: Record<PaymentStatus, string> = {
+		NotPaid:
+			'bg-yellow-400/10 text-yellow-500 dark:bg-yellow-500/15 dark:text-yellow-300 stroke-yellow-500',
+		Success: '',
+		Failed: 'bg-red-400/10 text-red-500 dark:bg-red-500/15 dark:text-red-300 stroke-red-500'
 	};
 
 	// Derive the aggregate status for a group of identical items
@@ -98,7 +106,7 @@
 			<p class="text-surface-500 text-sm">Loading orders...</p>
 		</div>
 	{:then}
-		<h1 class="mb-6 text-center text-2xl font-semibold">
+		<h1 class="mb-2 text-center text-2xl font-semibold">
 			{pendingOrders.length > 0 ? 'Your orders' : 'No orders made'}
 		</h1>
 
@@ -113,11 +121,13 @@
 				{@const groups = groupItems(order.items)}
 				{@const paymentStatus = (order.paymentStatus ?? 'NotPaid') as PaymentStatus}
 
-				<div class="overflow-hidden rounded-3xl border-300 bg-200 shadow-sm">
+				<div
+					class="overflow-hidden rounded-3xl border-300 bg-100 shadow-sm transition-shadow
+            {paymentGlow[paymentStatus]}"
+				>
 					<!-- Order header -->
-					<div class="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
+					<div class="flex items-start justify-between gap-3 px-4 py-3">
 						<div class="flex flex-col gap-0.5">
-							<!-- Pickup time prominent -->
 							{#if order.pickupTime}
 								<div class="flex items-center gap-1.5">
 									<span class="text-main text-lg font-bold">
@@ -125,34 +135,48 @@
 									</span>
 								</div>
 							{/if}
-							<!-- Placed time subtle -->
 							<span class="text-main/40 text-xs">
 								Placed {formatTime(order.createdTime)} · {formatDate(order.createdTime)}
 							</span>
 						</div>
 
-						<!-- Payment badge — tappable, goes to payment page -->
+						<!-- Only show badge if payment isn't settled -->
+						{#if paymentStatus !== 'Success'}
+							<!-- nothing on the right for paid orders -->
+						{/if}
+					</div>
+
+					<!-- Payment problem banner — only shown when action needed -->
+					{#if paymentStatus !== 'Success'}
 						<button
 							onclick={() => goto(`/orders/${order.id}`)}
-							class="shrink-0 rounded-xl px-2.5 py-1 text-xs font-semibold transition-all active:scale-95 {paymentStyle[
-								paymentStatus
-							]}"
+							class="mx-3 mb-3 flex w-[calc(100%-1.5rem)] items-center justify-between
+                   rounded-2xl px-4 py-2.5 font-semibold transition-all active:scale-[0.98]
+                   {paymentBannerStyle[paymentStatus]}"
 						>
-							{paymentLabel[paymentStatus]}
+							<span>
+								{paymentStatus === 'Failed' ? 'Payment failed' : 'Payment pending'}
+							</span>
+							<span class="flex items-center gap-1 underline">
+								{paymentLabel[paymentStatus]}
+								<span class="aspect-square h-6">
+									<SvgChevronRight />
+								</span>
+							</span>
 						</button>
-					</div>
+					{/if}
 
 					<!-- Divider -->
 					<div class="mx-4 h-px bg-300"></div>
 
-					<!-- Items -->
+					<!-- Items ... (unchanged) -->
 					<ul class="flex flex-col gap-2 p-3">
 						{#each groups as group}
 							{@const representative = group[0]}
 							{@const count = group.length}
 							{@const status = groupStatus(group)}
 
-							<li class="flex items-center gap-3 rounded-2xl border border-300 bg-100 p-2">
+							<li class="flex items-center gap-3 rounded-[1.25rem] border border-300 bg-200 p-2">
 								<div class="relative flex items-center gap-3">
 									<img
 										src={representative.product.imgUrl}
@@ -171,7 +195,7 @@
 										{representative.product.title[currentLanguage]}
 									</p>
 									{#if representative.choices?.length > 0}
-										<p class="text-main/40 truncate text-xs">
+										<p class="text-main/40 text-xs">
 											{groupDuplicateOrderItemChoices(representative.choices)
 												.map((choice) => {
 													const original = representative.choices.find(

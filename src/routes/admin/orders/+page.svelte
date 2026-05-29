@@ -456,16 +456,16 @@
 						{#if pendingOrders.length > 0}
 							<div class="shrink-0" transition:slide={{ duration: 200 }}>
 								<div class="mb-1 flex items-center gap-2 px-1">
-									<span class="h-2 w-2 animate-pulse rounded-full bg-amber-400"></span>
-									<span class="text-sm font-semibold tracking-widest text-amber-500/80 uppercase">
+									<span class="h-2 w-2 animate-pulse rounded-full bg-yellow-400"></span>
+									<span class="text-sm font-semibold tracking-widest text-yellow-500/80 uppercase">
 										Pending
 									</span>
 									<span
-										class="flex h-4 w-4 items-center justify-center rounded-full bg-amber-400/20 text-[10px] font-bold text-amber-500"
+										class="flex h-4 w-4 items-center justify-center rounded-full bg-yellow-400/20 text-[10px] font-bold text-yellow-500"
 									>
 										{pendingOrders.length}
 									</span>
-									<div class="h-px flex-1 bg-amber-400/20"></div>
+									<div class="h-px flex-1 bg-yellow-400/20"></div>
 								</div>
 								<div class="flex flex-row gap-3 overflow-x-auto p-2">
 									{#each pendingOrders as order (order.id)}
