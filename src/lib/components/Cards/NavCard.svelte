@@ -37,7 +37,7 @@
 		lg: 'max-w-48 min-w-48'
 	};
 	const imgSizeStyle = {
-		sm: 'max-h-20 min-h-20',
+		sm: 'max-h-15 min-h-15',
 		md: 'max-h-25 min-h-25',
 		lg: 'max-h-35 min-h-35'
 	};
@@ -51,13 +51,12 @@
 <div
 	{...restProps}
 	role="button"
-	transition:slide={{ duration: 200 }}
 	tabindex="0"
 	onclick={handleClick}
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}
 	class="flex {divSizeStyle[
 		size
-	]} h-fit cursor-pointer flex-col overflow-hidden rounded-3xl p-1 shadow-sm transition-all
+	]} h-fit cursor-pointer flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
         {selectable && selected ? 'border-primary-300 bg-300' : 'border-300 bg-200'}
         hover:shadow-md active:scale-95 {className}"
 >

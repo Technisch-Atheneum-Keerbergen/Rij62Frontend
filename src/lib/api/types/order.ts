@@ -20,6 +20,7 @@ export type OrderId = UUID;
 
 export type Order = {
 	id: OrderId;
+	orderNumber: number;
 	tableNumber: number | null;
 	createdTime: number;
 	paymentStatus: OrderPaymentStatus;
@@ -84,6 +85,7 @@ export function duplicateGroupedIds(items: BasketChoice[]): number[] {
 let i: Order = {
 	id: 'edc17bf3-f884-4009-98f2-4b205227a45d',
 	tableNumber: null,
+	orderNumber: 8,
 	createdTime: 1779393758,
 	totalPrice: 50,
 	pickupTime: 1779396153,

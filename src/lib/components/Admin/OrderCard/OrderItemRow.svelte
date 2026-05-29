@@ -43,10 +43,9 @@
 	};
 
 	const rowColor: Record<OrderStatus, string> = {
-		Pending: 'border-yellow-400/40 shadow-[inset_0_0_0_1px] shadow-yellow-400/20 bg-yellow-400/5',
-		InProgress:
-			'border-primary-400/40 shadow-[inset_0_0_0_1px] shadow-primary-400/20 bg-primary-400/5',
-		Ready: 'border-green-400/40 shadow-[inset_0_0_0_1px] shadow-green-400/20 bg-green-400/5',
+		Pending: 'border-yellow-400/40 bg-yellow-400/5',
+		InProgress: 'border-primary-400/40 bg-primary-400/5',
+		Ready: 'border-green-400/40 bg-green-400/5',
 		PickedUp: 'border-400/20 bg-400/5 opacity-40'
 	};
 
@@ -72,7 +71,7 @@
 <button
 	onclick={handleTap}
 	disabled={allPickedUp || !onitemdelta}
-	class="relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-2xl border px-3 py-1.5
+	class="relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-2xl border p-1.5 pl-2.5
 		transition-all {effectiveStatus() !== 'Pending' ? 'active:scale-95' : ''}
 		disabled:cursor-default {rowColor[effectiveStatus()]}"
 >
@@ -103,7 +102,7 @@
 				{#each groupedChoices as choice, i}
 					<span>
 						{choice.count > 1
-							? `${choice.product.title[currentLanguage]} x${choice.count}`
+							? `${choice.count}x ${choice.product.title[currentLanguage]} `
 							: choice.product.title[currentLanguage]}
 					</span>
 					{#if i < groupedChoices.length - 1}<span class="-ml-0.5">,&nbsp;</span>{/if}

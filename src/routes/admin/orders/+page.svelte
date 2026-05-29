@@ -271,7 +271,7 @@
 	}
 </script>
 
-<div class="flex h-[calc(100vh-94px)] flex-col gap-3 overflow-hidden p-4">
+<div class="flex h-[calc(100vh-80px)] flex-col gap-3 overflow-hidden">
 	<!-- Top bar: view + category filters -->
 	<div class="flex shrink-0 items-center justify-between gap-2">
 		<div class="flex items-center gap-1">
@@ -368,10 +368,10 @@
 								/>
 							</div>
 						</div>
-						<div class="min-h-0 flex-1 overflow-y-auto pr-1">
+						<div class="min-h-0 flex-1 overflow-y-auto">
 							<div
 								class="grid gap-3 p-2"
-								style="grid-template-columns: repeat(auto-fill, minmax(288px, 1fr))"
+								style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))"
 							>
 								{#each filteredOrders as order (order.id)}
 									{@const isPending = order.items.every((i: OrderItem) => i.status === 'Pending')}

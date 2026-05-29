@@ -3,7 +3,8 @@
 	import type { Category } from '$lib/api/types/category';
 	import { productIsAvailable, type Product } from '$lib/api/types/product';
 	import { apiFetch } from '$lib/api/client';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
+	import { browser } from '$app/environment';
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 
@@ -83,6 +84,10 @@
 
 	let stepStates = $state<ReturnType<typeof createStepStates>>([]);
 
+	// Track whether data is still loading (for the initial spinner only)
+	let categoriesLoading = $state(true);
+	let productsLoading = $state(true);
+
 	/* ---------------- DERIVED ---------------- */
 
 	const visibleCategories = $derived(
@@ -97,17 +102,44 @@
 			: []
 	);
 
+	/* ---------------- HISTORY (back gesture) ---------------- */
+
+	function pushCategoryState(id: number) {
+		history.pushState({ categoryId: id }, '');
+	}
+
+	function handlePopState(e: PopStateEvent) {
+		if (selectedCategoryId !== null) {
+			selectedCategoryId = null;
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	}
+
 	/* ---------------- METHODS ---------------- */
 
 	function selectRootCategory(rootCategory: RootCategory) {
+		if (selectedCategoryId !== null) {
+			history.back();
+			setTimeout(() => {
+				selectedRootCategory = rootCategory;
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			}, 0);
+			return;
+		}
 		selectedRootCategory = rootCategory;
-		selectedCategoryId = null;
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
 	function selectCategory(id: number) {
 		selectedCategoryId = id;
+		pushCategoryState(id);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
+
+	function goBackToCategories() {
+		if (selectedCategoryId !== null) {
+			history.back();
+		}
 	}
 
 	async function openProduct(id: number) {
@@ -137,12 +169,24 @@
 	/* ---------------- LIFECYCLE ---------------- */
 
 	onMount(() => {
+		window.addEventListener('popstate', handlePopState);
+
 		productsPromise = fetchProducts();
 		categoriesPromise = fetchCategories();
 		rootCategoriesPromise = fetchRootCategories();
 
-		productsPromise.then((p) => (allProducts = p));
-		categoriesPromise.then((c) => (allCategories = c));
+		productsPromise.then((p) => {
+			allProducts = p;
+			productsLoading = false;
+		});
+		categoriesPromise.then((c) => {
+			allCategories = c;
+			categoriesLoading = false;
+		});
+	});
+
+	onDestroy(() => {
+		if (browser) window.removeEventListener('popstate', handlePopState);
 	});
 </script>
 
@@ -161,10 +205,7 @@
 			>
 				<button
 					class="flex aspect-square h-9 cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-300 bg-200 stroke-current p-1 shadow-lg hover:opacity-100 active:scale-95"
-					onclick={() => {
-						selectedCategoryId = null;
-						window.scrollTo({ top: 0, behavior: 'smooth' });
-					}}
+					onclick={goBackToCategories}
 					transition:fade={{ duration: 200 }}
 				>
 					<SvgChevronLeft />
@@ -190,54 +231,45 @@
 	</div>
 
 	<!-- Sub-categories OR products -->
+
 	<div class="z-0 mt-14">
 		{#if selectedCategoryId === null}
-			{#await categoriesPromise}
+			{#if categoriesLoading}
 				<div class="flex flex-col items-center gap-4 text-center">
 					<Spinner size="lg" />
 				</div>
-			{:then}
-				{#if visibleCategories.length === 0}
-					<p class="text-sm opacity-50">No subcategories found.</p>
-				{:else}
-					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
-						{#each visibleCategories as category (category.id)}
-							<NavCard
-								title={category.name[currentLanguage]}
-								imageSrc={category.imgUrl}
-								onclick={() => selectCategory(category.id)}
-							/>
-						{/each}
-					</div>
-				{/if}
-			{:catch error}
-				<p class="text-red-500">Failed to load categories: {error}</p>
-			{/await}
+			{:else if visibleCategories.length === 0}
+				<p class="text-sm opacity-50">No subcategories found.</p>
+			{:else}
+				<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
+					{#each visibleCategories as category (category.id)}
+						<NavCard
+							title={category.name[currentLanguage]}
+							imageSrc={category.imgUrl}
+							onclick={() => selectCategory(category.id)}
+						/>
+					{/each}
+				</div>
+			{/if}
+		{:else if productsLoading}
+			<div class="flex flex-col items-center gap-4 text-center">
+				<Spinner size="lg" />
+				<p class="text-surface-500 text-sm">Loading products...</p>
+			</div>
+		{:else if filteredProducts.length > 0}
+			<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
+				{#each filteredProducts as product (product.id)}
+					<Card
+						title={product.title[currentLanguage]}
+						imageSrc={product.imgURL}
+						price={product.price}
+						disabled={!product.isAvailable || !product.enabledByPreset}
+						onclick={() => openProduct(product.id)}
+					/>
+				{/each}
+			</div>
 		{:else}
-			{#await productsPromise}
-				<div class="flex flex-col items-center gap-4 text-center">
-					<Spinner size="lg" />
-					<p class="text-surface-500 text-sm">Loading products...</p>
-				</div>
-			{:then}
-				{#if filteredProducts.length > 0}
-					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
-						{#each filteredProducts as product (product.id)}
-							<Card
-								title={product.title[currentLanguage]}
-								imageSrc={product.imgURL}
-								price={product.price}
-								disabled={!product.isAvailable || !product.enabledByPreset}
-								onclick={() => openProduct(product.id)}
-							/>
-						{/each}
-					</div>
-				{:else}
-					<p class="text-sm opacity-50">No products in this category.</p>
-				{/if}
-			{:catch error}
-				<p class="text-red-500">Failed to load products: {error}</p>
-			{/await}
+			<p class="text-sm opacity-50">No products in this category.</p>
 		{/if}
 	</div>
 </section>

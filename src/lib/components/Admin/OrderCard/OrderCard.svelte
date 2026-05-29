@@ -47,9 +47,9 @@
 		green: 'ring-1 ring-green-400/60'
 	};
 	const urgencyBg: Record<UrgencyLevel, string> = {
-		red: 'bg-red-200/20 dark:bg-red-500/5',
-		yellow: 'bg-yellow-200/20 dark:bg-yellow-500/5',
-		green: 'bg-green-200/20 dark:bg-green-500/5'
+		red: 'bg-red-200/50 dark:bg-red-500/10',
+		yellow: 'bg-yellow-200/20 dark:bg-yellow-500/10',
+		green: 'bg-green-200/20 dark:bg-green-500/10'
 	};
 	const urgencyDot: Record<UrgencyLevel, string> = {
 		red: 'bg-red-500 animate-pulse',
@@ -119,14 +119,14 @@
 	tabindex="0"
 	{onclick}
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onclick?.()}
-	class="flex h-fit w-full min-w-72 cursor-pointer flex-col gap-2 overflow-hidden rounded-3xl border-300 bg-200 p-2 shadow-sm transition-all {urgencyRing[
+	class="flex h-fit w-full min-w-80 cursor-pointer flex-col gap-2 overflow-hidden rounded-3xl border-300 bg-100 p-2 shadow-sm transition-all {urgencyRing[
 		urgency
 	]} {className}"
 >
 	<!-- Header -->
 	<div
-		class="relative flex flex-col justify-between rounded-2xl border border-400/50 px-3 py-2
-			text-left transition-all {urgencyBg[urgency]}"
+		class="relative flex flex-col justify-between rounded-2xl border border-400/50 bg-200 px-3
+			py-2 text-left transition-all"
 	>
 		<span
 			class="absolute top-2.5 right-2.5 h-2.5 w-2.5 rounded-full transition-colors {urgencyDot[
@@ -134,12 +134,16 @@
 			]}"
 		></span>
 		<div class="flex flex-row items-center justify-between pr-5">
-			<div class="flex flex-col">
-				<span class="text-main/50 text-xs font-semibold">
-					{order.tableNumber ? `Table ${order.tableNumber}` : 'Takeaway'}
+			<div class="flex flex-row items-center gap-2">
+				<span
+					class="h-7 w-fit min-w-7 rounded-full px-1.5 text-center text-lg font-semibold {urgencyBg[
+						urgency
+					]} {urgencyRing[urgency]}"
+				>
+					{order.orderNumber}
 				</span>
 				<span class="text-main text-sm font-bold">
-					{totalItems} item{totalItems !== 1 ? 's' : ''} &middot; €{totalPrice.toFixed(2)}
+					€{totalPrice.toFixed(2)} &middot; {totalItems} item{totalItems !== 1 ? 's' : ''}
 				</span>
 			</div>
 			<div class="flex flex-col items-end gap-0.5">

@@ -85,9 +85,10 @@
 
 	const paymentBannerStyle: Record<PaymentStatus, string> = {
 		NotPaid:
-			'bg-yellow-400/10 text-yellow-500 dark:bg-yellow-500/15 dark:text-yellow-300 stroke-yellow-500',
+			'bg-yellow-400/10 text-yellow-500 dark:bg-yellow-500/15 dark:text-yellow-300 stroke-yellow-500 dark:stroke-yellow-300',
 		Success: '',
-		Failed: 'bg-red-400/10 text-red-500 dark:bg-red-500/15 dark:text-red-300 stroke-red-500'
+		Failed:
+			'bg-red-400/10 text-red-500 dark:bg-red-500/15 dark:text-red-300 stroke-red-500 dark:stroke-red-300'
 	};
 
 	// Derive the aggregate status for a group of identical items
@@ -126,7 +127,7 @@
             {paymentGlow[paymentStatus]}"
 				>
 					<!-- Order header -->
-					<div class="flex items-start justify-between gap-3 px-4 py-3">
+					<div class="flex items-center justify-between gap-3 px-4 py-3">
 						<div class="flex flex-col gap-0.5">
 							{#if order.pickupTime}
 								<div class="flex items-center gap-1.5">
@@ -140,10 +141,14 @@
 							</span>
 						</div>
 
-						<!-- Only show badge if payment isn't settled -->
-						{#if paymentStatus !== 'Success'}
-							<!-- nothing on the right for paid orders -->
-						{/if}
+						<div class="flex flex-row items-center gap-1.5">
+							Order:
+							<span
+								class="h-7 w-fit min-w-7 rounded-full border border-300 bg-200 px-1.5 text-center text-lg font-semibold"
+							>
+								{order.orderNumber}
+							</span>
+						</div>
 					</div>
 
 					<!-- Payment problem banner — only shown when action needed -->
