@@ -23,6 +23,13 @@ function addAuth(options: RequestInit = {}): RequestInit {
 	};
 }
 
+class ApiFetchError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'ApiFetchError';
+	}
+}
+
 /* Calls the api at 'endpoint' not expecting any data.
  * If the request fails this function will throw an Error
  */
@@ -38,7 +45,7 @@ export async function apiCall(endpoint: string, options: RequestInit = {}): Prom
 		try {
 			responseText = await res.text();
 		} catch {
-			error = 'Failed to read response';
+			error = '(Failed to read server response)';
 		}
 
 		try {
@@ -46,7 +53,7 @@ export async function apiCall(endpoint: string, options: RequestInit = {}): Prom
 		} catch (e) {
 			error = responseText;
 		}
-		throw new Error("Got '" + res.statusText + "' from server: " + error);
+		throw new ApiFetchError(`Got ${res.status} from server: ${error}`);
 	}
 	return res;
 }
@@ -59,7 +66,7 @@ export async function apiFetchJson<T>(endpoint: string, options: RequestInit = {
 	try {
 		return (await res.json()) as T;
 	} catch (e) {
-		throw new Error('Failed to parse data returned by server: ' + e);
+		throw new ApiFetchError('Failed to parse JSON returned by server: ' + e);
 	}
 }
 
