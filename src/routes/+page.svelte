@@ -110,6 +110,7 @@
 	function handlePopState(e: PopStateEvent) {
 		if (selectedCategoryId !== null) {
 			selectedCategoryId = null;
+			document.getElementById('drawerCloser')?.click();
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		}
 	}
