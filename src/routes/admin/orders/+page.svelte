@@ -35,9 +35,9 @@
 		const token = localStorage.getItem('token');
 		if (!token) return;
 
-		const url = VITE_API_BASE_URL + '/order/events?count=100';
+		const url = VITE_API_BASE_URL + `/order/events?apikey=${encodeURIComponent(token)}&count=100`;
 		console.log('Connecting to order websocket...');
-		socket = new WebSocket(url, ['rij62.OrderEvents', token]);
+		socket = new WebSocket(url, ['rij62.OrderEvents']);
 
 		socket.addEventListener('open', () => {
 			console.log('Order websocket connected');
