@@ -38,7 +38,8 @@
 		const url = VITE_API_BASE_URL + '/order/events?count=100';
 		console.log('Connecting to order websocket...');
 		socket = new WebSocket(url, ['rij62.OrderEvents', token]);
-		socket.onopen = () => {
+
+		socket.addEventListener('open', () => {
 			console.log('Order websocket connected');
 
 			reconnectAttempts = 0;
@@ -47,25 +48,33 @@
 				clearTimeout(reconnectTimeout);
 				reconnectTimeout = null;
 			}
-		};
+		});
 
-		socket.onmessage = (event) => {
+		socket.addEventListener('message', (e) => {
 			try {
-				const data: OrderEvent = JSON.parse(event.data);
+				const data: OrderEvent = JSON.parse(e.data);
 
 				handleOrderEvent(data);
 			} catch (err) {
 				console.error('Failed to parse websocket event', err);
 			}
-		};
+		});
 
-		socket.onerror = (err) => {
-			console.error('Order websocket error', err);
-			alert('An error occcured, try logging out and back in.' + err);
-		};
-
-		socket.onclose = () => {
+		socket.addEventListener('close', (e) => {
 			console.log('Order websocket disconnected');
+			if (e.code != 1000) {
+				let humanCode = e.code.toString();
+				switch (e.code) {
+					case 1006:
+						humanCode += ' (Abnormal Closure)';
+						break;
+					// Al de andere error codes zijn heel unlikely dus dan gaat dat gewoon de error code zelf laten zien wat ook nuttig is.
+				}
+
+				let error = `Got ${humanCode} while connecting to websocket: ${e.reason}`;
+				console.error(error);
+				alert(`An error occcured, try logging out and back in.\n\n${error}`);
+			}
 
 			socket = null;
 			const delay = Math.min(1000 * 2 ** reconnectAttempts, 30000);
@@ -75,7 +84,7 @@
 			reconnectTimeout = setTimeout(() => {
 				connectOrderEvents();
 			}, delay);
-		};
+		});
 	}
 
 	function handleOrderEvent(event: OrderEvent) {
