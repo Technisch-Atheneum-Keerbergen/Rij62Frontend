@@ -5,6 +5,7 @@
     "": {
       "name": "rij62frontend",
       "dependencies": {
+        "@abhivarde/svelte-drawer": "^1.0.5",
         "flowbite": "^4.0.1",
         "flowbite-svelte": "^1.31.0",
         "flowbite-svelte-icons": "^3.1.0",
@@ -38,6 +39,8 @@
     },
   },
   "packages": {
+    "@abhivarde/svelte-drawer": ["@abhivarde/svelte-drawer@1.0.5", "", { "peerDependencies": { "svelte": "^5.46.4" } }, "sha512-wsbNEyJZcN8atg0+X5P+3+a3egjY6Cx/oILRFeXrfA4dUgrJqNy7CxGtaMbix2mwfsFSs4x6SJDNARFfYEW6RA=="],
+
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
     "@emnapi/core": ["@emnapi/core@1.10.0", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.1", "tslib": "^2.4.0" } }, "sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw=="],

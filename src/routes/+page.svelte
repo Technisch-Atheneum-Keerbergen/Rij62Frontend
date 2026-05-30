@@ -19,7 +19,7 @@
 	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
 	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import { Drawer } from 'vaul-svelte';
+	import { Drawer, DrawerOverlay, DrawerContent, DrawerHandle } from '@abhivarde/svelte-drawer';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -172,7 +172,7 @@
 		basket.add(selectedProduct, choices);
 		itemIsInBasket = true;
 		setTimeout(() => {
-			document.getElementById('drawerCloser')?.click();
+			isDrawerOpen = false;
 		}, 250);
 	}
 
@@ -283,50 +283,46 @@
 </section>
 
 <!-- ---------------- DRAWER ---------------- -->
-{#if isDrawerOpen}
-	<Drawer.Root bind:open={isDrawerOpen}>
-		<Drawer.Portal>
-			<Drawer.Overlay class="fixed inset-0 z-40 bg-black/40" />
-			<Drawer.Content
-				class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 pt-2 shadow-xl"
-			>
-				<div class="mx-auto mb-2 h-1 w-18 shrink-0 rounded-full bg-500"></div>
-				{#if selectedProduct}
-					<img
-						src={selectedProduct.imgURL}
-						alt={selectedProduct.title[currentLanguage]}
-						class="mb-3 h-40 w-full flex-none rounded-2xl object-cover"
-					/>
-					<div class="flex flex-1 flex-col overflow-y-auto">
-						{#each selectedProduct.steps as step, i}
-							<h1 class="mt-1 mb-0 ml-1">{step.title[currentLanguage]}</h1>
-							<StepGroup {step} state={stepStates[i]} language={currentLanguage} />
-						{/each}
-					</div>
 
-					<div class="flex-none">
-						<div class="ml-1">
-							<h2 class="text-lg font-semibold">
-								{selectedProduct.title[currentLanguage]}
-							</h2>
-							<p class="text-muted mb-2">€{selectedProduct.price.toFixed(2)}</p>
-							<p class="text-muted mb-4">{selectedProduct.description[currentLanguage]}</p>
-						</div>
+<Drawer bind:open={isDrawerOpen}>
+	<DrawerOverlay class="fixed inset-0 z-40 bg-black/40" />
+	<DrawerContent
+		class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 pt-2 shadow-xl"
+	>
+		<DrawerHandle class="mx-auto mb-2 h-1 w-18 shrink-0 rounded-full bg-500" />
+		{#if selectedProduct}
+			<img
+				src={selectedProduct.imgURL}
+				alt={selectedProduct.title[currentLanguage]}
+				class="mb-3 h-40 w-full flex-none rounded-2xl object-cover"
+			/>
+			<div class="flex flex-1 flex-col overflow-y-auto">
+				{#each selectedProduct.steps as step, i}
+					<h1 class="mt-1 mb-0 ml-1">{step.title[currentLanguage]}</h1>
+					<StepGroup {step} state={stepStates[i]} language={currentLanguage} />
+				{/each}
+			</div>
 
-						{#if !itemIsInBasket}
-							<Button class="w-full" size="lg" onclick={addToBasket}>Add to basket</Button>
-						{:else}
-							<div class="flex flex-row gap-2">
-								<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
-							</div>
-						{/if}
-						<Drawer.Close class="hidden" id="drawerCloser"></Drawer.Close>
+			<div class="flex-none">
+				<div class="ml-1">
+					<h2 class="text-lg font-semibold">
+						{selectedProduct.title[currentLanguage]}
+					</h2>
+					<p class="text-muted mb-2">€{selectedProduct.price.toFixed(2)}</p>
+					<p class="text-muted mb-4">{selectedProduct.description[currentLanguage]}</p>
+				</div>
+
+				{#if !itemIsInBasket}
+					<Button class="w-full" size="lg" onclick={addToBasket}>Add to basket</Button>
+				{:else}
+					<div class="flex flex-row gap-2">
+						<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
 					</div>
 				{/if}
-			</Drawer.Content>
-		</Drawer.Portal>
-	</Drawer.Root>
-{/if}
+			</div>
+		{/if}
+	</DrawerContent>
+</Drawer>
 
 <!-- ---------------- BASKET BAR ---------------- -->
 
