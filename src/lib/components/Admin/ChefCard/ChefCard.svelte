@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { ChefDish, UrgencyLevel } from '$lib/api/types/dish';
 	import { slide } from 'svelte/transition';
-	import SvgMinus from '../SVG/SvgMinus.svelte';
-	import SvgPlus from '../SVG/SvgPlus.svelte';
+	import SvgMinus from '../../SVG/SvgMinus.svelte';
+	import SvgPlus from '../../SVG/SvgPlus.svelte';
 
 	let {
 		dish,

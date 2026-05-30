@@ -63,7 +63,7 @@
 	onkeydown={(e) => !disabled && (e.key === 'Enter' || e.key === ' ') && handleClick()}
 	class="flex {divSizeStyle[
 		size
-	]} h-full flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
+	]} h-full touch-manipulation flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
         {selectable && selected ? 'border-primary-300 bg-300' : 'border-300 bg-200'}
         {disabled
 		? 'pointer-events-none cursor-not-allowed opacity-50 grayscale'

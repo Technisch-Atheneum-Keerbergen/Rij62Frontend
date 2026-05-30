@@ -7,9 +7,10 @@
 	import UserMenu from '$lib/components/Misc/UserMenu.svelte';
 	import SvgMenu from '$lib/components/SVG/SvgMenu.svelte';
 	import './layout.css';
-	import { tableNumberStore } from '$lib/stores/tableNumber.svelte';
 	import { page } from '$app/state';
-	import { browser } from '$app/environment';
+
+	// import { tableNumberStore } from '$lib/stores/tableNumber.svelte';
+	// import { browser } from '$app/environment';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -37,12 +38,16 @@
 </svelte:head>
 
 <header class="fixed top-0 z-20 flex w-full justify-center p-2">
-	<nav class="w-full max-w-2xl rounded-3xl bg-200/60 px-4 py-2 shadow-md backdrop-blur-md">
+	<nav
+		class="w-full max-w-2xl touch-manipulation rounded-3xl bg-200/60 px-4 py-2 shadow-md backdrop-blur-md"
+	>
 		<div class="flex w-full items-center justify-between">
-			<a href="/" class="text-xl font-medium text-primary-500 dark:text-primary-300"
-				>Rij<span class="font-bold text-yellow-500 dark:text-yellow-300">62</span></a
+			<a
+				href="/"
+				class="touch-manipulation text-xl font-medium text-primary-500 dark:text-primary-300"
+				>Rij<span class="font-bold text-secondary-500 dark:text-secondary-300">62</span></a
 			>
-			<div class=" hidden items-center gap-6 md:flex">
+			<div class="hidden items-center gap-6 md:flex">
 				<div class="flex flex-row gap-6">
 					{#each navItems as item}
 						{#if !item.reqAuth || $auth.user}
@@ -62,7 +67,7 @@
 			</div>
 			<div class="relative block h-10 w-10 md:hidden">
 				<button
-					class="stroke-main absolute flex cursor-pointer items-center justify-center rounded-xl transition-all active:scale-95"
+					class="stroke-main absolute flex cursor-pointer touch-manipulation items-center justify-center rounded-xl transition-all active:scale-95"
 					onclick={() => (sideMenuIsOpen = true)}
 				>
 					{#if sideMenuIsOpen}
@@ -85,7 +90,7 @@
 			<aside class="relative z-40 p-1 text-right font-medium" transition:slide={{ duration: 200 }}>
 				<nav class="flex flex-col gap-1">
 					<div
-						class="rounded-lg px-4 py-3 transition-all hover:bg-300 active:scale-95 active:bg-300"
+						class="touch-manipulation rounded-lg px-4 py-3 transition-all hover:bg-200/60 active:scale-95 active:bg-200/60"
 						role="button"
 						tabindex="0"
 						onclick={() => (sideMenuIsOpen = false)}
@@ -97,7 +102,7 @@
 						{#if !item.reqAuth || $auth.user}
 							<a
 								href={item.href}
-								class="rounded-lg px-4 py-3 transition-all hover:bg-300 active:scale-95 active:bg-300"
+								class="touch-manipulation rounded-lg px-4 py-3 transition-all hover:bg-200/60 active:scale-95 active:bg-200/60"
 								onclick={() => (sideMenuIsOpen = false)}
 							>
 								{item.name}

@@ -13,7 +13,7 @@
 		variant?: Variant;
 		size?: Size;
 	} = $props();
-	const baseStyle = 'border-1 inline px-2 py-0.5 transition-all shadow-sm ';
+	const baseStyle = 'border-1 inline px-2 py-0.5 transition-all shadow-sm touch-manipulation';
 	const variantStyle: Record<Variant, string> = {
 		primary: 'border-primary-600 bg-primary-500 text-light font-semibold',
 		secondary: 'border-yellow-500 bg-yellow-400 text-dark font-semibold',

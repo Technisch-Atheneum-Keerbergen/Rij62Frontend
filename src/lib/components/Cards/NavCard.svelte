@@ -1,6 +1,5 @@
 <script lang="ts">
 	import SvgChevronRight from './../SVG/SvgChevronRight.svelte';
-	import { slide } from 'svelte/transition';
 
 	let {
 		title = '',
@@ -56,7 +55,7 @@
 	onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}
 	class="flex {divSizeStyle[
 		size
-	]} h-fit cursor-pointer flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
+	]} h-fit cursor-pointer touch-manipulation flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
         {selectable && selected ? 'border-primary-300 bg-300' : 'border-300 bg-200'}
         hover:shadow-md active:scale-95 {className}"
 >

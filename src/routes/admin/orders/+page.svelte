@@ -5,12 +5,13 @@
 	import { slide } from 'svelte/transition';
 	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
 	import type { ChefDish, UrgencyLevel } from '$lib/api/types/dish';
-	import ChefCard from '$lib/components/Admin/ChefCard.svelte';
-	import ReadyChefCard from '$lib/components/Admin/ReadyChefCard.svelte';
-	import PendingOrderCard from '$lib/components/Admin/PendingOrderCard.svelte';
+	import ReadyChefCard from '$lib/components/Admin/ChefCard/ReadyChefCard.svelte';
+	import PendingOrderCard from '$lib/components/Admin/ChefCard/PendingOrderCard.svelte';
 	import { groupDuplicateOrderItemChoices } from '$lib/api/types/order';
 	import type { OrderEvent } from '$lib/api/types/orderEvent';
 	import { browser } from '$app/environment';
+	import ChefCard from '$lib/components/Admin/ChefCard/ChefCard.svelte';
+
 	const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
@@ -28,6 +29,7 @@
 	let orderCategory = $state<'all' | 'Food' | 'Drinks'>('all');
 
 	let orders = $state<Order[]>([]);
+	let intentionalClose = false;
 
 	function connectOrderEvents() {
 		if (socket?.readyState === WebSocket.OPEN) return;
@@ -62,6 +64,9 @@
 
 		socket.addEventListener('close', (e) => {
 			console.log('Order websocket disconnected');
+			socket = null;
+			if (intentionalClose) return;
+
 			if (e.code != 1000) {
 				let humanCode = e.code.toString();
 				switch (e.code) {
@@ -70,13 +75,11 @@
 						break;
 					// Al de andere error codes zijn heel unlikely dus dan gaat dat gewoon de error code zelf laten zien wat ook nuttig is.
 				}
-
+				console.log(e);
 				let error = `Got ${humanCode} while connecting to websocket: ${e.reason}`;
 				console.error(error);
-				alert(`An error occcured, try logging out and back in.\n\n${error}`);
 			}
 
-			socket = null;
 			const delay = Math.min(1000 * 2 ** reconnectAttempts, 30000);
 
 			reconnectAttempts++;
@@ -159,6 +162,7 @@
 
 	$effect(() => {
 		return () => {
+			intentionalClose = true;
 			if (reconnectTimeout) clearTimeout(reconnectTimeout);
 			socket?.close();
 			for (const timer of leavingTimers.values()) clearTimeout(timer);

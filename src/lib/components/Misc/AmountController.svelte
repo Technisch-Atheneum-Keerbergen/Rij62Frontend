@@ -41,7 +41,7 @@
 
 <div class="flex items-center gap-2 text-lg">
 	<button
-		class="rounded-md transition-all"
+		class="touch-manipulation rounded-md transition-all"
 		class:cursor-pointer={!disabled}
 		class:cursor-not-allowed={disabled}
 		class:opacity-40={disabled}
@@ -68,7 +68,7 @@
 	<span class="rounded-md bg-100 px-2 text-lg">{currentAmount}</span>
 
 	<button
-		class="rounded-md transition-all"
+		class="touch-manipulation rounded-md transition-all"
 		class:cursor-pointer={!increaseDisabled}
 		class:cursor-not-allowed={increaseDisabled}
 		class:opacity-40={increaseDisabled}
