@@ -7,6 +7,7 @@
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
 	import { groupDuplicateOrderItemChoices } from '$lib/api/types/order';
 	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
+	import { onDestroy } from 'svelte';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
@@ -27,7 +28,10 @@
 			.sort((a, b) => b.createdTime - a.createdTime);
 	}
 
-	setInterval(updatePendingOrders, 5000);
+	let updatePendingOrdersInterval = setInterval(updatePendingOrders, 5000);
+	onDestroy(() => {
+		clearInterval(updatePendingOrdersInterval);
+	});
 
 	function formatTime(unix: number) {
 		return new Date(unix * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
