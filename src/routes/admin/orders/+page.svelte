@@ -11,6 +11,7 @@
 	import type { OrderEvent } from '$lib/api/types/orderEvent';
 	import { browser } from '$app/environment';
 	import ChefCard from '$lib/components/Admin/ChefCard/ChefCard.svelte';
+	import { auth } from '$lib/stores/auth';
 
 	const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -67,11 +68,18 @@
 			socket = null;
 			if (intentionalClose) return;
 
-			if (e.code != 1000) {
+			if (e.code === 1008 && e.reason === 'unauthorized') {
+				console.log('Got unauthorized from websocket. Logging out user');
+				auth.logout();
+				return;
+			} else if (e.code != 1000) {
 				let humanCode = e.code.toString();
 				switch (e.code) {
 					case 1006:
 						humanCode += ' (Abnormal Closure)';
+						break;
+					case 1008:
+						humanCode += ' (Policy Violation)';
 						break;
 					// Al de andere error codes zijn heel unlikely dus dan gaat dat gewoon de error code zelf laten zien wat ook nuttig is.
 				}
