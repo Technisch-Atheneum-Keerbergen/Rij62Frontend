@@ -5,6 +5,7 @@ import type { OrderId } from '$lib/api/types/order';
 const STORAGE_KEY = 'pendingOrders';
 
 function loadPendingOrders(): OrderId[] {
+	if (!browser) return [];
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) return [];
