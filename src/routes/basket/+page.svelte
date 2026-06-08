@@ -3,6 +3,7 @@
 	import TimePicker from '$lib/components/Basket/TimePicker.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import AmountController from '$lib/components/Misc/AmountController.svelte';
+	import OrderCommentField from '$lib/components/Misc/OrderCommentField.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { basket, getItemTotal, type LoadedBasketItem } from '$lib/stores/basket.svelte';
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
@@ -13,6 +14,7 @@
 
 	// ─── Basket state ────────────────────────────────────────────────────────────
 	let loadedItems = $derived(basket.loadedItems);
+	let orderComment = $state(basket.comment);
 
 	function increase(itemIndex: number) {
 		if (basket.items[itemIndex]?.quantity < 50) {
@@ -120,6 +122,7 @@
 					choices: formattedChoices
 				};
 			}),
+			comment: orderComment,
 			pickupTime: scheduledTime ? Math.floor(scheduledTime.getTime() / 1000) : null,
 			tableNumber: tableNumber ?? null
 		};
@@ -175,6 +178,11 @@
 	$effect(() => {
 		// Keep local state synced when store changes externally
 		tableNumber = tableNumberStore.value;
+	});
+
+	$effect(() => {
+		console.log('Saving');
+		basket.saveComment(orderComment);
 	});
 
 	$effect(() => {
@@ -327,7 +335,10 @@
 			</ul>
 
 			<!-- Divider -->
-			<div class="mx-4 h-px bg-300"></div>
+
+						<OrderCommentField bind:value={orderComment} />
+
+						<div class="mx-4 h-px bg-300"></div>
 
 			<!-- Order-level errors -->
 			{#if getOrderErrors().length > 0 || placeError}

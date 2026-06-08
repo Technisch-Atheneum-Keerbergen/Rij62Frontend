@@ -432,20 +432,22 @@
 				checked={activeView === 'orders'}
 				onclick={() => (activeView = 'orders')}
 			/>
-			<FilterItem
-				group="kitchen-view"
-				label="Chef"
-				value="chef"
-				checked={activeView === 'chef'}
-				onclick={() => (activeView = 'chef')}
-			/>
-			<FilterItem
-				group="kitchen-view"
-				label="Both"
-				value="both"
-				checked={activeView === 'both'}
-				onclick={() => (activeView = 'both')}
-			/>
+			<!--  
+				<FilterItem
+					group="kitchen-view"
+					label="Chef"
+					value="chef"
+					checked={activeView === 'chef'}
+					onclick={() => (activeView = 'chef')}
+				/>
+				<FilterItem
+					group="kitchen-view"
+					label="Both"
+					value="both"
+					checked={activeView === 'both'}
+					onclick={() => (activeView = 'both')}
+				/>
+			-->
 		</div>
 
 		{#if activeView === 'chef' || activeView === 'both'}

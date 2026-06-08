@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api/client';
+	import { apiFetch, apiFetchJson } from '$lib/api/client';
 	import { goto } from '$app/navigation';
 	import { type Order, type OrderId, type OrderItem } from '$lib/api/types/order';
 	import StatusBadge from '$lib/components/Badges/StatusBadge.svelte';
@@ -16,9 +16,13 @@
 	let pendingOrders: Order[] = [];
 
 	async function getOrder(id: OrderId): Promise<Order | null> {
-		const result = await apiFetch(`/order/${id}`);
-		if (!result) return null;
-		return result as unknown as Order;
+		try {
+			const result = await apiFetchJson(`/order/${id}`);
+			if (!result) return null;
+			return result as Order;
+		} catch (error) {
+			return null;
+		}
 	}
 
 	async function updatePendingOrders() {
@@ -117,7 +121,7 @@
 
 		{#if pendingOrders.length === 0}
 			<p class="text-center">
-				Make a new order <a class="font-bold text-primary-500 underline" href="/">here</a>
+				Make an order <a class="font-bold text-primary-500 underline" href="/">here</a>
 			</p>
 		{/if}
 
@@ -153,7 +157,13 @@
 							</span>
 						</div>
 					</div>
-
+					{#if order.comment != null && order.comment.trim() != ''}
+						<span
+							class="w-full truncate overflow-hidden rounded-2xl border border-200 bg-50 px-2 py-1 text-sm text-wrap wrap-anywhere opacity-70"
+						>
+							{order.comment}
+						</span>
+					{/if}
 					<!-- Payment problem banner — only shown when action needed -->
 					{#if paymentStatus !== 'Success'}
 						<button
