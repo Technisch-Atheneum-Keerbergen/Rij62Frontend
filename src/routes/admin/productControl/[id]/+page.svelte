@@ -196,7 +196,7 @@
 				description: { English: '', Dutch: '' },
 				imgURL: '/images/blueberries.jpg',
 				btw: 21,
-				categoryId: 0,
+				categoryId: null,
 				steps: []
 			};
 			isNew = true;
@@ -309,7 +309,7 @@
 										bind:value={product.categoryId}
 										class="border-main text-main w-full rounded-lg border bg-50 p-2"
 									>
-										<option value={0} disabled>Select a category</option>
+										<option value={null}>No category</option>
 										{#each categories as category}
 											<option value={category.id}>
 												{category.name[Language.English]}

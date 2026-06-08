@@ -12,7 +12,7 @@ export interface Product {
 	description: MultiLangString;
 	btw: number;
 	imgURL: string;
-	categoryId: number;
+	categoryId: null;
 	steps: ProductStep[];
 }
 
