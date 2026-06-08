@@ -20,7 +20,7 @@
 
 	const variantStyle: Record<Variant, string> = {
 		primary: 'border-primary-600 bg-primary-500 text-light',
-		secondary: 'border-secondary-600 bg-secondary-500 text-dark',
+		secondary: 'border-yellow-600 bg-yellow-500 text-dark',
 		ghost: 'border-300 bg-200 text-dark'
 	};
 

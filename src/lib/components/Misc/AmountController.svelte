@@ -7,6 +7,7 @@
 		disabled = false,
 		disableIncrease = false,
 		currentAmount = 0,
+		max = Infinity,
 		decrease = () => {},
 		increase = () => {},
 		remove = () => {},
@@ -16,12 +17,13 @@
 		increase: (value?: any) => void;
 		remove?: (value?: any) => void;
 		currentAmount: number;
+		max?: number;
 		disabled?: boolean;
 		disableIncrease?: boolean;
 		id?: any;
 	} = $props();
 
-	let increaseDisabled = $derived(disabled || disableIncrease);
+	let increaseDisabled = $derived(disabled || disableIncrease || currentAmount >= max);
 
 	function handleDecrease() {
 		if (disabled) return;
@@ -39,7 +41,7 @@
 
 <div class="flex items-center gap-2 text-lg">
 	<button
-		class="rounded-md transition-all"
+		class="touch-manipulation rounded-md transition-all"
 		class:cursor-pointer={!disabled}
 		class:cursor-not-allowed={disabled}
 		class:opacity-40={disabled}
@@ -52,7 +54,7 @@
 			else handleDecrease();
 		}}
 	>
-		<div class="stroke-main aspect-square h-6 w-6">
+		<div class="stroke-main aspect-square h-8 w-8">
 			{#if currentAmount == 1 || disableIncrease}
 				<span class="stroke-red-400">
 					<SvgBin />
@@ -63,10 +65,10 @@
 		</div>
 	</button>
 
-	<span class="rounded-md bg-100 px-2">{currentAmount}</span>
+	<span class="rounded-md bg-100 px-2 text-lg">{currentAmount}</span>
 
 	<button
-		class="rounded-md transition-all"
+		class="touch-manipulation rounded-md transition-all"
 		class:cursor-pointer={!increaseDisabled}
 		class:cursor-not-allowed={increaseDisabled}
 		class:opacity-40={increaseDisabled}
@@ -78,7 +80,7 @@
 			handleIncrease();
 		}}
 	>
-		<div class="stroke-main aspect-square h-6 w-6">
+		<div class="stroke-main aspect-square h-8 w-8">
 			<SvgPlus />
 		</div>
 	</button>

@@ -3,10 +3,10 @@
 	import type { Category } from '$lib/api/types/category';
 	import { productIsAvailable, type Product } from '$lib/api/types/product';
 	import { apiFetch } from '$lib/api/client';
-	import { onMount } from 'svelte';
-	import { cubicInOut } from 'svelte/easing';
-	import { fade, fly } from 'svelte/transition';
+	import { onMount, onDestroy, tick } from 'svelte';
+	import { browser } from '$app/environment';
 
+	import { pushState } from '$app/navigation';
 	import { basket, basketCount } from '$lib/stores/basket.svelte';
 	import { createStepStates } from '$lib/stores/stepState.svelte';
 	import { mockProducts } from './mockProducts.ts';
@@ -16,9 +16,10 @@
 	import NavCard from '$lib/components/Cards/NavCard.svelte';
 	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
 	import StepGroup from '$lib/components/Misc/StepGroup.svelte';
-	import SvgBasket from '$lib/components/SVG/SvgBasket.svelte';
 	import SvgChevronLeft from '$lib/components/SVG/SvgChevronLeft.svelte';
 	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import { Drawer, DrawerOverlay, DrawerContent, DrawerHandle } from '@abhivarde/svelte-drawer';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -77,10 +78,14 @@
 	let selectedCategoryId = $state<number | null>(null);
 
 	let selectedProduct = $state<Product | null>(null);
-	let isSheetOpen = $state(false);
+	// isDrawerOpen is the single source of truth — bound to Drawer.Root
+	let isDrawerOpen = $state(false);
 	let itemIsInBasket = $state(false);
 
 	let stepStates = $state<ReturnType<typeof createStepStates>>([]);
+
+	let categoriesLoading = $state(true);
+	let productsLoading = $state(true);
 
 	/* ---------------- DERIVED ---------------- */
 
@@ -96,31 +101,66 @@
 			: []
 	);
 
+	/* ---------------- HISTORY (back gesture) ---------------- */
+
+	function pushCategoryState(id: number) {
+		pushState('', { categoryId: id });
+	}
+
+	function handlePopState(e: PopStateEvent) {
+		if (selectedCategoryId !== null) {
+			selectedCategoryId = null;
+			document.getElementById('drawerCloser')?.click();
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	}
+
 	/* ---------------- METHODS ---------------- */
 
 	function selectRootCategory(rootCategory: RootCategory) {
+		if (selectedCategoryId !== null) {
+			history.back();
+			setTimeout(() => {
+				selectedRootCategory = rootCategory;
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			}, 0);
+			return;
+		}
 		selectedRootCategory = rootCategory;
-		selectedCategoryId = null;
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
 	function selectCategory(id: number) {
 		selectedCategoryId = id;
+		pushCategoryState(id);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
+	function goBackToCategories() {
+		if (selectedCategoryId !== null) {
+			history.back();
+		}
+	}
+
+	// Sync: allProducts is already resolved by the time the user can tap a card.
+	// Setting selectedProduct BEFORE the drawer opens means the content is ready
+	// on the first render frame, so vaul's enter animation plays correctly.
 	async function openProduct(id: number) {
-		const products = await productsPromise;
-		selectedProduct = products.find((p) => p.id === id) ?? null;
+		selectedProduct = allProducts.find((p) => p.id === id) ?? null;
 		stepStates = createStepStates(selectedProduct?.steps ?? []);
-		isSheetOpen = true;
 		itemIsInBasket = false;
+
+		// Await tick() forces Svelte to update the DOM with the new selectedProduct data right now.
+		await tick();
+
+		// Now the DOM has content, and Vaul can correctly calculate the height for the slide animation!
+		isDrawerOpen = true;
 	}
 
 	function addToBasket() {
 		if (!selectedProduct) return;
 
-		const choices = stepStates.flatMap((stepState, i) =>
+		const choices = stepStates.flatMap((stepState) =>
 			stepState.options
 				.filter((o) => o.selected)
 				.map((o) => ({
@@ -131,17 +171,32 @@
 
 		basket.add(selectedProduct, choices);
 		itemIsInBasket = true;
+		setTimeout(() => {
+			isDrawerOpen = false;
+		}, 250);
 	}
 
 	/* ---------------- LIFECYCLE ---------------- */
 
 	onMount(() => {
+		window.addEventListener('popstate', handlePopState);
+
 		productsPromise = fetchProducts();
 		categoriesPromise = fetchCategories();
 		rootCategoriesPromise = fetchRootCategories();
 
-		productsPromise.then((p) => (allProducts = p));
-		categoriesPromise.then((c) => (allCategories = c));
+		productsPromise.then((p) => {
+			allProducts = p;
+			productsLoading = false;
+		});
+		categoriesPromise.then((c) => {
+			allCategories = c;
+			categoriesLoading = false;
+		});
+	});
+
+	onDestroy(() => {
+		if (browser) window.removeEventListener('popstate', handlePopState);
 	});
 </script>
 
@@ -160,19 +215,13 @@
 			>
 				<button
 					class="flex aspect-square h-9 cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-300 bg-200 stroke-current p-1 shadow-lg hover:opacity-100 active:scale-95"
-					onclick={() => {
-						selectedCategoryId = null;
-						window.scrollTo({ top: 0, behavior: 'smooth' });
-					}}
-					transition:fade={{ duration: 200 }}
+					onclick={goBackToCategories}
 				>
 					<SvgChevronLeft />
 				</button>
 			</div>
 
-			{#await rootCategoriesPromise}
-				<span class="text-xs opacity-50">Loading categories...</span>
-			{:then rootCategories}
+			{#await rootCategoriesPromise then rootCategories}
 				{#each rootCategories as rootCategory}
 					<FilterItem
 						group="rootCategory"
@@ -184,6 +233,8 @@
 						{rootCategory}
 					</FilterItem>
 				{/each}
+			{:catch error}
+				<p class="text-red-500">Failed to load root categories: {error}</p>
 			{/await}
 		</div>
 	</div>
@@ -191,7 +242,11 @@
 	<!-- Sub-categories OR products -->
 	<div class="z-0 mt-14">
 		{#if selectedCategoryId === null}
-			{#if visibleCategories.length === 0}
+			{#if categoriesLoading}
+				<div class="flex flex-col items-center gap-4 text-center">
+					<Spinner size="lg" />
+				</div>
+			{:else if visibleCategories.length === 0}
 				<p class="text-sm opacity-50">No subcategories found.</p>
 			{:else}
 				<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
@@ -204,49 +259,38 @@
 					{/each}
 				</div>
 			{/if}
+		{:else if productsLoading}
+			<div class="flex flex-col items-center gap-4 text-center">
+				<Spinner size="lg" />
+				<p class="text-surface-500 text-sm">Loading products...</p>
+			</div>
+		{:else if filteredProducts.length > 0}
+			<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
+				{#each filteredProducts as product (product.id)}
+					<Card
+						onclick={() => openProduct(product.id)}
+						title={product.title[currentLanguage]}
+						imageSrc={product.imgURL}
+						price={product.price}
+						disabled={!product.isAvailable || !product.enabledByPreset}
+					/>
+				{/each}
+			</div>
 		{:else}
-			{#await productsPromise}
-				<p class="opacity-70">Loading products...</p>
-			{:then}
-				{#if filteredProducts.length > 0}
-					<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
-						{#each filteredProducts as product (product.id)}
-							<Card
-								title={product.title[currentLanguage]}
-								imageSrc={product.imgURL}
-								price={product.price}
-								disabled={!product.isAvailable || !product.enabledByPreset}
-								onclick={() => openProduct(product.id)}
-							/>
-						{/each}
-					</div>
-				{:else}
-					<p class="text-sm opacity-50">No products in this category.</p>
-				{/if}
-			{:catch error}
-				<p class="text-red-500">Failed to load products: {error}</p>
-			{/await}
+			<p class="text-sm opacity-50">No products in this category.</p>
 		{/if}
 	</div>
 </section>
 
-<!-- ---------------- SHEET ---------------- -->
+<!-- ---------------- DRAWER ---------------- -->
 
-{#if isSheetOpen && selectedProduct}
-	<div class="fixed inset-0 z-50 flex items-end justify-center">
-		<div
-			role="button"
-			tabindex="0"
-			class="absolute inset-0 bg-darken"
-			transition:fade={{ duration: 100 }}
-			onclick={() => (isSheetOpen = false)}
-			onkeydown={(e) => e.key === 'Escape' && (isSheetOpen = false)}
-		></div>
-
-		<div
-			class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 shadow-xl"
-			transition:fly={{ y: 200, duration: 150, easing: cubicInOut }}
-		>
+<Drawer bind:open={isDrawerOpen}>
+	<DrawerOverlay class="fixed inset-0 z-40 bg-black/40" />
+	<DrawerContent
+		class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 pt-2 shadow-xl"
+	>
+		<DrawerHandle class="mx-auto mb-2 h-1 w-18 shrink-0 rounded-full bg-500" />
+		{#if selectedProduct}
 			<img
 				src={selectedProduct.imgURL}
 				alt={selectedProduct.title[currentLanguage]}
@@ -273,20 +317,12 @@
 				{:else}
 					<div class="flex flex-row gap-2">
 						<Button class="w-full" size="lg" disabled variant="ghost">Added to basket</Button>
-						<Button
-							class="relative h-10 w-16 stroke-secondary-900"
-							size="lg"
-							onclick={() => (window.location.href = '/basket')}
-							variant="secondary"
-						>
-							<p class="absolute top-1 left-3 aspect-square h-7"><SvgBasket /></p>
-						</Button>
 					</div>
 				{/if}
 			</div>
-		</div>
-	</div>
-{/if}
+		{/if}
+	</DrawerContent>
+</Drawer>
 
 <!-- ---------------- BASKET BAR ---------------- -->
 

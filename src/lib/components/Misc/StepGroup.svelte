@@ -15,7 +15,7 @@
 	} = $props();
 </script>
 
-<div class="my-1.5 flex flex-row gap-1.5" transition:slide={{ duration: 200 }}>
+<div class="my-1.5 flex flex-row gap-1.5">
 	{#each step.options as option}
 		{@const optState = state.options.find((o) => o.id === option.id)!}
 		<Card

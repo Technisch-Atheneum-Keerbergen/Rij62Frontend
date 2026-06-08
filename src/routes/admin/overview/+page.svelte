@@ -8,7 +8,7 @@
 			type: 'productControl',
 			description: 'Manage all products and inventory.'
 		},
-		{ name: 'order control', type: 'orders', description: 'See current orders.' },
+		{ name: 'Orders', type: 'orders', description: 'See current orders.' },
 		{ name: 'table control', type: 'tableControl', description: 'Edit tables and datasets.' },
 		{
 			name: 'category control',
@@ -32,7 +32,7 @@
 		</Heading>
 		<P>
 			Here at Rij 62, we are committed to offer the best possible coffee experience. Use the
-			controls below to manage products, screens, and tables efficiently.
+			controls below to manage products, and orders efficiently.
 		</P>
 	</div>
 

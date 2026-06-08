@@ -26,7 +26,7 @@
 	};
 
 	const baseStyles = $derived(
-		`border-2 mx-1 rounded-full h-fit inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-lg border-300 bg-100 ${sizeStyle[size]} ${className}`
+		`border-2 mx-1 touch-manipulation rounded-full h-fit inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-lg border-300 bg-100 ${sizeStyle[size]} ${className}`
 	);
 </script>
 
