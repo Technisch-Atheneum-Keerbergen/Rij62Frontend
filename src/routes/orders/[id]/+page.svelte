@@ -9,6 +9,7 @@
 	import SvgXmark from '$lib/components/SVG/SvgXmark.svelte';
 
 	const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL as string;
+	const REQUIRE_PAYMENT = import.meta.env.VITE_REQUIRE_PAYMENT == "true";
 
 	const orderId: OrderId = page.params.id as OrderId;
 
@@ -45,7 +46,7 @@
 		errorMessage = '';
 		try {
 			const redirectUrl = `${FRONTEND_BASE_URL}/orders?paidOrderId=${orderId}`;
-			const result = await apiFetchJson(`/payment/pay/${orderId}?bypassPayment=true`, {
+			const result = await apiFetchJson(`/payment/pay/${orderId}?bypassPayment=${REQUIRE_PAYMENT}`, {
 				method: 'POST',
 				body: JSON.stringify({ redirectUrl })
 			});
