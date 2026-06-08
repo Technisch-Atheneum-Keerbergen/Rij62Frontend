@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { duplicateGroupedIds } from '$lib/api/types/order';
-	import TablePicker from '$lib/components/Basket/TablePicker.svelte';
 	import TimePicker from '$lib/components/Basket/TimePicker.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import AmountController from '$lib/components/Misc/AmountController.svelte';

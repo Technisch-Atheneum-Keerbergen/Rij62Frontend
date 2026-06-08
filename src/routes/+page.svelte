@@ -142,18 +142,13 @@
 		}
 	}
 
-	// Sync: allProducts is already resolved by the time the user can tap a card.
-	// Setting selectedProduct BEFORE the drawer opens means the content is ready
-	// on the first render frame, so vaul's enter animation plays correctly.
 	async function openProduct(id: number) {
 		selectedProduct = allProducts.find((p) => p.id === id) ?? null;
 		stepStates = createStepStates(selectedProduct?.steps ?? []);
 		itemIsInBasket = false;
 
-		// Await tick() forces Svelte to update the DOM with the new selectedProduct data right now.
 		await tick();
 
-		// Now the DOM has content, and Vaul can correctly calculate the height for the slide animation!
 		isDrawerOpen = true;
 	}
 
@@ -284,7 +279,7 @@
 
 <!-- ---------------- DRAWER ---------------- -->
 
-<Drawer bind:open={isDrawerOpen}>
+<Drawer bind:open={isDrawerOpen} closeThreshold={0.1}>
 	<DrawerOverlay class="fixed inset-0 z-40 bg-black/40" />
 	<DrawerContent
 		class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 pt-2 shadow-xl"
