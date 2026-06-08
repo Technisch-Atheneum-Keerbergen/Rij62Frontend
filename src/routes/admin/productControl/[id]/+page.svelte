@@ -117,8 +117,10 @@
 	const ApplyChangesForStep = async () => {
 		if (!product) return;
 
+		const TEMP_ID_THRESHOLD = 1_000_000_000_000; // Date.now() is ~13 digits
+
 		try {
-			// 1. Save option titles via PUT /product/{id} for each option
+			// 1. Save option titles
 			for (const step of product.steps) {
 				for (const option of step.options) {
 					if (option.id) {
@@ -156,9 +158,11 @@
 				'PUT'
 			);
 
-			// 3. Delete all old steps
+			// 3. Only delete steps with real server IDs
 			for (const step of product.steps) {
-				await apiAdd(`/product/${product.id}/step/${step.id}`, null, 'DELETE');
+				if (step.id < TEMP_ID_THRESHOLD) {
+					await apiAdd(`/product/${product.id}/step/${step.id}`, null, 'DELETE');
+				}
 			}
 
 			// 4. Recreate all steps
