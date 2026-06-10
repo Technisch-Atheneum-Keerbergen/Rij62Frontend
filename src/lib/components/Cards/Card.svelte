@@ -62,15 +62,17 @@
 		: 'cursor-pointer hover:shadow-md active:scale-95'}
         {className}"
 >
-	<div class="relative aspect-5/4 h-full w-full overflow-hidden">
+	<div class="relative aspect-5/4 h-full w-full">
 		<Image src={imageSrc} {alt} class="aspect-5/4 w-full" />
 
 		<div class="absolute bottom-0 h-[55%] w-full">
 			<div
-				class="absolute inset-0 backdrop-blur-md"
+				class="absolute inset-0 h-[101%] backdrop-blur-md"
 				style="mask-image: linear-gradient(to bottom, transparent, black); -webkit-mask-image: linear-gradient(to bottom, transparent, black);"
 			></div>
-			<div class="absolute inset-0 bg-linear-to-b/oklch from-transparent to-black/80"></div>
+			<div
+				class="absolute inset-0 h-[101%] bg-linear-to-b/oklch from-transparent to-black/80"
+			></div>
 			<div class="relative flex h-full flex-col justify-end px-2 pb-1.5">
 				<h3 class="truncate text-center text-sm font-semibold text-light">{title}</h3>
 				{#if price > 0}

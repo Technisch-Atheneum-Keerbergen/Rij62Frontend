@@ -63,16 +63,16 @@
 	shadow-sm transition-all
         hover:shadow-md active:scale-95 {className}"
 >
-	<div class="relative aspect-5/4 h-full w-full overflow-hidden rounded-3xl">
+	<div class="relative aspect-5/4 h-full w-full overflow-hidden">
 		<Image src={imageSrc} {alt} class="aspect-5/4 w-full" />
 
 		<div class="absolute bottom-0 h-[65%] w-full">
 			<div
-				class="absolute inset-0 rounded-b-3xl backdrop-blur-lg"
+				class="absolute inset-0 h-[101%] backdrop-blur-lg"
 				style="mask-image: linear-gradient(to bottom, transparent, black); -webkit-mask-image: linear-gradient(to bottom, transparent, black);"
 			></div>
 			<div
-				class="absolute inset-0 rounded-b-3xl bg-linear-to-b/oklch from-transparent to-black/80"
+				class="absolute inset-0 h-[101%] bg-linear-to-b/oklch from-transparent to-black/80"
 			></div>
 			<div class="relative mt-auto flex h-full w-full flex-row items-end pr-1.5 pb-2 pl-2.5">
 				<h3 class="max-w-[90%] min-w-0 truncate text-sm font-semibold text-light">{title}</h3>

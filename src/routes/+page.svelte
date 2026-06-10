@@ -288,11 +288,10 @@
 <!-- ---------------- DRAWER ---------------- -->
 
 <Drawer bind:open={isDrawerOpen} closeThreshold={0.1}>
-	<DrawerOverlay class="fixed inset-0 z-40 bg-black/40" />
+	<DrawerOverlay class="fixed inset-0 z-40" />
 	<DrawerContent
-		class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 pt-2 shadow-xl"
+		class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-[28px] bg-50/80 p-4 pt-4 shadow-xl backdrop-blur-2xl dark:bg-100/50"
 	>
-		<DrawerHandle class="mx-auto mb-2 h-1 w-18 shrink-0 rounded-full bg-500" />
 		{#if selectedProduct}
 			<Image
 				src={selectedProduct.imgURL}
