@@ -26,6 +26,7 @@ export type Order = {
 	paymentStatus: OrderPaymentStatus;
 	totalPrice: number;
 	pickupTime: number;
+	comment: string;
 	items: OrderItem[];
 };
 
@@ -90,6 +91,7 @@ let i: Order = {
 	totalPrice: 50,
 	pickupTime: 1779396153,
 	paymentStatus: 'NotPaid',
+	comment: '',
 	items: [
 		{
 			id: 9,

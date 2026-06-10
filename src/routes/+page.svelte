@@ -6,7 +6,7 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { browser } from '$app/environment';
 
-	import { pushState } from '$app/navigation';
+	import { goto, pushState } from '$app/navigation';
 	import { basket, basketCount } from '$lib/stores/basket.svelte';
 	import { createStepStates } from '$lib/stores/stepState.svelte';
 	import { mockProducts } from './mockProducts.ts';
@@ -20,6 +20,7 @@
 	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { Drawer, DrawerOverlay, DrawerContent, DrawerHandle } from '@abhivarde/svelte-drawer';
+	import Image from '$lib/components/Misc/Image.svelte';
 
 	/* ---------------- CONFIG ---------------- */
 
@@ -109,6 +110,7 @@
 
 	function handlePopState(e: PopStateEvent) {
 		if (selectedCategoryId !== null) {
+			isDrawerOpen = false;
 			selectedCategoryId = null;
 			document.getElementById('drawerCloser')?.click();
 			window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -119,6 +121,7 @@
 
 	function selectRootCategory(rootCategory: RootCategory) {
 		if (selectedCategoryId !== null) {
+			isDrawerOpen = false;
 			history.back();
 			setTimeout(() => {
 				selectedRootCategory = rootCategory;
@@ -138,22 +141,18 @@
 
 	function goBackToCategories() {
 		if (selectedCategoryId !== null) {
+			isDrawerOpen = false;
 			history.back();
 		}
 	}
 
-	// Sync: allProducts is already resolved by the time the user can tap a card.
-	// Setting selectedProduct BEFORE the drawer opens means the content is ready
-	// on the first render frame, so vaul's enter animation plays correctly.
 	async function openProduct(id: number) {
 		selectedProduct = allProducts.find((p) => p.id === id) ?? null;
 		stepStates = createStepStates(selectedProduct?.steps ?? []);
 		itemIsInBasket = false;
 
-		// Await tick() forces Svelte to update the DOM with the new selectedProduct data right now.
 		await tick();
 
-		// Now the DOM has content, and Vaul can correctly calculate the height for the slide animation!
 		isDrawerOpen = true;
 	}
 
@@ -249,10 +248,12 @@
 			{:else if visibleCategories.length === 0}
 				<p class="text-sm opacity-50">No subcategories found.</p>
 			{:else}
-				<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
+				<div class="grid grid-cols-[repeat(auto-fit,168px)] justify-center gap-3">
 					{#each visibleCategories as category (category.id)}
 						<NavCard
+							size="md"
 							title={category.name[currentLanguage]}
+							alt={category.name[currentLanguage]}
 							imageSrc={category.imgUrl}
 							onclick={() => selectCategory(category.id)}
 						/>
@@ -265,11 +266,13 @@
 				<p class="text-surface-500 text-sm">Loading products...</p>
 			</div>
 		{:else if filteredProducts.length > 0}
-			<div class="grid grid-cols-[repeat(auto-fit,160px)] justify-center gap-4">
+			<div class="grid grid-cols-[repeat(auto-fit,168px)] justify-center gap-3">
 				{#each filteredProducts as product (product.id)}
 					<Card
+						size="md"
 						onclick={() => openProduct(product.id)}
 						title={product.title[currentLanguage]}
+						alt={product.title[currentLanguage]}
 						imageSrc={product.imgURL}
 						price={product.price}
 						disabled={!product.isAvailable || !product.enabledByPreset}
@@ -284,22 +287,25 @@
 
 <!-- ---------------- DRAWER ---------------- -->
 
-<Drawer bind:open={isDrawerOpen}>
+<Drawer bind:open={isDrawerOpen} closeThreshold={0.1}>
 	<DrawerOverlay class="fixed inset-0 z-40 bg-black/40" />
 	<DrawerContent
 		class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-3xl bg-100 p-4 pt-2 shadow-xl"
 	>
 		<DrawerHandle class="mx-auto mb-2 h-1 w-18 shrink-0 rounded-full bg-500" />
 		{#if selectedProduct}
-			<img
+			<Image
 				src={selectedProduct.imgURL}
 				alt={selectedProduct.title[currentLanguage]}
-				class="mb-3 h-40 w-full flex-none rounded-2xl object-cover"
+				class="mb-3 h-40 w-full flex-none rounded-2xl"
 			/>
-			<div class="flex flex-1 flex-col overflow-y-auto">
+
+			<div class="flex flex-1 flex-col">
 				{#each selectedProduct.steps as step, i}
 					<h1 class="mt-1 mb-0 ml-1">{step.title[currentLanguage]}</h1>
-					<StepGroup {step} state={stepStates[i]} language={currentLanguage} />
+					<div class="overflow-y-auto">
+						<StepGroup {step} state={stepStates[i]} language={currentLanguage} />
+					</div>
 				{/each}
 			</div>
 
@@ -328,8 +334,8 @@
 
 {#if basketCount() > 0}
 	<div class="fixed bottom-0 left-0 flex w-screen justify-center">
-		<a
-			href="/basket"
+		<button
+			onclick={() => goto('/basket')}
 			class="relative m-5 flex h-15 w-full max-w-2xl items-center justify-between rounded-full border-2 border-secondary-500 bg-secondary-400 stroke-secondary-900 p-2 text-2xl font-extrabold text-secondary-900 shadow-sm transition-all active:scale-95 active:bg-secondary-500 dark:border-secondary-600 dark:bg-secondary-500 dark:stroke-secondary-50 dark:text-secondary-50 active:dark:bg-secondary-600"
 		>
 			<div
@@ -339,6 +345,6 @@
 			</div>
 			<span>Basket</span>
 			<span class="aspect-square h-full stroke-3"><SvgChevronRight /></span>
-		</a>
+		</button>
 	</div>
 {/if}

@@ -2,6 +2,7 @@ import { writable } from 'svelte/store';
 
 import { decodeToken } from '$lib/utils/jwt';
 import { browser } from '$app/environment';
+import { goto } from '$app/navigation';
 
 type User = {
 	displayName: string;
@@ -70,10 +71,11 @@ function createAuth() {
 
 		logout() {
 			if (browser) {
-				localStorage.removeItem('token'); // ✅ critical
+				localStorage.removeItem('token');
 			}
 
 			set({ token: null, user: null });
+			goto('/login');
 		}
 	};
 }

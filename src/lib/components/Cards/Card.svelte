@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { slide } from 'svelte/transition';
 	import AmountController from '$lib/components/Misc/AmountController.svelte';
+	import SvgImage from '../SVG/SvgImage.svelte';
+	import Image from '../Misc/Image.svelte';
 
 	let {
 		title = '',
@@ -16,7 +17,6 @@
 		ontoggle,
 		onamount,
 		onclick,
-
 		...restProps
 	}: {
 		title?: string;
@@ -31,19 +31,13 @@
 		price?: number;
 		ontoggle?: () => void;
 		onamount?: (delta: number) => void;
-
 		onclick?: () => void;
 	} = $props();
 
 	const divSizeStyle = {
 		sm: 'max-w-30 min-w-30',
-		md: 'max-w-40 min-w-40',
+		md: 'max-w-42 min-w-42',
 		lg: 'max-w-48 min-w-48'
-	};
-	const imgSizeStyle = {
-		sm: 'max-h-15 min-h-15',
-		md: 'max-h-25 min-h-25',
-		lg: 'max-h-35 min-h-35'
 	};
 
 	const showAmount = $derived(selected && price > 0);
@@ -57,47 +51,47 @@
 <div
 	{...restProps}
 	role="button"
-	transition:slide={{ duration: 200 }}
 	tabindex={disabled ? -1 : 0}
 	onclick={!disabled ? handleClick : undefined}
 	onkeydown={(e) => !disabled && (e.key === 'Enter' || e.key === ' ') && handleClick()}
-	class="flex {divSizeStyle[
-		size
-	]} h-full touch-manipulation flex-col overflow-hidden rounded-3xl border p-1 shadow-sm transition-all
-        {selectable && selected ? 'border-primary-300 bg-300' : 'border-300 bg-200'}
+	class="flex {divSizeStyle[size]} relative h-fit cursor-pointer touch-manipulation flex-col
+        overflow-hidden rounded-3xl border-2 shadow-sm transition-all
+        {selectable && selected ? 'border-primary-300 bg-200' : 'border-300 bg-100'}
         {disabled
 		? 'pointer-events-none cursor-not-allowed opacity-50 grayscale'
 		: 'cursor-pointer hover:shadow-md active:scale-95'}
         {className}"
 >
-	{#if imageSrc}
-		<img src={imageSrc} {alt} class="{imgSizeStyle[size]} w-full rounded-[20px] object-cover" />
-	{/if}
+	<div class="relative aspect-5/4 h-full w-full overflow-hidden">
+		<Image src={imageSrc} {alt} class="aspect-5/4 w-full" />
 
-	<div class="mt-1 flex h-full flex-col items-center justify-between">
-		<div class="flex h-full flex-col items-center">
-			<h3 class="text-center text-xs font-semibold">{title}</h3>
-
-			{#if price > 0}
-				<p class="text-muted mt-auto w-full text-center text-sm">€{price.toFixed(2)}</p>
-			{/if}
-		</div>
-
-		{#if showAmount}
+		<div class="absolute bottom-0 h-[55%] w-full">
 			<div
-				role="none"
-				class="mt-1"
-				onclick={(e) => e.stopPropagation()}
-				onkeydown={(e) => e.stopPropagation()}
-			>
-				<div class="mb-0.5">
-					<AmountController
-						currentAmount={amount}
-						decrease={() => onamount?.(-1)}
-						increase={() => onamount?.(1)}
-					/>
-				</div>
+				class="absolute inset-0 backdrop-blur-md"
+				style="mask-image: linear-gradient(to bottom, transparent, black); -webkit-mask-image: linear-gradient(to bottom, transparent, black);"
+			></div>
+			<div class="absolute inset-0 bg-linear-to-b/oklch from-transparent to-black/80"></div>
+			<div class="relative flex h-full flex-col justify-end px-2 pb-1.5">
+				<h3 class="truncate text-center text-sm font-semibold text-light">{title}</h3>
+				{#if price > 0}
+					<p class="text-center text-xs text-white/70">€{price.toFixed(2)}</p>
+				{/if}
 			</div>
-		{/if}
+		</div>
 	</div>
+
+	{#if showAmount}
+		<div
+			role="none"
+			class="flex justify-center py-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+		>
+			<AmountController
+				currentAmount={amount}
+				decrease={() => onamount?.(-1)}
+				increase={() => onamount?.(1)}
+			/>
+		</div>
+	{/if}
 </div>

@@ -7,9 +7,10 @@
 	import Button from '$lib/components/Button.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import SvgXmark from '$lib/components/SVG/SvgXmark.svelte';
+	import { goto } from '$app/navigation';
 
 	const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL as string;
-	const REQUIRE_PAYMENT = import.meta.env.VITE_REQUIRE_PAYMENT == "true";
+	const REQUIRE_PAYMENT = import.meta.env.VITE_REQUIRE_PAYMENT == 'true';
 
 	const orderId: OrderId = page.params.id as OrderId;
 
@@ -26,13 +27,15 @@
 			errorMessage = 'No order ID provided.';
 			return;
 		}
-		const result = await apiFetch(`/order/${orderId}`);
-		if (!result) {
+		try {
+			const result = await apiFetchJson(`/order/${orderId}`);
+			order = result as Order;
+		} catch (e) {
 			state = 'error';
-			errorMessage = 'Could not load order.';
+			errorMessage = 'Could not load order:' + (e as Error).toString();
 			return;
 		}
-		order = result as unknown as Order;
+
 		const status = order.paymentStatus;
 		if (status === 'NotPaid') state = 'NotPaid';
 		else if (status === 'Success') state = 'Success';
@@ -46,10 +49,13 @@
 		errorMessage = '';
 		try {
 			const redirectUrl = `${FRONTEND_BASE_URL}/orders?paidOrderId=${orderId}`;
-			const result = await apiFetchJson(`/payment/pay/${orderId}?bypassPayment=${REQUIRE_PAYMENT}`, {
-				method: 'POST',
-				body: JSON.stringify({ redirectUrl })
-			});
+			const result = await apiFetchJson(
+				`/payment/pay/${orderId}?bypassPayment=${!REQUIRE_PAYMENT}`,
+				{
+					method: 'POST',
+					body: JSON.stringify({ redirectUrl })
+				}
+			);
 			if (result && (result as any).redirectUrl) {
 				window.location.href = (result as any).redirectUrl;
 			} else {
@@ -85,11 +91,7 @@
 				<p class="text-main/40 text-sm">{errorMessage}</p>
 
 				<div class="w-full p-4">
-					<Button
-						variant="primary"
-						class="w-full"
-						onclick={() => (window.location.href = `/orders`)}
-					>
+					<Button variant="primary" class="w-full" onclick={() => goto('/orders')}>
 						View orders
 					</Button>
 				</div>
@@ -185,11 +187,7 @@
 				<div class="mx-4 h-px bg-300"></div>
 
 				<div class="p-4">
-					<Button
-						variant="primary"
-						class="w-full"
-						onclick={() => (window.location.href = `/orders`)}
-					>
+					<Button variant="primary" class="w-full" onclick={() => goto('/orders')}>
 						View orders
 					</Button>
 				</div>

@@ -82,10 +82,10 @@ html {
 	--darken: rgba(1, 1, 1, 0.24);
 	--color-border: var(--surface-300);
 
-	--surface-50: #f3f1eb;
-	--surface-100: #f0eee8;
+	--surface-50: #f6f5f1;
+	--surface-100: #f0efec;
 	--surface-200: #e7e6e3;
-	--surface-300: #e3e1db;
+	--surface-300: #e2e1df;
 	--surface-400: #dcdad4;
 	--surface-500: #d2d1ca;
 	--surface-600: #cccbc4;

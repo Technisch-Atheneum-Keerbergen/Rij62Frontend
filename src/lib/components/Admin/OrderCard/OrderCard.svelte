@@ -5,6 +5,7 @@
 	import OrderItemRow from './OrderItemRow.svelte';
 	import OrderFooterAction from './OrderFooterAction.svelte';
 	import CategoryReadyButton from './CategoryReadyButton.svelte';
+	import OrderCommentField from '$lib/components/Misc/OrderCommentField.svelte';
 
 	let {
 		order,
@@ -158,6 +159,11 @@
 				{/if}
 			</div>
 		</div>
+		{#if order.comment != null && order.comment.trim() != ''}
+			<span class="w-full truncate overflow-hidden text-wrap wrap-anywhere opacity-70">
+				{order.comment}
+			</span>
+		{/if}
 	</div>
 
 	<!-- Items -->

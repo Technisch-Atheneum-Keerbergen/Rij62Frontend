@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api/client';
+	import { apiFetchJson } from '$lib/api/client';
 	import { goto } from '$app/navigation';
 	import { type Order, type OrderId, type OrderItem } from '$lib/api/types/order';
 	import StatusBadge from '$lib/components/Badges/StatusBadge.svelte';
@@ -7,7 +7,8 @@
 	import { pendingOrderStore } from '$lib/stores/pendingOrders';
 	import { groupDuplicateOrderItemChoices } from '$lib/api/types/order';
 	import SvgChevronRight from '$lib/components/SVG/SvgChevronRight.svelte';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import Image from '$lib/components/Misc/Image.svelte';
 
 	const currentLanguage = import.meta.env.VITE_CURRENT_LANGUAGE as 'English' | 'Dutch';
 
@@ -15,20 +16,37 @@
 
 	let pendingOrders: Order[] = [];
 
+	let loading = true;
+	let updatePendingOrdersInterval: ReturnType<typeof setInterval>;
+
 	async function getOrder(id: OrderId): Promise<Order | null> {
-		const result = await apiFetch(`/order/${id}`);
-		if (!result) return null;
-		return result as unknown as Order;
+		try {
+			const result = await apiFetchJson(`/order/${id}`);
+			if (!result) return null;
+			return result as Order;
+		} catch (error) {
+			return null;
+		}
 	}
 
 	async function updatePendingOrders() {
 		const results = await Promise.all($pendingOrderStore.map(getOrder));
+		$pendingOrderStore = results
+			.map((result) => {
+				if (result) return result.id;
+			})
+			.filter((result) => {
+				return result != undefined;
+			});
 		pendingOrders = results
 			.filter((order): order is Order => order !== null)
 			.sort((a, b) => b.createdTime - a.createdTime);
 	}
 
-	let updatePendingOrdersInterval = setInterval(updatePendingOrders, 5000);
+	onMount(() => {
+		updatePendingOrders().finally(() => (loading = false));
+		updatePendingOrdersInterval = setInterval(updatePendingOrders, 5000);
+	});
 	onDestroy(() => {
 		clearInterval(updatePendingOrdersInterval);
 	});
@@ -105,19 +123,19 @@
 </script>
 
 <section class="mx-auto max-w-2xl px-1 py-2">
-	{#await updatePendingOrders()}
+	{#if loading}
 		<div class="flex flex-col items-center gap-4 text-center">
 			<Spinner size="lg" />
 			<p class="text-surface-500 text-sm">Loading orders...</p>
 		</div>
-	{:then}
+	{:else}
 		<h1 class="mb-2 text-center text-2xl font-semibold">
 			{pendingOrders.length > 0 ? 'Your orders' : 'No orders made'}
 		</h1>
 
 		{#if pendingOrders.length === 0}
 			<p class="text-center">
-				Make a new order <a class="font-bold text-primary-500 underline" href="/">here</a>
+				Make an order <a class="font-bold text-primary-500 underline" href="/">here</a>
 			</p>
 		{/if}
 
@@ -153,7 +171,13 @@
 							</span>
 						</div>
 					</div>
-
+					{#if order.comment != null && order.comment.trim() != ''}
+						<span
+							class="w-full truncate overflow-hidden rounded-2xl border border-200 bg-50 px-2 py-1 text-sm text-wrap wrap-anywhere opacity-70"
+						>
+							{order.comment}
+						</span>
+					{/if}
 					<!-- Payment problem banner — only shown when action needed -->
 					{#if paymentStatus !== 'Success'}
 						<button
@@ -186,10 +210,10 @@
 
 							<li class="flex items-center gap-3 rounded-[1.25rem] border border-300 bg-200 p-2">
 								<div class="relative flex items-center gap-3">
-									<img
+									<Image
 										src={representative.product.imgUrl}
 										alt={representative.product.title[currentLanguage]}
-										class="h-12 w-12 shrink-0 rounded-xl object-cover"
+										class="h-12 w-12 shrink-0 rounded-xl"
 									/>
 									<span
 										class="inset-shadow-lg absolute left-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-xl text-light shadow-md backdrop-blur-[1px]"
@@ -229,5 +253,5 @@
 				</div>
 			{/each}
 		</div>
-	{/await}
+	{/if}
 </section>
