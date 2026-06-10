@@ -46,15 +46,21 @@ export function getItemTotal(item: LoadedBasketItem): number {
 const STORAGE_KEY = 'basket';
 
 function loadFromStorage(): BasketData {
-	if (!browser) return { items: [], comment: '' };
+	let defaultData = { items: [], comment: '' };
+	if (!browser) return defaultData;
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) throw 'No basket data in local storage';
+
 		let parsed = JSON.parse(raw) as { items: BasketItem[]; comment: string };
-		return parsed;
+		if (parsed.items && parsed.comment) {
+			return parsed;
+		}
+		saveToStorage(defaultData);
+		return defaultData;
 	} catch (err) {
 		console.error('Failed to load basket from storage:', err);
-		return { items: [], comment: '' };
+		return defaultData;
 	}
 }
 
