@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { duplicateGroupedIds } from '$lib/api/types/order';
 	import TimePicker from '$lib/components/Basket/TimePicker.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import AmountController from '$lib/components/Misc/AmountController.svelte';
+	import Image from '$lib/components/Misc/Image.svelte';
 	import OrderCommentField from '$lib/components/Misc/OrderCommentField.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { basket, getItemTotal, type LoadedBasketItem } from '$lib/stores/basket.svelte';
@@ -227,7 +229,7 @@
 				pendingOrderStore.add(data.orderId);
 				basket.clear();
 				tableNumberStore.set(null);
-				window.location.href = `/orders/${data.orderId}`;
+				goto(`/orders/${data.orderId}`);
 			} else {
 				placeError = 'Something went wrong placing your order. Please try again.';
 			}
@@ -275,10 +277,10 @@
 						class:border-300={!hasError}
 						class:border-red-400={hasError}
 					>
-						<img
+						<Image
 							src={item.product.imgURL}
 							alt={item.product.title[currentLanguage]}
-							class="h-12 w-12 shrink-0 rounded-xl object-cover"
+							class="h-12 w-12 shrink-0 rounded-xl"
 						/>
 
 						<div class="min-w-0 flex-1">
@@ -336,9 +338,9 @@
 
 			<!-- Divider -->
 
-						<OrderCommentField bind:value={orderComment} />
+			<OrderCommentField bind:value={orderComment} />
 
-						<div class="mx-4 h-px bg-300"></div>
+			<div class="mx-4 h-px bg-300"></div>
 
 			<!-- Order-level errors -->
 			{#if getOrderErrors().length > 0 || placeError}
@@ -364,7 +366,7 @@
 
 	<!-- Actions -->
 	<div class="mt-4 flex w-full items-stretch gap-1.5">
-		<Button class="flex-1" variant="ghost" size="sm" onclick={() => (window.location.href = '/')}>
+		<Button class="flex-1" variant="ghost" size="sm" onclick={() => goto('/')}>
 			Continue shopping
 		</Button>
 		<Button class="flex-1" size="sm" variant="primary" disabled={!canPlace} onclick={placeOrder}>

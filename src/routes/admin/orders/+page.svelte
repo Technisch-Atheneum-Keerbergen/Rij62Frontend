@@ -1,6 +1,6 @@
 <script lang="ts">
 	import OrderCard from '../../../lib/components/Admin/OrderCard/OrderCard.svelte';
-	import { apiFetch } from '$lib/api/client';
+	import { apiFetch, apiFetchJson } from '$lib/api/client';
 	import type { Order, OrderItem, OrderPaymentStatus, OrderStatus } from '$lib/api/types/order';
 	import { slide } from 'svelte/transition';
 	import FilterItem from '$lib/components/Badges/FilterItem.svelte';
@@ -313,7 +313,7 @@
 		const nextStatus: OrderStatus = next >= 1 ? 'Ready' : 'InProgress';
 
 		try {
-			await apiFetch(`/order/${orderId}/status/${itemId}`, {
+			await apiFetchJson(`/order/${orderId}/status/${itemId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ status: nextStatus })
@@ -325,8 +325,9 @@
 					items: o.items.map((i) => (i.id !== itemId ? i : { ...i, status: nextStatus }))
 				};
 			});
-		} catch {
+		} catch (e) {
 			preparedCounts[itemId] = current;
+			alert((e as Error).toString());
 		}
 	}
 
@@ -336,11 +337,13 @@
 
 		await Promise.all(
 			order.items.map((item) =>
-				apiFetch(`/order/${orderId}/status/${item.id}`, {
+				apiFetchJson(`/order/${orderId}/status/${item.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ status: nextStatus })
-				}).catch(() => {})
+				}).catch((e: Error) => {
+					alert(e.toString());
+				})
 			)
 		);
 
@@ -373,11 +376,13 @@
 
 		await Promise.all(
 			order.items.map((item) =>
-				apiFetch(`/order/${orderId}/status/${item.id}`, {
+				apiFetchJson(`/order/${orderId}/status/${item.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ status: 'InProgress' })
-				}).catch(() => {})
+				}).catch((e: Error) => {
+					e.toString();
+				})
 			)
 		);
 

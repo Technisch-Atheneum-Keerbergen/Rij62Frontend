@@ -15,7 +15,7 @@
 		bind:value
 		maxlength={maxChars}
 		placeholder="Anything we should know?"
-		class="h-fit max-h-24 w-full rounded-2xl border border-300 bg-50 inset-shadow-sm placeholder:font-light placeholder:text-black/50 focus-visible:inset-shadow-sm dark:placeholder:text-white/50"
+		class="h-fit max-h-36 min-h-11 w-full rounded-2xl border border-300 bg-50 placeholder:font-light placeholder:text-black/50 focus:inset-shadow-sm dark:placeholder:text-white/50"
 	></textarea>
 	<span
 		class="absolute right-4 bottom-4 text-xs tabular-nums

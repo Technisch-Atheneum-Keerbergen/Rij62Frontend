@@ -26,7 +26,7 @@
 	};
 
 	const baseStyles = $derived(
-		`border-2 mx-1 touch-manipulation rounded-full h-fit inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-lg border-300 bg-100 ${sizeStyle[size]} ${className}`
+		`border-1 mx-1 touch-manipulation rounded-full h-fit inline-flex items-center cursor-pointer select-none transition-all active:scale-95 shadow-lg border-300 bg-100 ${sizeStyle[size]} ${className}`
 	);
 </script>
 
@@ -46,6 +46,7 @@
 	input:checked + span {
 		border-color: var(--color-primary-300);
 		background-color: var(--color-primary-200);
+		box-shadow: 0px 0px 10px -5px var(--color-primary-300);
 		font-weight: bold;
 	}
 	:global(.dark) input:checked + span {

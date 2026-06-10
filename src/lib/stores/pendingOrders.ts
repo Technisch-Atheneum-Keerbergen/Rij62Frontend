@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { OrderId } from '$lib/api/types/order';
+import type { UUID } from 'crypto';
 
 const STORAGE_KEY = 'pendingOrders';
 
@@ -27,6 +28,10 @@ function createPendingOrderStore() {
 
 	return {
 		subscribe,
+
+		set(items: OrderId[]) {
+			set(items);
+		},
 
 		add(order: OrderId) {
 			update((items) => {

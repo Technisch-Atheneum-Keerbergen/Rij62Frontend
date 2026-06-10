@@ -28,6 +28,7 @@
 		Modal,
 		TableSearch
 	} from 'flowbite-svelte';
+	import { goto } from '$app/navigation';
 
 	const currentLanguage = Language.English;
 
@@ -142,7 +143,7 @@
 				newSet.add(productId);
 			}
 		} else {
-			window.location.href = `/admin/productControl/${productId}`;
+			goto(`/admin/productControl/${productId}`);
 		}
 
 		selectedIds = newSet;
