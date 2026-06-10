@@ -54,25 +54,29 @@
 	tabindex={disabled ? -1 : 0}
 	onclick={!disabled ? handleClick : undefined}
 	onkeydown={(e) => !disabled && (e.key === 'Enter' || e.key === ' ') && handleClick()}
-	class="flex {divSizeStyle[size]} relative h-fit cursor-pointer touch-manipulation flex-col
+	class="flex {divSizeStyle[size]}         
+		{selectable && selected
+		? 'border-primary-400 bg-200 outline-2 outline-primary-400'
+		: 'border-300 bg-100 outline-2 outline-transparent'}
+		 relative h-fit cursor-pointer touch-manipulation flex-col
         overflow-hidden rounded-3xl border-2 shadow-sm transition-all
-        {selectable && selected ? 'border-primary-300 bg-200' : 'border-300 bg-100'}
+
         {disabled
 		? 'pointer-events-none cursor-not-allowed opacity-50 grayscale'
 		: 'cursor-pointer hover:shadow-md active:scale-95'}
         {className}"
 >
-	<div class="relative aspect-5/4 h-full w-full">
+	<div
+		class="relative aspect-5/4 h-full w-full overflow-hidden {showAmount ? 'rounded-b-2xl' : ''}"
+	>
 		<Image src={imageSrc} {alt} class="aspect-5/4 w-full" />
 
 		<div class="absolute bottom-0 h-[55%] w-full">
 			<div
-				class="absolute inset-0 h-[101%] backdrop-blur-md"
+				class="absolute inset-0 {showAmount ? 'rounded-b-2xl' : ''}  backdrop-blur-md"
 				style="mask-image: linear-gradient(to bottom, transparent, black); -webkit-mask-image: linear-gradient(to bottom, transparent, black);"
 			></div>
-			<div
-				class="absolute inset-0 h-[101%] bg-linear-to-b/oklch from-transparent to-black/80"
-			></div>
+			<div class="absolute inset-0 bg-linear-to-b/oklch from-transparent to-black/80"></div>
 			<div class="relative flex h-full flex-col justify-end px-2 pb-1.5">
 				<h3 class="truncate text-center text-sm font-semibold text-light">{title}</h3>
 				{#if price > 0}

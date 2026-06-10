@@ -313,11 +313,11 @@
 		const nextStatus: OrderStatus = next >= 1 ? 'Ready' : 'InProgress';
 
 		try {
-			await apiFetchJson(`/order/${orderId}/status/${itemId}`, {
+			await apiFetch(`/order/${orderId}/status/${itemId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ status: nextStatus })
-			});
+			}); // should not be apiFetchJson because it doesn't return json
 			orders = orders.map((o) => {
 				if (o.id !== orderId) return o;
 				return {
@@ -327,7 +327,7 @@
 			});
 		} catch (e) {
 			preparedCounts[itemId] = current;
-			alert((e as Error).toString());
+			console.error(e);
 		}
 	}
 
@@ -336,14 +336,13 @@
 		if (!order) return;
 
 		await Promise.all(
-			order.items.map((item) =>
-				apiFetchJson(`/order/${orderId}/status/${item.id}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ status: nextStatus })
-				}).catch((e: Error) => {
-					alert(e.toString());
-				})
+			order.items.map(
+				(item) =>
+					apiFetch(`/order/${orderId}/status/${item.id}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ status: nextStatus })
+					}) // should not be apiFetchJson because it doesn't return json
 			)
 		);
 
@@ -375,14 +374,13 @@
 		if (!order) return;
 
 		await Promise.all(
-			order.items.map((item) =>
-				apiFetchJson(`/order/${orderId}/status/${item.id}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ status: 'InProgress' })
-				}).catch((e: Error) => {
-					e.toString();
-				})
+			order.items.map(
+				(item) =>
+					apiFetch(`/order/${orderId}/status/${item.id}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ status: 'InProgress' })
+					}) // should not be apiFetchJson because it doesn't return json
 			)
 		);
 

@@ -287,7 +287,7 @@
 
 <!-- ---------------- DRAWER ---------------- -->
 
-<Drawer bind:open={isDrawerOpen} closeThreshold={0.01}>
+<Drawer bind:open={isDrawerOpen} closeThreshold={0.05}>
 	<DrawerOverlay class="fixed inset-0 z-40" />
 	<DrawerContent
 		class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-[28px] bg-50/80 p-4 pt-4 shadow-xl backdrop-blur-2xl dark:bg-100/50"

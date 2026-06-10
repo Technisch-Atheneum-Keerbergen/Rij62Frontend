@@ -10,7 +10,7 @@
 	import { goto } from '$app/navigation';
 
 	const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL as string;
-	const REQUIRE_PAYMENT = import.meta.env.VITE_REQUIRE_PAYMENT == 'true';
+	const VITE_SHOW_STEAL = import.meta.env.VITE_SHOW_STEAL == 'true';
 
 	const orderId: OrderId = page.params.id as OrderId;
 
@@ -43,19 +43,16 @@
 		else state = 'NotPaid';
 	}
 
-	async function initiatePayment() {
+	async function initiatePayment(bypassPayment = false) {
 		if (!orderId) return;
 		payLoading = true;
 		errorMessage = '';
 		try {
 			const redirectUrl = `${FRONTEND_BASE_URL}/orders?paidOrderId=${orderId}`;
-			const result = await apiFetchJson(
-				`/payment/pay/${orderId}?bypassPayment=${!REQUIRE_PAYMENT}`,
-				{
-					method: 'POST',
-					body: JSON.stringify({ redirectUrl })
-				}
-			);
+			const result = await apiFetchJson(`/payment/pay/${orderId}?bypassPayment=${bypassPayment}`, {
+				method: 'POST',
+				body: JSON.stringify({ redirectUrl })
+			});
 			if (result && (result as any).redirectUrl) {
 				window.location.href = (result as any).redirectUrl;
 			} else {
@@ -131,13 +128,34 @@
 					{#if errorMessage}
 						<p class="mb-3 text-center text-sm text-red-500">{errorMessage}</p>
 					{/if}
-					<Button onclick={initiatePayment} disabled={payLoading} size="md" class="w-full">
+					<Button
+						onclick={() => initiatePayment(false)}
+						disabled={payLoading}
+						size="md"
+						class="w-full"
+					>
 						{#if payLoading}
 							<span class="inline-flex items-center gap-2"><Spinner size="sm" />Processing…</span>
 						{:else}
 							Pay now
 						{/if}
 					</Button>
+
+					{#if VITE_SHOW_STEAL}
+						<Button
+							onclick={() => initiatePayment(true)}
+							disabled={payLoading}
+							size="md"
+							variant="secondary"
+							class="mt-2 w-full"
+						>
+							{#if payLoading}
+								<span class="inline-flex items-center gap-2"><Spinner size="sm" />Processing…</span>
+							{:else}
+								Steal now
+							{/if}
+						</Button>
+					{/if}
 				</div>
 			</div>
 		{:else if state === 'Failed'}
@@ -161,7 +179,12 @@
 					{#if errorMessage}
 						<p class="mb-3 text-center text-sm text-red-500">{errorMessage}</p>
 					{/if}
-					<Button onclick={initiatePayment} disabled={payLoading} size="md" class="w-full">
+					<Button
+						onclick={() => initiatePayment(false)}
+						disabled={payLoading}
+						size="md"
+						class="w-full"
+					>
 						{#if payLoading}
 							<span class="inline-flex items-center gap-2"><Spinner size="sm" />Processing…</span>
 						{:else}
