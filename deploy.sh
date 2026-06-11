@@ -17,6 +17,7 @@ SERVER_SSH="$1"
 echo "Pushing to: $SERVER_SSH"
 
 echo "Building..."
+bun install
 bun run build
 
 
