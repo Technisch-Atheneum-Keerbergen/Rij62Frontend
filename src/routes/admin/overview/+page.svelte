@@ -4,23 +4,28 @@
 
 	const controlTypes = [
 		{
-			name: 'product control',
-			type: 'productControl',
-			description: 'Manage all products and inventory.'
+			name: 'availibility control',
+			type: 'availibilityControl',
+			description: 'Change the availibility of all products'
 		},
-		{ name: 'Orders', type: 'orders', description: 'See current orders.' },
-		{ name: 'table control', type: 'tableControl', description: 'Edit tables and datasets.' },
 		{
 			name: 'category control',
 			type: 'categoryControl',
 			description: 'Edit all available categories'
 		},
-		{ name: 'user control', type: 'userControl', description: 'Manage users' },
+		{ name: 'Orders', type: 'orders', description: 'See current orders.' },
+		{
+			name: 'product control',
+			type: 'productControl',
+			description: 'Manage all products and inventory.'
+		},
 		{
 			name: 'schedule preset control',
 			type: 'presetControl',
 			description: 'Manage wich product are active on specific days'
-		}
+		},
+		{ name: 'table control', type: 'tableControl', description: 'Edit tables and datasets.' },
+		{ name: 'user control', type: 'userControl', description: 'Manage users' }
 	];
 </script>
 

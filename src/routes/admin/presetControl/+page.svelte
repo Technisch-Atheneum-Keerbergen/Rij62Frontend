@@ -29,6 +29,7 @@
 		name: string;
 		repeat: string[];
 		enabled: boolean;
+		products: number[];
 	};
 
 	const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -57,11 +58,15 @@
 	});
 
 	async function loadData() {
-		[presets, products] = await Promise.all([
-			apiFetch('/menuPreset') as Promise<MenuPreset[]>,
-			apiFetch('/product') as Promise<Product[]>
-		]);
-		console.log('[Rij62] products[0]:', products[0]); // check what fields come back
+		const data = await apiFetch('/menuPreset');
+
+		presets = data.map((p: any) => ({
+			...p,
+			// convert product objects → id array
+			products: (p.products ?? []).map((prod: any) => prod.id)
+		}));
+
+		products = await apiFetch('/product');
 	}
 
 	function openNew() {
@@ -73,13 +78,19 @@
 		try {
 			await apiAdd(
 				'/menuPreset',
-				{ Name: newPreset.name, Repeat: newPreset.repeat, Enabled: newPreset.enabled },
+				{
+					name: newPreset.name,
+					repeat: newPreset.repeat,
+					enabled: newPreset.enabled,
+					products: []
+				},
 				'POST'
 			);
+
 			newModalOpen = false;
 			await loadData();
 		} catch (err: any) {
-			console.error('[Rij62] Failed to create preset:', err.message);
+			console.error('Failed to create preset:', err.message);
 		}
 	}
 
@@ -87,11 +98,15 @@
 		try {
 			await apiAdd(
 				`/menuPreset/${preset.id}`,
-				{ Name: preset.name, Repeat: preset.repeat, Enabled: preset.enabled },
+				{
+					name: preset.name,
+					repeat: preset.repeat,
+					enabled: preset.enabled
+				},
 				'PUT'
 			);
 		} catch (err: any) {
-			console.error('[Rij62] Failed to save preset:', err.message);
+			console.error('Failed to save preset:', err.message);
 		}
 	}
 
@@ -106,64 +121,56 @@
 
 	async function deletePreset() {
 		if (!deletingPreset) return;
+
 		try {
-			for (const p of products.filter((p) => p.menuPresetId === deletingPreset!.id)) {
-				await apiAdd(
-					`/product/${p.id}`,
-					{
-						title: p.title,
-						description: p.description,
-						price: p.price,
-						btw: p.btw,
-						stock: p.stock,
-						isAvailable: p.isAvailable,
-						imgURL: p.imgURL,
-						categoryId: p.categoryId,
-						MenuPresetId: null
-					},
-					'PUT'
-				);
-			}
 			await apiDelete(`/menuPreset/${deletingPreset.id}`);
+
 			deleteModalOpen = false;
 			await loadData();
-		} catch (err: any) {
-			console.error('[Rij62] Failed to delete preset:', err.message);
+		} catch (err) {
+			console.error('Failed to delete preset:', err);
 		}
 	}
-
 	async function toggleProductInPreset(product: Product, presetId: number) {
-		const newPresetId = product.menuPresetId === presetId ? null : presetId;
+		const preset = presets.find((p) => p.id === presetId);
+		if (!preset) return;
+
+		const isInPreset = preset.products.includes(product.id);
+
+		const updatedProducts = isInPreset
+			? preset.products.filter((id) => id !== product.id)
+			: [...preset.products, product.id];
+
+		// optimistic update
+		preset.products = updatedProducts;
+		presets = [...presets];
+
 		try {
 			await apiAdd(
-				`/product/${product.id}`,
+				`/menuPreset/${presetId}`,
 				{
-					title: product.title,
-					description: product.description,
-					price: product.price,
-					btw: product.btw,
-					stock: product.stock,
-					isAvailable: product.isAvailable,
-					imgURL: product.imgURL,
-					categoryId: product.categoryId,
-					MenuPresetId: newPresetId
+					name: preset.name,
+					repeat: preset.repeat,
+					enabled: preset.enabled,
+					products: updatedProducts
 				},
 				'PUT'
 			);
-			product.menuPresetId = newPresetId;
-			products = products;
-		} catch (err: any) {
-			console.error('[Rij62] Failed to update product preset:', err.message);
+		} catch (err) {
+			console.error(err);
+			await loadData();
 		}
+	}
+
+	function productInPreset(preset: MenuPreset, product: Product): boolean {
+		return preset.products.includes(product.id);
 	}
 </script>
 
 <div class="mx-auto max-w-7xl p-8">
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold md:text-5xl lg:text-6xl">
-			Take
-			<Span class="text-highlight">Control</Span>
-			of Your Menu Presets
+			Take <Span class="text-highlight">Control</Span> of Your Menu Presets
 		</Heading>
 	</div>
 
@@ -180,7 +187,7 @@
 		<Table striped class="w-full">
 			<TableSearch placeholder="Search by name" bind:inputValue={searchTerm}>
 				<TableHead>
-					<TableHeadCell class="text-left">Name</TableHeadCell>
+					<TableHeadCell>Name</TableHeadCell>
 					<TableHeadCell>Active Days</TableHeadCell>
 					<TableHeadCell>Enabled</TableHeadCell>
 					<TableHeadCell class="text-right">Actions</TableHeadCell>
@@ -189,12 +196,12 @@
 				<TableBody>
 					{#each filteredPresets as preset (preset.id)}
 						<TableBodyRow
-							class="cursor-pointer transition hover:bg-400"
+							class="cursor-pointer"
 							onclick={() => (expandedId = expandedId === preset.id ? null : preset.id)}
 						>
 							<TableBodyCell>
 								<Input
-									class="border-main w-48 bg-50"
+									class="w-48"
 									value={preset.name}
 									onclick={(e) => e.stopPropagation()}
 									onblur={async (e) => {
@@ -214,8 +221,9 @@
 												preset.repeat = toggleDay(preset.repeat, day);
 												await savePreset(preset);
 											}}
-											class="rounded-full px-2 py-0.5 text-xs font-semibold transition
-												{preset.repeat.includes(day) ? 'bg-primary-500 text-white' : 'border-main text-muted border bg-50'}"
+											class={preset.repeat.includes(day)
+												? 'rounded-full bg-primary-500 px-2 text-xs text-white'
+												: 'rounded-full border px-2 text-xs'}
 										>
 											{day.slice(0, 3)}
 										</button>
@@ -226,7 +234,6 @@
 							<TableBodyCell>
 								<Toggle
 									checked={preset.enabled}
-									onclick={(e) => e.stopPropagation()}
 									onchange={async () => {
 										preset.enabled = !preset.enabled;
 										await savePreset(preset);
@@ -235,51 +242,43 @@
 							</TableBodyCell>
 
 							<TableBodyCell class="text-right">
-								<div class="flex justify-end gap-2">
-									<Button
-										size="xs"
-										variant="ghost"
-										onclick={(e) => {
-											e.stopPropagation();
-											openDelete(preset);
-										}}
-									>
-										<DeleteRowOutline class="h-4 w-4" />
-									</Button>
-								</div>
+								<Button
+									size="xs"
+									variant="ghost"
+									onclick={(e) => {
+										e.stopPropagation();
+										openDelete(preset);
+									}}
+								>
+									<DeleteRowOutline class="h-4 w-4" />
+								</Button>
 							</TableBodyCell>
 						</TableBodyRow>
 
 						{#if expandedId === preset.id}
 							<TableBodyRow>
-								<TableBodyCell colspan={4} class="bg-100 p-0">
+								<TableBodyCell colspan={4}>
 									<div transition:slide class="space-y-3 p-6">
-										<h4 class="text-main text-sm font-semibold">Products in this preset</h4>
-										<p class="text-muted text-xs">
-											Toggled products will only show when this preset is active.
-										</p>
+										<h4 class="font-semibold">Products</h4>
 
-										<div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+										<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
 											{#each products as product (product.id)}
 												<button
 													type="button"
 													onclick={() => toggleProductInPreset(product, preset.id)}
-													class="border-main flex items-center justify-between rounded-lg border p-3 text-left transition
-														{product.menuPresetId === preset.id
-														? 'border-primary-500 bg-primary-500/10'
-														: 'bg-50 hover:bg-100'}"
+													class={productInPreset(preset, product)
+														? 'w-full rounded-lg border bg-green-100 p-3 transition hover:bg-green-200'
+														: 'w-full rounded-lg border p-3 transition hover:bg-gray-100'}
 												>
-													<div>
-														<p class="text-main text-sm font-semibold">
+													<div class="flex items-center justify-between">
+														<div class="text-left font-semibold">
 															{product.title[Language.English]}
-														</p>
-														{#if product.menuPresetId !== null && product.menuPresetId !== undefined && product.menuPresetId !== preset.id}
-															<p class="text-muted text-xs">In another preset</p>
-														{/if}
+														</div>
+
+														<Badge color={productInPreset(preset, product) ? 'green' : 'dark'}>
+															{productInPreset(preset, product) ? 'In preset' : 'Not in preset'}
+														</Badge>
 													</div>
-													<Badge color={product.menuPresetId === preset.id ? 'green' : 'dark'}>
-														{product.menuPresetId === preset.id ? 'In preset' : 'Not in preset'}
-													</Badge>
 												</button>
 											{/each}
 										</div>
@@ -295,26 +294,25 @@
 </div>
 
 <!-- New Preset Modal -->
-<Modal form bind:open={newModalOpen} size="sm" transition={slide} permanent>
-	<div class="space-y-5">
-		<h3 class="text-main text-lg font-semibold">New Menu Preset</h3>
+<Modal bind:open={newModalOpen} size="sm" transition={slide}>
+	<div class="space-y-4">
+		<h3 class="text-lg font-semibold">New Menu Preset</h3>
 
 		<div>
 			<Label>Name</Label>
-			<Input class="border-main bg-50" bind:value={newPreset.name} />
+			<Input bind:value={newPreset.name} />
 		</div>
 
 		<div>
-			<Label>Active Days</Label>
-			<div class="mt-2 flex flex-wrap gap-2">
+			<Label>Days</Label>
+			<div class="flex flex-wrap gap-2">
 				{#each DAYS as day}
 					<button
 						type="button"
 						onclick={() => (newPreset.repeat = toggleDay(newPreset.repeat, day))}
-						class="rounded-full px-3 py-1 text-sm font-semibold transition
-							{newPreset.repeat.includes(day)
-							? 'bg-primary-500 text-white'
-							: 'border-main text-muted border bg-50'}"
+						class={newPreset.repeat.includes(day)
+							? 'rounded-full bg-primary-500 px-3 text-white'
+							: 'rounded-full border px-3'}
 					>
 						{day}
 					</button>
@@ -322,41 +320,35 @@
 			</div>
 		</div>
 
-		<div class="flex items-center gap-3">
+		<div class="flex items-center gap-2">
 			<Toggle bind:checked={newPreset.enabled} />
 			<Label>Enabled</Label>
 		</div>
 
-		<div class="flex justify-end gap-3">
-			<Button type="button" color="primary" onclick={createPreset}>Create</Button>
-			<Button type="button" variant="ghost" onclick={() => (newModalOpen = false)}>Cancel</Button>
+		<div class="flex justify-end gap-2">
+			<Button onclick={createPreset}>Create</Button>
+			<Button variant="ghost" onclick={() => (newModalOpen = false)}>Cancel</Button>
 		</div>
 	</div>
 </Modal>
 
 <!-- Delete Modal -->
-<Modal form bind:open={deleteModalOpen} size="xs" transition={slide} permanent>
+<Modal bind:open={deleteModalOpen} size="xs" transition={slide}>
 	{#if deletingPreset}
-		<div class="text-center">
-			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
-			<h3 class="text-main mb-5 text-lg font-normal">
-				Are you sure you want to delete <strong>{deletingPreset.name}</strong>?
-			</h3>
-			<p class="text-muted mb-5 text-sm">Products in this preset will be unlinked.</p>
-			<div class="flex justify-center gap-3">
+		<div class="space-y-4 text-center">
+			<ExclamationCircleOutline class="mx-auto h-10 w-10" />
+			<p>Delete <b>{deletingPreset.name}</b>?</p>
+
+			<div class="flex justify-center gap-2">
 				<Button
-					type="button"
-					color="primary"
 					onclick={() => {
 						deletePreset();
 						deleteModalOpen = false;
 					}}
 				>
-					Yes, delete
+					Delete
 				</Button>
-				<Button type="button" variant="ghost" onclick={() => (deleteModalOpen = false)}
-					>Cancel</Button
-				>
+				<Button variant="ghost" onclick={() => (deleteModalOpen = false)}>Cancel</Button>
 			</div>
 		</div>
 	{/if}

@@ -14,6 +14,7 @@ export interface Product {
 	imgURL: string;
 	categoryId: null;
 	steps: ProductStep[];
+	menuPresetId: number | null;
 }
 
 export function productIsAvailable(product: Product) {

@@ -12,7 +12,8 @@
 		Heading,
 		Span,
 		ImagePlaceholder,
-		Modal
+		Modal,
+		P
 	} from 'flowbite-svelte';
 	import { ArrowLeftOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
 	import type { Product } from '$lib/api/types/product';
@@ -117,10 +118,9 @@
 	const ApplyChangesForStep = async () => {
 		if (!product) return;
 
-		const TEMP_ID_THRESHOLD = 1_000_000_000_000; // Date.now() is ~13 digits
+		const TEMP_ID_THRESHOLD = 1_000_000_000_000;
 
 		try {
-			// 1. Save option titles
 			for (const step of product.steps) {
 				for (const option of step.options) {
 					if (option.id) {
@@ -142,7 +142,6 @@
 				}
 			}
 
-			// 2. Update base product
 			await apiAdd(
 				`/product/${product.id}`,
 				{
@@ -158,14 +157,12 @@
 				'PUT'
 			);
 
-			// 3. Only delete steps with real server IDs
 			for (const step of product.steps) {
 				if (step.id < TEMP_ID_THRESHOLD) {
 					await apiAdd(`/product/${product.id}/step/${step.id}`, null, 'DELETE');
 				}
 			}
 
-			// 4. Recreate all steps
 			for (const step of product.steps) {
 				await apiAdd(
 					`/product/${product.id}/step`,
@@ -220,7 +217,8 @@
 	});
 </script>
 
-<div class="mx-auto max-w-7xl space-y-8 p-8">
+<div class="mx-auto max-w-7xl p-8">
+	<!-- Heading -->
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold md:text-5xl lg:text-6xl">
 			Take
@@ -229,132 +227,142 @@
 		</Heading>
 	</div>
 
-	<div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
-		<form class="border-main space-y-6 rounded-xl border bg-50 p-8 shadow-2xl">
-			<Tabs tabStyle="pill">
+	<div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+		<!-- Left: Form -->
+		<div class="border-main overflow-hidden rounded-xl border shadow-lg">
+			<Tabs tabStyle="pill" class="bg-100 p-4">
 				<Button
 					type="button"
 					onclick={() => goto('/admin/productControl')}
 					class="bg-primary-500 p-2 text-white hover:bg-primary-600"
 				>
-					<ArrowLeftOutline class="h-6 w-6" />
+					<ArrowLeftOutline class="h-5 w-5" />
 				</Button>
 
+				<!-- Product Profile Tab -->
 				<TabItem open title="Product Profile">
 					{#if product}
-						<div class="border-main space-y-6 rounded-xl border bg-100 p-6 shadow-lg">
-							<div>
-								<h3 class="text-main text-lg font-semibold">General Information</h3>
-							</div>
+						<div class="space-y-6 p-2">
+							<div class="border-main space-y-4 rounded-xl border bg-100 p-5">
+								<h3 class="text-main text-sm font-semibold tracking-wider text-gray-500 uppercase">
+									General Information
+								</h3>
 
-							<div class="space-y-5">
-								{#each Object.keys(product.title) as lang (lang)}
-									<div>
-										<Label for="Title_{lang}">Title {lang}</Label>
-										<Input
-											id="Title_{lang}"
-											bind:value={product.title[lang as keyof typeof product.title]}
-											type="text"
-											class="border-main bg-50"
-										/>
+								<div class="space-y-4">
+									{#each Object.keys(product.title) as lang (lang)}
+										<div>
+											<Label for="Title_{lang}">Title {lang}</Label>
+											<Input
+												id="Title_{lang}"
+												bind:value={product.title[lang as keyof typeof product.title]}
+												type="text"
+												class="border-main mt-1 bg-50"
+											/>
+										</div>
+									{/each}
+
+									{#each Object.keys(product.description) as lang (lang)}
+										<div>
+											<Label for="Description_{lang}">Description {lang}</Label>
+											<Input
+												id="Description_{lang}"
+												bind:value={product.description[lang as keyof typeof product.description]}
+												type="text"
+												class="border-main mt-1 bg-50"
+											/>
+										</div>
+									{/each}
+
+									<div class="grid grid-cols-3 gap-4">
+										<div>
+											<Label for="Price">Price (€)</Label>
+											<Input
+												id="Price"
+												bind:value={product.price}
+												type="number"
+												min="0"
+												class="border-main mt-1 bg-50"
+											/>
+										</div>
+										<div>
+											<Label for="Stock">Stock</Label>
+											<Input
+												id="Stock"
+												bind:value={product.stock}
+												type="number"
+												min="0"
+												class="border-main mt-1 bg-50"
+											/>
+										</div>
+										<div>
+											<Label for="Btw">BTW (%)</Label>
+											<Input
+												id="Btw"
+												bind:value={product.btw}
+												type="number"
+												min="0"
+												max="100"
+												class="border-main mt-1 bg-50"
+											/>
+										</div>
 									</div>
-								{/each}
 
-								{#each Object.keys(product.description) as lang (lang)}
 									<div>
-										<Label for="Description_{lang}">Description {lang}</Label>
-										<Input
-											id="Description_{lang}"
-											bind:value={product.description[lang as keyof typeof product.description]}
-											type="text"
-											class="border-main bg-50"
-										/>
+										<Label for="Category">Category</Label>
+										<select
+											id="Category"
+											bind:value={product.categoryId}
+											class="border-main text-main mt-1 w-full rounded-lg border bg-50 p-2 text-sm"
+										>
+											<option value={null}>No category</option>
+											{#each categories as category}
+												<option value={category.id}>
+													{category.name[Language.English]}
+												</option>
+											{/each}
+										</select>
 									</div>
-								{/each}
 
-								<div>
-									<Label for="Price">Price (€)</Label>
-									<Input
-										id="Price"
-										bind:value={product.price}
-										type="number"
-										min="0"
-										class="border-main bg-50"
-									/>
-								</div>
-
-								<div>
-									<Label for="Stock">Stock</Label>
-									<Input
-										id="Stock"
-										bind:value={product.stock}
-										type="number"
-										min="0"
-										class="border-main bg-50"
-									/>
-								</div>
-
-								<div>
-									<Label for="Btw">Btw</Label>
-									<Input
-										id="Btw"
-										bind:value={product.btw}
-										type="number"
-										min="0"
-										max="100"
-										class="border-main bg-50"
-									/>
-								</div>
-
-								<div>
-									<Label for="Category">Category</Label>
-									<select
-										id="Category"
-										bind:value={product.categoryId}
-										class="border-main text-main w-full rounded-lg border bg-50 p-2"
+									<div
+										class="border-main flex items-center justify-between rounded-lg border bg-100 p-4"
 									>
-										<option value={null}>No category</option>
-										{#each categories as category}
-											<option value={category.id}>
-												{category.name[Language.English]}
-											</option>
-										{/each}
-									</select>
-								</div>
-
-								<div
-									class="border-main flex items-center justify-between rounded-lg border bg-100 p-4"
-								>
-									<div>
-										<Label for="IsAvailable">Product Available</Label>
-										<p class="text-muted text-sm">Toggle product visibility</p>
+										<div>
+											<p class="text-main text-sm font-medium">Product Available</p>
+											<p class="text-muted text-xs">Toggle product visibility</p>
+										</div>
+										<Toggle bind:checked={product.isAvailable} color="blue" />
 									</div>
-									<Toggle id="IsAvailable" bind:checked={product.isAvailable} />
 								</div>
 							</div>
-						</div>
-						<div class="mt-8 flex justify-end">
-							<Button
-								type="button"
-								onclick={ApplyChanges}
-								class="bg-primary-500 text-white hover:bg-primary-600"
-							>
-								Apply Changes
-							</Button>
+
+							<div class="flex justify-end pt-2">
+								<Button
+									type="button"
+									onclick={ApplyChanges}
+									class="bg-primary-500 text-white hover:bg-primary-600"
+								>
+									Apply Changes
+								</Button>
+							</div>
 						</div>
 					{/if}
 				</TabItem>
 
+				<!-- Product Steps Tab -->
 				<TabItem title="Product Steps">
 					{#if product}
-						<div class="space-y-6">
+						<div class="space-y-4 p-2">
 							{#each product.steps as step, i (step.id)}
-								<div class="border-main space-y-5 rounded-xl border bg-100 p-6 shadow-lg">
+								<div class="border-main space-y-4 rounded-xl border bg-100 p-5">
 									<div class="flex items-center justify-between">
-										<h3 class="text-main text-lg font-semibold">Step {i + 1}</h3>
+										<span
+											class="text-main text-sm font-semibold tracking-wider text-gray-500 uppercase"
+										>
+											Step {i + 1}
+										</span>
 										<div class="flex items-center gap-3">
 											<Toggle bind:checked={step.multipleChoice} />
-											<span class="text-muted text-sm">Multiple choice</span>
+											<span class="text-muted text-xs">Multiple choice</span>
 											<Button
 												type="button"
 												variant="ghost"
@@ -365,26 +373,29 @@
 													product = product;
 												}}
 											>
-												Remove Step
+												Remove
 											</Button>
 										</div>
 									</div>
 
-									<div class="grid gap-4 md:grid-cols-2">
+									<div class="grid gap-3 md:grid-cols-2">
 										{#each Object.keys(step.title) as lang (lang)}
 											<div>
 												<Label>Title {lang}</Label>
 												<Input
-													class="border-main bg-50"
+													class="border-main mt-1 bg-50"
 													bind:value={step.title[lang as keyof typeof step.title]}
 												/>
 											</div>
 										{/each}
 									</div>
 
-									<div class="border-main space-y-3 rounded-lg border bg-50 p-4">
+									<!-- Options -->
+									<div class="border-main space-y-3 rounded-lg border bg-50 p-3">
 										<div class="flex items-center justify-between">
-											<h4 class="text-main text-sm font-semibold">Options</h4>
+											<span class="text-xs font-semibold tracking-wider text-gray-500 uppercase"
+												>Options</span
+											>
 											<Button
 												type="button"
 												size="xs"
@@ -414,9 +425,8 @@
 										<p class="text-muted text-xs">☑ = default selected</p>
 
 										{#each step.options as option, j (option.id)}
-											<div class="border-main space-y-3 rounded-lg border bg-100 p-4">
+											<div class="border-main space-y-3 rounded-lg border bg-100 p-3">
 												<div class="flex items-center gap-3">
-													<!-- Styled default checkbox -->
 													<button
 														type="button"
 														title="Set as default"
@@ -449,7 +459,7 @@
 													<div class="flex-1">
 														<Label>Option Product</Label>
 														<select
-															class="border-main text-main w-full rounded-lg border bg-50 p-2"
+															class="border-main text-main mt-1 w-full rounded-lg border bg-50 p-2 text-sm"
 															value={option.id}
 															onchange={(e) => {
 																const selected = allProducts.find(
@@ -497,31 +507,11 @@
 														<div>
 															<Label>Title {lang}</Label>
 															<Input
-																class="border-main bg-50"
+																class="border-main mt-1 bg-50"
 																bind:value={option.title[lang as keyof typeof option.title]}
 															/>
 														</div>
 													{/each}
-												</div>
-
-												<div class="flex items-center gap-4">
-													{#if option.imgURL}
-														<img
-															src={option.imgURL}
-															alt="option"
-															class="border-main h-16 w-16 rounded-lg border object-cover"
-															onerror={(e) => (e.currentTarget.style.display = 'none')}
-														/>
-													{/if}
-													<div class="flex-1">
-														<Label>Image</Label>
-														<input
-															type="file"
-															accept="image/*"
-															onchange={(e) => handleOptionUpload(e, i, j)}
-															class="text-muted block w-full text-sm"
-														/>
-													</div>
 												</div>
 											</div>
 										{/each}
@@ -549,37 +539,42 @@
 										}
 									];
 								}}
-								class="border-main text-muted w-full rounded-xl border-2 border-dashed bg-100 p-4 transition-colors hover:border-blue-500 hover:text-blue-500"
+								class="border-main text-muted w-full rounded-xl border-2 border-dashed bg-100 p-4 text-sm transition-colors hover:border-primary-500 hover:text-primary-500"
 							>
 								+ Add Step
 							</button>
-						</div>
 
-						<div class="mt-8 flex justify-end">
-							<Button
-								type="button"
-								onclick={ApplyChangesForStep}
-								class="bg-primary-500 text-white hover:bg-primary-600"
-							>
-								Apply Changes
-							</Button>
+							<div class="flex justify-end pt-2">
+								<Button
+									type="button"
+									onclick={ApplyChangesForStep}
+									class="bg-primary-500 text-white hover:bg-primary-600"
+								>
+									Apply Changes
+								</Button>
+							</div>
 						</div>
 					{/if}
 				</TabItem>
 
 				<TabItem title="History">
-					<div class="text-muted p-4">No history APIs available yet. Will be added later.</div>
+					<div class="text-muted p-4 text-sm">No history available yet.</div>
 				</TabItem>
 			</Tabs>
-		</form>
+		</div>
 
-		<div class="border-main rounded-xl border bg-50 p-6 shadow-2xl">
-			<h2 class="text-main mb-4 text-lg font-semibold">Product Preview</h2>
+		<!-- Right: Preview -->
+		<div class="border-main flex flex-col gap-6 rounded-xl border bg-50 p-6 shadow-lg">
+			<div>
+				<span class="text-xs font-semibold tracking-wider text-gray-500 uppercase"
+					>Product Preview</span
+				>
+			</div>
 
 			{#if product?.imgURL && !imageError}
-				<!-- svelte-ignore a11y_missing_attribute -->
 				<img
 					src={product.imgURL}
+					alt="product preview"
 					class="border-main w-full rounded-lg border object-cover"
 					onerror={() => (imageError = true)}
 				/>
@@ -587,48 +582,76 @@
 				<ImagePlaceholder />
 			{/if}
 
-			<div class="mt-4">
-				<input type="file" accept="image/*" onchange={handleUpload} class="block w-full text-sm" />
+			<div>
+				<Label>Replace Image</Label>
+				<input
+					type="file"
+					accept="image/*"
+					onchange={handleUpload}
+					class="text-muted mt-1 block w-full text-sm"
+				/>
 			</div>
+
+			{#if product}
+				<div class="border-main space-y-2 rounded-lg border bg-100 p-4 text-sm">
+					<p class="text-main font-semibold">{product.title[Language.English] || 'Untitled'}</p>
+					<p class="text-muted">{product.description[Language.English] || 'No description'}</p>
+					<div class="flex items-center justify-between pt-1">
+						<span class="text-main font-medium">€{product.price.toFixed(2)}</span>
+						<span class="text-xs {product.isAvailable ? 'text-green-500' : 'text-red-400'}">
+							{product.isAvailable ? 'Available' : 'Unavailable'}
+						</span>
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
-
-	<Modal bind:open={popupOpen} size="xs" transition={slide}>
-		<div class="text-center">
-			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
-			<h3 class="text-main mb-5 text-lg font-normal">
-				{formError}
-			</h3>
-			<div class="flex justify-center gap-3">
-				<Button
-					type="button"
-					color="primary"
-					onclick={() => {
-						popupOpen = false;
-						formError = null;
-					}}
-				>
-					Okay
-				</Button>
-			</div>
-		</div>
-	</Modal>
-
-	<Modal bind:open={SavedProduct} size="xs" transition={slide}>
-		<div class="text-center">
-			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
-			<h3 class="text-main mb-5 text-lg font-normal">Saved Product Successfully</h3>
-			<div class="flex justify-center gap-3">
-				<Button
-					type="button"
-					color="primary"
-					onclick={() => {
-						goto('/admin/productControl');
-					}}
-				>
-					Okay
-				</Button>
-			</div>
-		</div>
-	</Modal>
 </div>
+
+<!-- Error modal -->
+<Modal bind:open={popupOpen} size="xs" transition={slide}>
+	<div class="text-center">
+		<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+		<h3 class="text-main mb-5 text-lg font-normal">{formError}</h3>
+		<div class="flex justify-center gap-3">
+			<Button
+				type="button"
+				color="primary"
+				onclick={() => {
+					popupOpen = false;
+					formError = null;
+				}}
+			>
+				Okay
+			</Button>
+		</div>
+	</div>
+</Modal>
+
+<!-- Saved modal -->
+<Modal bind:open={SavedProduct} size="xs" transition={slide}>
+	<div class="text-center">
+		<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+		<h3 class="text-main mb-5 text-lg font-normal">Saved Product Successfully</h3>
+		<div class="flex justify-center gap-3">
+			<Button type="button" color="primary" onclick={() => goto('/admin/productControl')}>
+				Okay
+			</Button>
+		</div>
+	</div>
+</Modal>
+
+<style>
+	/* Flowbite structural overrides */
+	:global([role='tabpanel']) {
+		background: var(--bg-100) !important;
+	}
+
+	:global([role='tablist']) {
+		background: transparent !important;
+	}
+
+	:global([data-testid]) {
+		border-color: var(--color-border) !important;
+	}
+</style>

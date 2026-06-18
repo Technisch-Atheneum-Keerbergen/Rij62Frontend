@@ -26,7 +26,7 @@
 		Heading,
 		Span,
 		Modal,
-		TableSearch
+		P
 	} from 'flowbite-svelte';
 	import { goto } from '$app/navigation';
 
@@ -63,9 +63,7 @@
 		if (!selectedIds || selectedIds.size === 0) return;
 
 		const presetLocked = [...selectedIds].filter(
-			(id) =>
-				products.find((p) => p.id === id)?.menuPresetId !== null &&
-				products.find((p) => p.id === id)?.menuPresetId !== undefined
+			(id) => !products.find((p) => p.id === id)?.enabledByPreset
 		);
 
 		if (presetLocked.length > 0) {
@@ -168,6 +166,7 @@
 </script>
 
 <div class="mx-auto max-w-7xl p-8">
+	<!-- Heading -->
 	<div class="mb-12 text-center">
 		<Heading tag="h1" class="mb-4 text-3xl font-extrabold md:text-5xl lg:text-6xl">
 			Take
@@ -175,114 +174,158 @@
 			of Your Products
 		</Heading>
 	</div>
+	<!-- Search + Actions -->
+	<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="relative w-full sm:max-w-xs">
+			<svg
+				class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
+				/>
+			</svg>
+			<input
+				bind:value={searchTerm}
+				type="text"
+				placeholder="Search products…"
+				class="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm shadow-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+			/>
+		</div>
 
-	<div class="flex justify-center p-3">
 		<ButtonGroup>
 			<Button color="primary" onclick={() => toggleSelected()}>
 				<RefreshOutline class="me-2 h-4 w-4" />
 				Toggle Activation
 			</Button>
-
 			<Button color="primary" onclick={() => (popupModal = true)}>
 				<DeleteRowOutline class="me-2 h-4 w-4" />
 				Delete
 			</Button>
-
 			<Button color="primary" href="/admin/productControl/new">
-				<PlusOutline class="h-6 w-6 shrink-0" />
+				<PlusOutline class="me-2 h-4 w-4" />
 				Add Product
 			</Button>
 		</ButtonGroup>
 	</div>
 
+	<!-- Table -->
 	<div class="border-main overflow-hidden rounded-xl border shadow-lg select-none">
 		<Table striped class="w-full">
-			<TableSearch placeholder="Search by title" bind:inputValue={searchTerm}>
-				<TableHead>
-					<TableHeadCell></TableHeadCell>
-					<TableHeadCell class="text-left">Product</TableHeadCell>
-					<TableHeadCell>Category</TableHeadCell>
-					<TableHeadCell>Status</TableHeadCell>
-					<TableHeadCell class="text-right">Price</TableHeadCell>
-				</TableHead>
+			<TableHead>
+				<TableHeadCell></TableHeadCell>
+				<TableHeadCell class="text-left">Product</TableHeadCell>
+				<TableHeadCell>Category</TableHeadCell>
+				<TableHeadCell>Status</TableHeadCell>
+				<TableHeadCell class="text-right">Price</TableHeadCell>
+			</TableHead>
 
-				<TableBody>
-					{#each filteredProducts as product}
-						<TableBodyRow
-							class="cursor-pointer transition hover:bg-400"
-							onclick={(e) => handleRowClick(e, product.id)}
-						>
-							<TableBodyCell class="w-10 p-2!">
-								<Checkbox
-									checked={selectedIds.has(product.id)}
-									onclick={(e) => handleCheckboxClick(e, product.id)}
-								/>
-							</TableBodyCell>
+			<TableBody>
+				{#each filteredProducts as product}
+					<TableBodyRow
+						class="cursor-pointer border-0 transition hover:bg-400"
+						onclick={(e) => handleRowClick(e, product.id)}
+					>
+						<TableBodyCell class="w-10 p-2!">
+							<Checkbox
+								checked={selectedIds.has(product.id)}
+								onclick={(e) => handleCheckboxClick(e, product.id)}
+							/>
+						</TableBodyCell>
 
-							<TableBodyCell class="font-semibold">
-								{product.title[currentLanguage]}
-							</TableBodyCell>
+						<TableBodyCell class="font-semibold">
+							{product.title[currentLanguage]}
+						</TableBodyCell>
 
-							<TableBodyCell>
-								{#if categories.length}
-									{@const category = categories.find((c) => c.id === product.categoryId)}
-									{#if category}
-										<Badge color="blue">{category.name[currentLanguage]}</Badge>
-									{/if}
+						<TableBodyCell>
+							{#if categories.length}
+								{@const category = categories.find((c) => c.id === product.categoryId)}
+								{#if category}
+									<Badge color="blue">{category.name[currentLanguage]}</Badge>
 								{/if}
-							</TableBodyCell>
+							{/if}
+						</TableBodyCell>
 
-							<TableBodyCell>
-								{#if product.menuPresetId !== null && product.menuPresetId !== undefined}
-									<Badge color="yellow">In preset</Badge>
-								{:else if product.isAvailable}
-									<Badge color="green">Available</Badge>
-								{:else}
-									<Badge color="red">Unavailable</Badge>
-								{/if}
-							</TableBodyCell>
+						<TableBodyCell>
+							{#if !product.enabledByPreset}
+								<Badge color="yellow">In preset</Badge>
+							{:else if product.isAvailable}
+								<Badge color="green">Available</Badge>
+							{:else}
+								<Badge color="red">Unavailable</Badge>
+							{/if}
+						</TableBodyCell>
 
-							<TableBodyCell class="text-right font-medium">
-								€{product.price.toFixed(2)}
-							</TableBodyCell>
-						</TableBodyRow>
-					{/each}
-				</TableBody>
-			</TableSearch>
+						<TableBodyCell class="text-right font-medium">
+							€{product.price.toFixed(2)}
+						</TableBodyCell>
+					</TableBodyRow>
+				{/each}
+
+				{#if filteredProducts.length === 0}
+					<TableBodyRow>
+						<TableBodyCell colspan={5} class="py-12 text-center text-gray-400">
+							{searchTerm ? `No products matching "${searchTerm}".` : 'No products found.'}
+						</TableBodyCell>
+					</TableBodyRow>
+				{/if}
+			</TableBody>
 		</Table>
 	</div>
 
-	<Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
-		<div class="text-center">
-			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
-			<h3 class="text-main mb-5 text-lg font-normal">
-				Are you sure you want to delete this product?
-			</h3>
-			<div class="flex justify-center gap-3">
-				<Button
-					type="button"
-					color="primary"
-					onclick={() => {
-						deleteSelected();
-						popupModal = false;
-					}}
-				>
-					Yes, delete
-				</Button>
-				<Button type="button" variant="ghost" onclick={() => (popupModal = false)}>Cancel</Button>
-			</div>
+	<!-- Summary -->
+	{#if products.length > 0}
+		<div class="mt-4 flex justify-end gap-6 text-sm text-gray-500">
+			{#if searchTerm}
+				<span>{filteredProducts.length} result{filteredProducts.length === 1 ? '' : 's'}</span>
+				<span class="text-gray-300">·</span>
+			{/if}
+			{#if selectedIds.size > 0}
+				<span class="font-medium text-primary-600">{selectedIds.size} selected</span>
+				<span class="text-gray-300">·</span>
+			{/if}
+			<span>{products.filter((p) => p.isAvailable).length} available</span>
+			<span>{products.filter((p) => !p.isAvailable).length} unavailable</span>
+			<span class="font-medium text-gray-700 dark:text-gray-300">{products.length} total</span>
 		</div>
-	</Modal>
-
-	<Modal form bind:open={lockedModal} size="xs" transition={slide} permanent>
-		<div class="text-center">
-			<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
-			<h3 class="text-main mb-5 text-lg font-normal">
-				This item is currently in a preset. Unable to toggle activation.
-			</h3>
-			<div class="flex justify-center gap-3">
-				<Button type="button" color="primary" onclick={() => (lockedModal = false)}>Okay</Button>
-			</div>
-		</div>
-	</Modal>
+	{/if}
 </div>
+
+<Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
+	<div class="text-center">
+		<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+		<h3 class="text-main mb-5 text-lg font-normal">
+			Are you sure you want to delete this product?
+		</h3>
+		<div class="flex justify-center gap-3">
+			<Button
+				type="button"
+				color="primary"
+				onclick={() => {
+					deleteSelected();
+					popupModal = false;
+				}}
+			>
+				Yes, delete
+			</Button>
+			<Button type="button" variant="ghost" onclick={() => (popupModal = false)}>Cancel</Button>
+		</div>
+	</div>
+</Modal>
+
+<Modal form bind:open={lockedModal} size="xs" transition={slide} permanent>
+	<div class="text-center">
+		<ExclamationCircleOutline class="text-muted mx-auto mb-4 h-12 w-12" />
+		<h3 class="text-main mb-5 text-lg font-normal">
+			This item is currently in a preset. Unable to toggle activation.
+		</h3>
+		<div class="flex justify-center gap-3">
+			<Button type="button" color="primary" onclick={() => (lockedModal = false)}>Okay</Button>
+		</div>
+	</div>
+</Modal>
